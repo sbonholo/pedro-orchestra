@@ -150,6 +150,7 @@ p { margin: 0; line-height: 1.5; }
   <button class="btn" data-tab="music">Music &amp; Concerts</button>
   <button class="btn" data-tab="practice">Practice</button>
   <button class="btn" data-tab="auditions">Auditions</button>
+  <button class="btn" data-tab="shop">Shop</button>
   <div class="spacer"></div>
   <button class="btn" id="b-day">Next Day</button>
   <button class="btn" id="b-week">+7 Days</button>
@@ -390,7 +391,8 @@ const fastestNps = (part, bpm) => { const mb = Math.min(...part.notes.filter(n =
 function tempoScale(players, parts, p) { let s = 1; for (const m of players) { const need = Math.min(fastestNps(parts[m.inst], p.bpm), 1.6 * p.bpm / 60); const can = comfortNps(m); if (need > can) s = Math.min(s, can / need); } return Math.max(0.7, s); }
 function renderPart(m, part, p, prep, ctx, bpm) {
   const r = rngFrom(m.seed + Math.floor(rnd() * 1e6));
-  const [rhythm, ens, inton, tech, tone, expr, mus, conf, acc, sight] = [S.rhythm, S.ensemble, S.intonation, S.technique, S.tone, S.expression, S.musicality, S.confidence, S.accuracy, S.sight].map(i => sk(m, i));
+  let [rhythm, ens, inton, tech, tone, expr, mus, conf, acc, sight] = [S.rhythm, S.ensemble, S.intonation, S.technique, S.tone, S.expression, S.musicality, S.confidence, S.accuracy, S.sight].map(i => sk(m, i));
+  inton = played(m, S.intonation) / 100; tone = played(m, S.tone) / 100; expr = played(m, S.expression) / 100;   // instrument quality
   const nerves = (1 - conf) * (ctx === "concert" ? 0.6 : ctx === "audition" ? 0.45 : 0.15);
   const ready = lerp(sight, 1, prep), nps = fastestNps(part, bpm), comfort = comfortNps(m), stress = clamp((nps - comfort) / comfort, 0, 1);
   const diffF = 1 + 0.6 * (p.diff - 1) * (1 - tech);
@@ -418,7 +420,7 @@ function renderPart(m, part, p, prep, ctx, bpm) {
 function evaluate(parts, p, mode, ctx, ts, conductScore = -1) {
   let R = 0, I = 0, A = 0, Art = 0; const lines = [];
   for (const pr of parts) { R += 100 * Math.exp(-pr.timingMs / 45); I += 100 * Math.exp(-pr.cents / 18); A += Math.max(0, 100 * (1 - pr.wrong / pr.count * 4));
-    Art += (pr.m.skills[S.musicality] + pr.m.skills[S.expression] + pr.m.skills[S.tone]) / 3;
+    Art += (pr.m.skills[S.musicality] + played(pr.m, S.expression) + played(pr.m, S.tone)) / 3;
     lines.push(`${fullName(pr.m)} (${INST[pr.m.inst].name}): timing ±${pr.timingMs.toFixed(0)} ms, pitch ±${pr.cents.toFixed(0)} cents, ${pr.wrong} wrong note${pr.wrong === 1 ? "" : "s"}`); }
   const n = parts.length; R /= n; I /= n; A /= n; Art /= n;
   let E = R;
@@ -443,6 +445,44 @@ const EXERCISES = [
   { name: "Off-beat Eighths", bpm: 76, taps: [.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5], min: 50, text: "After the count-in, tap exactly between the clicks, on every 'and'. The hardest of the three." },
 ];
 
+/* ---------- economy: coins, judges, masterclasses, instruments (same rules as Economy.cs) ---------- */
+const ECO = { start: 50, yes: 30, no: 5, pass: 5.5, gain: 3 };
+const masterclassCost = v => 10 + Math.round(v * 0.5);
+const SHOP = (() => {
+  const list = [];
+  for (const k of INST_KEYS) { const n = INST[k].name.toLowerCase();
+    list.push({ id: k + "_workshop", name: "Workshop " + n, maker: "Modern workshop", inst: k, price: 300, q: .25 }, { id: k + "_master", name: "Master-made " + n, maker: "Contemporary luthier", inst: k, price: 1200, q: .5 }); }
+  [["hellier", "Hellier", 1679], ["molitor", "Molitor", 1697], ["hammer", "Hammer", 1707], ["viotti", "Viotti", 1709], ["dolphin", "Dolphin", 1714], ["soil", "Soil", 1714],
+   ["alard", "Alard", 1715], ["lipinski", "Lipinski", 1715], ["ladyblunt", "Lady Blunt", 1721], ["messiah", "Messiah", 1716]]   // ten Stradivarius violins, 3,000 → 5,000
+    .forEach(([id, nm, yr], i) => list.push({ id: "strad_" + id, name: `Stradivarius “${nm}”`, maker: `Antonio Stradivari, ${yr}`, inst: "violin", price: 3000 + Math.round(i * 2000 / 9), q: .8 + .2 * i / 9 }));
+  list.push({ id: "strad_archinto", name: "Stradivarius “Archinto” viola", maker: "Antonio Stradivari, 1696", inst: "viola", price: 4000, q: .9 },
+    { id: "strad_macdonald", name: "Stradivarius “Macdonald” viola", maker: "Antonio Stradivari, 1701", inst: "viola", price: 4800, q: .98 },
+    { id: "strad_duport", name: "Stradivarius “Duport” cello", maker: "Antonio Stradivari, 1711", inst: "cello", price: 4500, q: .92 },
+    { id: "strad_davidov", name: "Stradivarius “Davidov” cello", maker: "Antonio Stradivari, 1712", inst: "cello", price: 5000, q: 1 },
+    { id: "dragonetti", name: "“Dragonetti” double bass", maker: "Gasparo da Salò, c. 1600", inst: "bass", price: 4000, q: .95 });
+  return list;
+})();
+const shopItem = id => SHOP.find(x => x.id === id);
+// Skill as heard: the player's skill plus what their instrument adds (+20 tone, +8 expression, +4 intonation at quality 1)
+function played(m, i) { const q = shopItem(m.instrumentModel)?.q || 0; return Math.min(100, m.skills[i] + (i === S.tone ? 20 * q : i === S.expression ? 8 * q : i === S.intonation ? 4 * q : 0)); }
+function buyInstrument(m, it) {
+  if (!state.owned.includes(it.id)) { if (state.coins < it.price) return `Not enough coins: ${it.name} costs ${it.price.toLocaleString("en")}.`; state.coins -= it.price; state.owned.push(it.id); }
+  for (const o of state.roster) if (o.instrumentModel === it.id) o.instrumentModel = "";
+  m.instrumentModel = it.id; return `${m.first} now plays the ${it.name}.`;
+}
+function masterclass(m, i) {
+  const v = m.skills[i]; if (v >= 100) return `${m.first}'s ${SKILLS[i][0]} is already at the maximum.`; const cost = masterclassCost(v);
+  if (state.coins < cost) return `Not enough coins: this masterclass costs ${cost}.`;
+  state.coins -= cost; m.skills[i] = Math.min(100, v + ECO.gain); return `Masterclass: ${m.first}'s ${SKILLS[i][0]} ${v.toFixed(1)} → ${m.skills[i].toFixed(1)}.`;
+}
+const JUDGES = [["Prof. Ilse Varga", "intonation", -.4], ["Marcus Bell", "rhythm and ensemble", 0], ["Sofia Ricci", "artistry", .4]];   // strict, fair, generous
+function judge(r) {
+  const focus = [r.I, (r.R + r.E) / 2, r.Art];
+  return JUDGES.map(([name, f, bias], i) => { const score = Math.round(clamp((r.overall + (focus[i] - r.overall) * .5) / 10 + bias + (Math.random() - .5) * .6, 1, 10) * 10) / 10;
+    return { name, focus: f, score, ok: score >= ECO.pass, comment: score >= 8.5 ? "Outstanding." : score >= ECO.pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
+}
+const concertCoins = js => js.filter(j => j.ok).length >= 2 ? ECO.yes : ECO.no;
+
 /* =====================================================================
    STATE & SAVE (browser storage; the Unity game saves to a JSON file)
    ===================================================================== */
@@ -451,12 +491,12 @@ let state = null, selectedId = null;
 function newGame() {
   state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
     roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
-    auditions: [], invites: [], energy1000: true };
+    auditions: [], invites: [], energy1000: true, coins: ECO.start, owned: [] };
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
-function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } state = s; return true; } } catch (e) { } return false; }
+function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } state = s; return true; } } catch (e) { } return false; }
 const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
 const selected = () => state?.roster.find(m => m.id === selectedId) || null;
 
@@ -927,7 +967,7 @@ function finishPerformance() {
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
     gains = { ok: true, msg: `Concert experience. Reputation +${rg.toFixed(1)} (now ${state.rep.toFixed(0)}).`, log }; }
-  if (pf.ctx === "concert") applause(res.stars);
+  if (pf.ctx === "concert") { applause(res.stars); res.judges = judge(res); res.coins = concertCoins(res.judges); state.coins += res.coins; }
   save(); updateAudience(); renderUI(); showResult(pf, res, gains); if (pf.onDone) pf.onDone(res);
 }
 
@@ -1036,6 +1076,15 @@ function renderSide() {
       ${EXERCISES.map((e, i) => `<button class="btn ${m.skills[S.rhythm] >= e.min ? "on" : ""}" data-ex="${i}">${e.name} · ${e.bpm} bpm${m.skills[S.rhythm] >= e.min ? "" : ` · recommended Rhythm ${e.min}`}</button>`).join("")}
       <h3>Quick practice</h3><p class="muted small">One tap, −${T.ePractice} energy. Gains shrink as a skill approaches mastery.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${SKILLS.map((k, i) => `<button class="btn" data-qp="${i}" ${m.energy < T.minE || perf ? "disabled" : ""}>${k[1]} <span class="muted">${m.skills[i].toFixed(0)}</span></button>`).join("")}</div>`;
+  } else if (tab === "shop") {
+    const plain = { [S.intonation]: "plays in tune", [S.rhythm]: "plays notes on time", [S.accuracy]: "fewer wrong notes", [S.tone]: "more beautiful sound", [S.expression]: "vibrato and feeling", [S.musicality]: "shapes the phrases", [S.ensemble]: "stays together", [S.technique]: "cleaner playing", [S.speed]: "plays fast pieces", [S.sight]: "new pieces", [S.confidence]: "calm on stage" };
+    const order = [S.intonation, S.rhythm, S.accuracy, S.tone, S.expression, S.musicality, S.ensemble, S.technique, S.speed, S.sight, S.confidence];
+    s.innerHTML = `<div class="eyebrow">Shop</div><h2>${state.coins.toLocaleString("en")} coins</h2><p class="muted small">Concerts earn ${ECO.yes} coins when the judges approve, ${ECO.no} when they don't.</p>`
+      + (!m ? `<p>Select a musician to upgrade them.</p>` : `<h3>Masterclasses for ${esc(fullName(m))} <span class="muted small">(+${ECO.gain} per lesson)</span></h3>
+      ${order.map(i => { const v = m.skills[i], c = masterclassCost(v); return `<button class="btn" data-mc="${i}" ${v >= 100 || state.coins < c ? "disabled" : ""} style="text-align:left">${SKILLS[i][0]} ${v.toFixed(0)} <span class="muted small">(${plain[i]})</span> — ${v >= 100 ? "maximum" : c + " coins"}</button>`; }).join("")}
+      <h3>Instruments for ${esc(fullName(m))}</h3><p class="muted small">Playing: <b>${shopItem(m.instrumentModel)?.name || "own student " + INST[m.inst].name.toLowerCase()}</b>. Better instruments add up to +20 Tone, +8 Expression and +4 Intonation.</p>
+      ${SHOP.filter(it => it.inst === m.inst).map(it => { const own = state.owned.includes(it.id), on = m.instrumentModel === it.id;
+        return `<button class="card ${on ? "on" : ""}" data-buy="${it.id}" ${on || (!own && state.coins < it.price) ? "disabled" : ""}><span class="t">${it.name}</span><span class="s">${it.maker} · quality ${Math.round(it.q * 100)} · ${on ? "playing" : own ? `owned: give to ${esc(m.first)}` : it.price.toLocaleString("en") + " coins"}</span></button>`; }).join("")}`);
   } else if (tab === "auditions") {
     const card = (c, inv) => { const lead = state.roster.filter(x => x.inst === c.inst).sort((a, b) => overall(b) - overall(a))[0]; const diff = lead ? overall(c) - overall(lead) : null;
       const str = c.skills.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]); const nm = l => l.map(([, i]) => SKILLS[i][1]).join(", ");
@@ -1055,7 +1104,7 @@ function renderSide() {
 function updateStatus() {
   if (!state) return;
   if (perf) { $("#status").innerHTML = perf.status; $("#progress i").style.width = clamp((actx.currentTime - perf.t0) / (perf.end - perf.t0) * 100, 0, 100) + "%"; }
-  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `Day <b>${state.day}</b> · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
+  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `Day <b>${state.day}</b> · <b>${state.coins.toLocaleString("en")}</b> coins · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
 }
 function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visible = vid === id; renderUI(); }
 function advance(days) {
@@ -1082,6 +1131,8 @@ function showResult(pf, r, gains) {
     <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" style="margin-left:12px">${r.overall.toFixed(0)}</span><span class="muted">/ 100</span></div>
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
+    ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of 3 approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
+      <p style="color:var(--gold)"><b>+${r.coins} coins.</b> ${r.coins === ECO.yes ? "The judges approved." : `Two judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
     <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
     ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
     <button class="btn primary" data-close>Continue</button>`);
@@ -1093,7 +1144,7 @@ const TUTORIAL = [
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 1,000 energy. <b>Next Day</b> restores 600. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Three <b>judges</b> score every concert: if two approve you earn <b>30 coins</b>, otherwise 5. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
   ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];
@@ -1202,6 +1253,8 @@ document.addEventListener("click", e => {
   else if (d.skill) { focusSkill = +d.skill; toast(SKILLS[focusSkill][0] + ": " + SKILLS[focusSkill][2]); renderUI(); }
   else if (d.piece) { pieceSel = d.piece; soloSel = pieceById(d.piece).featured; renderUI(); }
   else if (d.solo) { soloSel = d.solo; renderUI(); }
+  else if (d.mc) { toast(masterclass(selected(), +d.mc)); save(); renderUI(); }
+  else if (d.buy) { toast(buyInstrument(selected(), shopItem(d.buy))); save(); renderUI(); }
   else if (d.cond) { state.conduct = d.cond === "you"; save(); renderUI(); }
   else if (d.mode) { modeSel = d.mode; renderUI(); }
   else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }

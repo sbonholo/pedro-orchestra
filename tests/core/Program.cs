@@ -135,6 +135,22 @@ static class Program
             var r0 = new PerformanceResult { Overall = 50f }; PerformanceEvaluator.ApplyConducting(r0, 0f);
             Check(Math.Abs(r1.Overall - 56f) < 0.01f && Math.Abs(r0.Overall - 44f) < 0.01f && r1.MusicianNotes.Count == 1, "conducting bonus: +6 perfect, -6 none");
         }
+        // Economy: coins, judges, masterclasses, instruments
+        {
+            var es = OrchestraState.NewGame(8); var v = es.roster.First(m => m.instrument == InstrumentType.Violin);
+            var strads = Economy.Catalog.Where(i => i.Id.StartsWith("strad_") && i.Type == InstrumentType.Violin).ToList();
+            Check(strads.Count == 10 && strads.Min(i => i.Price) == 3000 && strads.Max(i => i.Price) == 5000 && strads.OrderBy(i => i.Price).Last().Id == "strad_messiah", "10 Stradivarius violins, 3,000 to 5,000 coins, Messiah the best");
+            Check(es.coins == Economy.StartingCoins, "new game starts with " + Economy.StartingCoins + " coins");
+            var good = new PerformanceResult { Overall = 80, Rhythm = 80, Intonation = 80, Ensemble = 80, Artistry = 80 };
+            var bad = new PerformanceResult { Overall = 35, Rhythm = 35, Intonation = 35, Ensemble = 35, Artistry = 35 };
+            Check(Economy.ConcertCoins(Economy.Judge(good, new Random(1))) == 30 && Economy.ConcertCoins(Economy.Judge(bad, new Random(1))) == 5, "judges: good concert 30 coins, bad concert 5");
+            float before = v.Get(SkillType.Intonation); int cost = Economy.MasterclassCost(before);
+            Economy.Masterclass(es, v, SkillType.Intonation);
+            Check(Math.Abs(v.Get(SkillType.Intonation) - before - 3f) < 0.01f && es.coins == Economy.StartingCoins - cost, "masterclass: +3 for " + cost + " coins");
+            es.coins = 5000; float tone0 = Economy.Played(v, SkillType.ToneQuality);
+            Economy.Buy(es, v, Economy.Get("strad_messiah"));
+            Check(es.coins == 0 && v.instrumentModel == "strad_messiah" && Economy.Played(v, SkillType.ToneQuality) > tone0 + 19f, "Messiah Stradivarius bought: +20 tone");
+        }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);

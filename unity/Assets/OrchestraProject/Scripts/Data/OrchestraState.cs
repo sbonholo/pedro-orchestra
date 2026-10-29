@@ -22,7 +22,7 @@ namespace OrchestraProject
     [Serializable]
     public class OrchestraState
     {
-        public const int CurrentVersion = 2;   // 2: energy scale 0–1000
+        public const int CurrentVersion = 3;   // 2: energy scale 0–1000, 3: coins
         public const int MaxRosterSize = 40;
 
         public int saveVersion = CurrentVersion;
@@ -35,7 +35,9 @@ namespace OrchestraProject
         public int lastPoolRefreshDay = -100;
         public int lastConcertDay = -1;
         public bool heardOrchestra;
-        public bool playerConducts;            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
+        public bool playerConducts;
+        public int coins = Economy.StartingCoins;
+        public List<string> ownedInstruments = new List<string>();            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();
@@ -75,6 +77,9 @@ namespace OrchestraProject
                 foreach (var m in roster) m.energy = TrainingSystem.MaxEnergy;   // old saves used 0–100
                 saveVersion = 2;
             }
+            if (saveVersion < 3) { coins = Economy.StartingCoins; saveVersion = 3; }
+            if (ownedInstruments == null) ownedInstruments = new List<string>();
+            if (coins < 0) coins = 0;
             foreach (var m in roster) m.Validate();
             foreach (var m in auditionPool) m.Validate();
             foreach (var m in invitePool) m.Validate();

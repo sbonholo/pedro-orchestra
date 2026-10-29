@@ -16,6 +16,8 @@ namespace OrchestraProject
         public List<string> MusicianNotes = new List<string>();
         public float ConductingScore = -1f;   // 0–1 when the player conducted, otherwise -1
         public float ConductingBonus;
+        public List<JudgeVerdict> Judges;     // concerts only
+        public int CoinsEarned;
     }
 
     /// <summary>
@@ -37,7 +39,7 @@ namespace OrchestraProject
                 float wrongRate = p.PlayedNotes > 0 ? p.WrongNotes / (float)p.PlayedNotes : 0f;
                 float pa = Math.Max(0f, 100f * (1f - wrongRate * 4f));
                 var m = p.Musician;
-                float pArt = (m.Get(SkillType.Musicality) + m.Get(SkillType.Expression) + m.Get(SkillType.ToneQuality)) / 3f;
+                float pArt = (m.Get(SkillType.Musicality) + Economy.Played(m, SkillType.Expression) + Economy.Played(m, SkillType.ToneQuality)) / 3f;
                 rhythm += pr; inton += pi; acc += pa; art += pArt;
 
                 r.MusicianNotes.Add(m.FullName + " (" + p.Instrument.DisplayName + "): timing ±" + p.AvgAbsTimingMs.ToString("0") +

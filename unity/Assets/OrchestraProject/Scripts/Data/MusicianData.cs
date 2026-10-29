@@ -25,6 +25,7 @@ namespace OrchestraProject
         public int practiceSessions;
         public int concertsPlayed;
         public int appearanceSeed;
+        public string instrumentModel = "";   // Economy catalog id; "" = the player's own student instrument
 
         public string FullName { get { return firstName + " " + lastName; } }
         public InstrumentDefinition Instrument { get { return InstrumentCatalog.Get(instrument); } }
@@ -75,6 +76,7 @@ namespace OrchestraProject
             for (int i = 0; i < skills.Length; i++) skills[i] = Math.Max(0f, Math.Min(100f, skills[i]));
             if (talent <= 0f) talent = 1f;
             energy = Math.Max(0f, Math.Min(TrainingSystem.MaxEnergy, energy));
+            if (instrumentModel == null) instrumentModel = "";
             if (trainingFocus < -1 || trainingFocus >= Skills.Count) trainingFocus = -1;
         }
     }

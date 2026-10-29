@@ -33,7 +33,7 @@ namespace OrchestraProject
             string kind = r.Context == PerformanceContext.Concert ? "Concert Review" : r.Context == PerformanceContext.Audition ? "Audition" :
                           r.Context == PerformanceContext.Rehearsal ? "Rehearsal Report" : "Performance";
             var t = UIFactory.Label(body, kind, 20, TextAnchor.MiddleLeft, UITheme.Accent, FontStyle.Bold); UIFactory.Size(t, 30);
-            var p = UIFactory.Label(body, "<b>" + r.Piece.Title + "</b>  <size=18>(" + (r.Mode == ArrangementMode.SeparateParts ? "separate parts" : "same melody") + ")</size>", 28); UIFactory.Size(p, 40);
+            var p = UIFactory.Label(body, "<b>" + r.Piece.Title + "</b>  <size=18>(" + (r.Mode == ArrangementMode.SeparateParts ? "separate parts" : r.Mode == ArrangementMode.Solo ? "solo" : "same melody") + ")</size>", 28); UIFactory.Size(p, 40);
 
             var starRow = UIFactory.Row(body, 60, 10);
             starRow.GetComponent<HorizontalLayoutGroup>().childForceExpandWidth = false;
@@ -56,6 +56,20 @@ namespace OrchestraProject
             Category("Note accuracy", r.Accuracy);
             Category("Ensemble", r.Ensemble);
             Category("Artistry", r.Artistry);
+
+            if (r.Judges != null)
+            {
+                int yes = 0; foreach (var j in r.Judges) if (j.Approves) yes++;
+                UIFactory.Header(body, "The judges  (" + yes + " of 3 approve)");
+                foreach (var j in r.Judges)
+                {
+                    var jl = UIFactory.Label(body, "<b>" + j.Name + "</b>  <size=15>(listens for " + j.Focus + ")</size>   " + j.Score.ToString("0.0") + " / 10   " + (j.Approves ? "YES  " : "NO  ") + j.Comment,
+                        18, TextAnchor.UpperLeft, j.Approves ? UITheme.Good : UITheme.Bad);
+                    UIFactory.Size(jl, 28);
+                }
+                var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (r.CoinsEarned == Economy.CoinsApproved ? "  The judges approved." : "  Two judges must approve for " + Economy.CoinsApproved + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
+                UIFactory.Size(cl, 32);
+            }
 
             UIFactory.Header(body, "What the audience heard");
             foreach (var line in r.MusicianNotes)

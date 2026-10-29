@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace OrchestraProject
 {
-    public enum HudTab { None, Roster, Musician, Music, Practice, Auditions }
+    public enum HudTab { None, Roster, Musician, Music, Practice, Auditions, Shop }
 
     /// <summary>
     /// In-game interface: navigation bar on top, roster on the left, the active tab on the right,
@@ -38,6 +38,7 @@ namespace OrchestraProject
         public readonly MusicTab MusicTab = new MusicTab();
         public readonly PracticeTab PracticeTab = new PracticeTab();
         public readonly AuditionTab AuditionTab = new AuditionTab();
+        public readonly ShopTab ShopTab = new ShopTab();
 
         public void Build(UIManager uiManager, GameManager gameManager)
         {
@@ -60,6 +61,7 @@ namespace OrchestraProject
             AddNav(HudTab.Music, "Music & Concerts");
             AddNav(HudTab.Practice, "Practice");
             AddNav(HudTab.Auditions, "Auditions");
+            AddNav(HudTab.Shop, "Shop");
             var spacer = UIFactory.Rect("Spacer", topBar); UIFactory.Size(spacer, -1, 0, 1);
             Nav("Next Day", () => gm.AdvanceDays(1), phone ? 130 : 150);
             Nav("+7 Days", () => gm.AdvanceDays(7), phone ? 120 : 140);
@@ -245,6 +247,7 @@ namespace OrchestraProject
                 case HudTab.Music: tabTitle.text = "Music & Concerts"; MusicTab.Build(tabContent, gm, ui); break;
                 case HudTab.Practice: tabTitle.text = "Practice"; PracticeTab.Build(tabContent, gm, ui); break;
                 case HudTab.Auditions: tabTitle.text = "Auditions & Invitations"; AuditionTab.Build(tabContent, gm, ui); break;
+                case HudTab.Shop: tabTitle.text = "Shop: upgrades & instruments"; ShopTab.Build(tabContent, gm, ui); break;
             }
         }
 
@@ -266,7 +269,7 @@ namespace OrchestraProject
                 var s = gm.State;
                 float avg = 0f; foreach (var m in s.roster) avg += m.Overall;
                 avg = s.roster.Count > 0 ? avg / s.roster.Count : 0f;
-                statusText.text = "Day " + s.day + "   ·   Reputation " + s.reputation.ToString("0") + "   ·   Orchestra level " + avg.ToString("0") + " (" + SkillLevels.TierName(avg) + ")";
+                statusText.text = "Day " + s.day + "   ·   <color=#" + UITheme.Hex(UITheme.Accent) + ">" + s.coins.ToString("N0") + " coins</color>   ·   Reputation " + s.reputation.ToString("0") + "   ·   Orchestra level " + avg.ToString("0") + " (" + SkillLevels.TierName(avg) + ")";
             }
             if (uiHidden && InputHelper.KeyDown(GameKey.Escape)) SetHidden(false);
             UpdateCoach();

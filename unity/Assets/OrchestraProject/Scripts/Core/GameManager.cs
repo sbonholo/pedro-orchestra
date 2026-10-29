@@ -208,6 +208,9 @@ namespace OrchestraProject
                     progress.bestConcertRating = Mathf.Max(progress.bestConcertRating, result.Overall);
                     gains.Message += " Reputation +" + repGain.ToString("0.0") + " (now " + State.reputation.ToString("0") + ").";
                     if (AudienceCrowd.Instance != null) AudienceCrowd.Instance.Applaud(result.Stars, State.reputation);
+                    result.Judges = Economy.Judge(result, Rng);
+                    result.CoinsEarned = Economy.ConcertCoins(result.Judges);
+                    State.coins += result.CoinsEarned;
                     State.Log("Concert: " + result.Piece.Title + " — " + result.Stars + "/5 (" + result.Overall.ToString("0") + ").");
                     break;
             }

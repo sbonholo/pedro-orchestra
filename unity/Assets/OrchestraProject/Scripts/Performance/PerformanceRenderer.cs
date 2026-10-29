@@ -93,10 +93,10 @@ namespace OrchestraProject
 
             float rhythm = m.Get01(SkillType.Rhythm);
             float ensemble = m.Get01(SkillType.Ensemble);
-            float intonation = m.Get01(SkillType.Intonation);
+            float intonation = Economy.Played(m, SkillType.Intonation) / 100f;   // instrument quality adds to these three
             float technique = m.Get01(SkillType.Technique);
-            float tone = m.Get01(SkillType.ToneQuality);
-            float expression = m.Get01(SkillType.Expression);
+            float tone = Economy.Played(m, SkillType.ToneQuality) / 100f;
+            float expression = Economy.Played(m, SkillType.Expression) / 100f;
             float musicality = m.Get01(SkillType.Musicality);
             float confidence = m.Get01(SkillType.Confidence);
             float accuracy = m.Get01(SkillType.Accuracy);
