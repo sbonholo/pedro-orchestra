@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <OutputType>Library</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>UNITY_2021_3_OR_NEWER;ENABLE_INPUT_SYSTEM</DefineConstants>
+    <NoWarn>CS0649;CS0414;CS0169</NoWarn>
+    <BaseIntermediateOutputPath>obj_inputsystem/</BaseIntermediateOutputPath>
+    <OutputPath>bin_inputsystem/</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../unity/Assets/OrchestraProject/**/*.cs" />
+    <Compile Include="Stubs.cs" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="UnityEngine.AIModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AccessibilityModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AccessibilityModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AndroidJNIModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AndroidJNIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AssetBundleModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AssetBundleModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>pkgs/um/lib/net45/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ClothModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ClothModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ClusterInputModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ClusterInputModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ClusterRendererModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ClusterRendererModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>pkgs/um/lib/net45/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CrashReportingModule"><HintPath>pkgs/um/lib/net45/UnityEngine.CrashReportingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.DSPGraphModule"><HintPath>pkgs/um/lib/net45/UnityEngine.DSPGraphModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.DirectorModule"><HintPath>pkgs/um/lib/net45/UnityEngine.DirectorModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.GIModule"><HintPath>pkgs/um/lib/net45/UnityEngine.GIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.GameCenterModule"><HintPath>pkgs/um/lib/net45/UnityEngine.GameCenterModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.GridModule"><HintPath>pkgs/um/lib/net45/UnityEngine.GridModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.HotReloadModule"><HintPath>pkgs/um/lib/net45/UnityEngine.HotReloadModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>pkgs/um/lib/net45/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>pkgs/um/lib/net45/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputModule"><HintPath>pkgs/um/lib/net45/UnityEngine.InputModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule"><HintPath>pkgs/um/lib/net45/UnityEngine.JSONSerializeModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.LocalizationModule"><HintPath>pkgs/um/lib/net45/UnityEngine.LocalizationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PerformanceReportingModule"><HintPath>pkgs/um/lib/net45/UnityEngine.PerformanceReportingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.Physics2DModule"><HintPath>pkgs/um/lib/net45/UnityEngine.Physics2DModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ProfilerModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ProfilerModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule"><HintPath>pkgs/um/lib/net45/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule"><HintPath>pkgs/um/lib/net45/UnityEngine.ScreenCaptureModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SharedInternalsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.SharedInternalsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SpriteMaskModule"><HintPath>pkgs/um/lib/net45/UnityEngine.SpriteMaskModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SpriteShapeModule"><HintPath>pkgs/um/lib/net45/UnityEngine.SpriteShapeModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.StreamingModule"><HintPath>pkgs/um/lib/net45/UnityEngine.StreamingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SubstanceModule"><HintPath>pkgs/um/lib/net45/UnityEngine.SubstanceModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.SubsystemsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.SubsystemsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TLSModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TLSModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TerrainModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TerrainModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TerrainPhysicsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TerrainPhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TextCoreFontEngineModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreTextEngineModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TextCoreTextEngineModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TilemapModule"><HintPath>pkgs/um/lib/net45/UnityEngine.TilemapModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIElementsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UIElementsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIElementsNativeModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UIElementsNativeModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UNETModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UNETModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UmbraModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UmbraModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityAnalyticsCommonModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityAnalyticsCommonModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityAnalyticsModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityAnalyticsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityConnectModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityConnectModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityCurlModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityCurlModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityTestProtocolModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityTestProtocolModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityWebRequestAudioModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityWebRequestModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestTextureModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityWebRequestTextureModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestWWWModule"><HintPath>pkgs/um/lib/net45/UnityEngine.UnityWebRequestWWWModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.VFXModule"><HintPath>pkgs/um/lib/net45/UnityEngine.VFXModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.VRModule"><HintPath>pkgs/um/lib/net45/UnityEngine.VRModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.VehiclesModule"><HintPath>pkgs/um/lib/net45/UnityEngine.VehiclesModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.VideoModule"><HintPath>pkgs/um/lib/net45/UnityEngine.VideoModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.VirtualTexturingModule"><HintPath>pkgs/um/lib/net45/UnityEngine.VirtualTexturingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.WindModule"><HintPath>pkgs/um/lib/net45/UnityEngine.WindModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.XRModule"><HintPath>pkgs/um/lib/net45/UnityEngine.XRModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>pkgs/um/lib/net45/UnityEngine.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

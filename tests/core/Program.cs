@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using OrchestraProject;
+
+static class Program
+{
+    static int fails = 0;
+    static void Check(bool c, string msg) { Console.WriteLine((c ? "PASS " : "FAIL ") + msg); if (!c) fails++; }
+
+    static Dictionary<InstrumentType, SampleSet> sets = new Dictionary<InstrumentType, SampleSet>();
+    static float[] Voice(RenderedPart rp) =>
+        sets.TryGetValue(rp.Instrument.Type, out var set) ? SampleVoice.RenderPart(rp, set, 48000, rp.LengthSec, 3) : StringSynth.RenderPart(rp, 48000, rp.LengthSec, 3);
+
+    static void Main(string[] args)
+    {
+        foreach (var t in new[] { InstrumentType.Violin, InstrumentType.Viola, InstrumentType.Cello, InstrumentType.DoubleBass })
+        {
+            string dir = "../../unity/Assets/OrchestraProject/Resources/OrchestraSamples/" + t + "/";
+            sets[t] = SampleSet.Parse(t, File.ReadAllText(dir + "samples.txt"), f => File.ReadAllBytes(dir + f + ".bytes"));
+        }
+        var s = OrchestraState.NewGame(1234);
+        Check(s.roster.Count == 4, "4 starting musicians");
+        foreach (var m in s.roster) Console.WriteLine($"  {m.FullName,-22} {m.Instrument.DisplayName,-12} overall {m.Overall:0.0} {m.LevelName} talent {m.talent:0.00}");
+        Check(s.roster.All(m => m.Overall > 25 && m.Overall < 45), "starting level = experienced amateur (25-45)");
+
+        // Arrangements
+        foreach (var p in MusicLibrary.All)
+        {
+            Check(Math.Abs(p.TotalBeats - p.Chords.Sum(c => c.Beats)) < 0.001, $"{p.Id}: melody beats {p.TotalBeats} == chord beats");
+            foreach (ArrangementMode mode in Enum.GetValues(typeof(ArrangementMode)))
+            {
+                var arr = Arranger.Arrange(p, mode, s.roster.Select(m => m.instrument));
+                foreach (var kv in arr.Parts)
+                {
+                    var def = InstrumentCatalog.Get(kv.Key);
+                    float beats = kv.Value.Notes.Sum(n => n.beats);
+                    bool inRange = kv.Value.Notes.All(n => n.IsRest || (n.midi >= def.LowestMidi && n.midi <= def.HighestMidi));
+                    Check(Math.Abs(beats - p.TotalBeats) < 0.001 && inRange, $"{p.Id}/{mode}/{kv.Key}: {beats} beats, in range");
+                }
+                if (mode == ArrangementMode.SeparateParts && p.Id == "twinkle")
+                    foreach (var kv in arr.Parts)
+                        Console.WriteLine($"  {kv.Key,-11} {kv.Value.Role,-14} " + string.Join(" ", kv.Value.Notes.Take(10).Select(n => NoteParser.MidiToName(n.midi))));
+            }
+        }
+
+        // Render + evaluate + synth timing
+        var piece = MusicLibrary.Get("twinkle");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var parts = new List<RenderedPart>();
+        var arr2 = Arranger.Arrange(piece, ArrangementMode.SeparateParts, s.roster.Select(m => m.instrument));
+        float tempo = PerformanceRenderer.EnsembleTempoScale(s.roster, arr2);
+        var mix = new float[0];
+        foreach (var m in s.roster)
+        {
+            var rp = PerformanceRenderer.Render(m, arr2.Parts[m.instrument], piece, 0f, PerformanceContext.Concert, piece.Bpm * tempo, 7);
+            parts.Add(rp);
+            var buf = Voice(rp);
+            if (mix.Length < buf.Length) Array.Resize(ref mix, buf.Length);
+            for (int i = 0; i < buf.Length; i++) mix[i] += buf[i] * 0.6f;
+            Check(buf.All(v => !float.IsNaN(v) && Math.Abs(v) <= 1f), $"synth {m.instrument}: no NaN, within ±1, peak {buf.Max(Math.Abs):0.00}");
+        }
+        Console.WriteLine($"  synth 4 parts: {sw.ElapsedMilliseconds} ms, tempo scale {tempo:0.00}");
+        var res = PerformanceEvaluator.Evaluate(parts, piece, ArrangementMode.SeparateParts, PerformanceContext.Concert, tempo);
+        Console.WriteLine($"  beginners concert: overall {res.Overall:0} ({res.Stars}*) R{res.Rhythm:0} I{res.Intonation:0} A{res.Accuracy:0} E{res.Ensemble:0} Art{res.Artistry:0}\n  {res.Review}");
+        WriteWav("twinkle_beginners_separate_parts.wav", mix, 48000);
+        WriteWav("cello_part_beginner.wav", Voice(parts.First(p => p.Instrument.Type == InstrumentType.Cello)), 48000);
+
+        // World-class version for comparison
+        var pros = s.roster.Select(m => { var c = MusicianFactory.Create(m.instrument, 92, new Random(5)); return c; }).ToList();
+        var parts2 = new List<RenderedPart>(); var mix2 = new float[0];
+        foreach (var m in pros)
+        {
+            var rp = PerformanceRenderer.Render(m, arr2.Parts[m.instrument], piece, 1f, PerformanceContext.Concert, piece.Bpm, 7);
+            parts2.Add(rp);
+            var buf = Voice(rp);
+            if (mix2.Length < buf.Length) Array.Resize(ref mix2, buf.Length);
+            for (int i = 0; i < buf.Length; i++) mix2[i] += buf[i] * 0.6f;
+        }
+        var res2 = PerformanceEvaluator.Evaluate(parts2, piece, ArrangementMode.SeparateParts, PerformanceContext.Concert, 1f);
+        Console.WriteLine($"  world-class concert: overall {res2.Overall:0} ({res2.Stars}*) R{res2.Rhythm:0} I{res2.Intonation:0} A{res2.Accuracy:0} E{res2.Ensemble:0}");
+        Check(res2.Overall > res.Overall + 25, "world-class scores far above beginners");
+        WriteWav("twinkle_worldclass_separate_parts.wav", mix2, 48000);
+        WriteWav("cello_part_worldclass.wav", Voice(parts2.First(p => p.Instrument.Type == InstrumentType.Cello)), 48000);
+
+        // Progression pacing (Director mode, rehearse daily, concert every 7 days)
+        var rng = new Random(9);
+        var st = OrchestraState.NewGame(77);
+        var milestones = new Dictionary<string, int>();
+        for (int d = 0; d < 400; d++)
+        {
+            foreach (var m in st.roster) TrainingSystem.Practice(m, TrainingSystem.ChooseFocus(m), 1f, rng);
+            TrainingSystem.Rehearse(st.roster, st.Progress("twinkle"), rng);
+            TrainingSystem.AdvanceDay(st, rng);
+            float avg = st.roster.Average(m => m.Overall);
+            string tier = SkillLevels.TierName(avg);
+            if (!milestones.ContainsKey(tier)) milestones[tier] = st.day;
+        }
+        Console.WriteLine("  pacing (avg roster tier first reached on day): " + string.Join(", ", milestones.Select(kv => kv.Key + "=" + kv.Value)));
+
+        // Rhythm scorer
+        var targets = new List<double> { 1.0, 1.75, 2.5, 3.25 };
+        var sc = new RhythmScorer(targets);
+        Check(sc.RegisterTap(1.01).Grade == TapGrade.Perfect, "tap +10ms = perfect");
+        Check(sc.RegisterTap(1.70).Grade == TapGrade.Good, "tap -50ms = good");
+        Check(sc.RegisterTap(2.62).Grade == TapGrade.Late, "tap +120ms = late");
+        Check(sc.RegisterTap(5.0).Grade == TapGrade.Extra, "far tap = extra");
+        Console.WriteLine($"  score {sc.Score:0.00} hits {sc.Hits} extra {sc.ExtraTaps} — {sc.Verdict}");
+        var perfect = new RhythmScorer(targets); foreach (var t in targets) perfect.RegisterTap(t);
+        Check(Math.Abs(perfect.Score - 1f) < 1e-6, "perfect taps = 1.0");
+        var none = new RhythmScorer(targets);
+        Check(none.Score == 0f, "no taps = 0 (no free points)");
+
+        // Recruitment
+        RecruitmentSystem.Refresh(st, rng);
+        Check(st.auditionPool.Count == 3 && st.invitePool.Count == 2, "pools filled");
+
+        Console.WriteLine(fails == 0 ? "\nALL PASS" : $"\n{fails} FAILED");
+        Environment.Exit(fails == 0 ? 0 : 1);
+    }
+
+    static void WriteWav(string path, float[] data, int sr)
+    {
+        float peak = data.Max(Math.Abs); float g = peak > 0.95f ? 0.95f / peak : 1f;
+        using var bw = new BinaryWriter(File.Create(path));
+        bw.Write("RIFF"u8.ToArray()); bw.Write(36 + data.Length * 2); bw.Write("WAVEfmt "u8.ToArray());
+        bw.Write(16); bw.Write((short)1); bw.Write((short)1); bw.Write(sr); bw.Write(sr * 2); bw.Write((short)2); bw.Write((short)16);
+        bw.Write("data"u8.ToArray()); bw.Write(data.Length * 2);
+        foreach (var v in data) bw.Write((short)(Math.Clamp(v * g, -1f, 1f) * 32767));
+    }
+}

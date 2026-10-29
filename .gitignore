@@ -1,0 +1,19 @@
+# Unity
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild/
+unity/[Bb]uilds/
+unity/[Ll]ogs/
+unity/[Uu]ser[Ss]ettings/
+unity/*.csproj
+unity/*.sln
+*.pidb.meta
+*.pdb.meta
+# .NET test harness
+tests/**/bin/
+tests/**/obj*/
+tests/**/bin_*/
+tests/unity-compile/pkgs/
+*.wav
+.DS_Store

@@ -1,0 +1,1031 @@
+<title>Orchestra Project</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-bleed 3D stage; UI floats on it like programme cards under stage light. Single dark look (a concert hall at curtain-up). */
+:root {
+  color-scheme: dark;
+  --ink: #0d0b10;          /* hall darkness */
+  --card: rgba(22, 18, 24, 0.90);
+  --card-solid: #19151b;
+  --line: rgba(232, 200, 140, 0.16);
+  --gold: #e2b86e;         /* brass and gilt */
+  --gold-dim: #8c6a3a;
+  --text: #f2ebe0;
+  --muted: #b3a89a;
+  --good: #8fcf9a;
+  --bad: #e88b78;
+  --display: "Cormorant Garamond", "Cormorant", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--ink); color: var(--text); font-family: var(--body); font-size: 14px; overflow: hidden; }
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.btn { background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 6px; padding: 9px 14px; min-height: 40px; transition: background .12s, border-color .12s; }
+.btn:hover { background: rgba(255,255,255,0.11); }
+.btn:disabled { opacity: .42; cursor: default; }
+.btn.on { background: rgba(226,184,110,0.18); border-color: var(--gold-dim); color: #fff; }
+.btn.primary { background: linear-gradient(#b98b47, #8f6630); border-color: #c79a55; color: #1a1206; font-weight: 600; }
+.btn.primary:hover { background: linear-gradient(#c99a55, #9c7136); }
+.ui { position: fixed; z-index: 5; }
+#topbar > * { flex-shrink: 0; }
+#topbar { top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+  padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: linear-gradient(rgba(10,8,12,.92), rgba(10,8,12,.55)); }
+#brand { font-family: var(--display); font-size: 26px; font-weight: 600; letter-spacing: .06em; color: var(--gold); margin-right: 10px; white-space: nowrap; }
+#brand small { font-family: var(--body); font-size: 11px; letter-spacing: .14em; color: var(--muted); margin-left: 8px; text-transform: uppercase; }
+.spacer { flex: 1; }
+#bottombar { bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(rgba(10,8,12,.4), rgba(10,8,12,.92)); }
+#status { flex: 1; min-width: 180px; text-align: center; color: var(--muted); font-size: 13px; }
+#status b { color: var(--gold); font-weight: 500; }
+#progress { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: transparent; }
+#progress i { display: block; height: 100%; width: 0; background: var(--gold); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto; overscroll-behavior: contain; }
+#roster { left: max(12px, env(safe-area-inset-left, 0px)); top: 76px; bottom: 76px; width: 300px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+#side { right: max(12px, env(safe-area-inset-right, 0px)); top: 76px; bottom: 76px; width: min(460px, calc(100vw - 24px)); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+h2 { font-family: var(--display); font-size: 30px; font-weight: 600; margin: 0; line-height: 1.05; text-wrap: balance; }
+h3 { font-family: var(--display); font-size: 21px; font-weight: 600; margin: 6px 0 0; }
+p { margin: 0; line-height: 1.5; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.card { text-align: left; width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 3px; }
+.card:hover { background: rgba(255,255,255,0.08); }
+.card.on { border-color: var(--gold-dim); background: rgba(226,184,110,0.12); }
+.card .t { font-weight: 600; }
+.card .s { font-size: 12px; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > .btn { flex: 1 1 auto; }
+.skill { display: grid; grid-template-columns: 150px 1fr 46px; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
+.skill:hover { background: rgba(255,255,255,0.05); }
+.skill.on { border-color: var(--gold-dim); background: rgba(226,184,110,0.10); }
+.skill .v { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.kv span:last-child { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.tier { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; letter-spacing: .06em; border: 1px solid var(--gold-dim); color: var(--gold); }
+#toast { left: 50%; top: 84px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 12px 16px; white-space: pre-line; font-size: 13px;
+  background: var(--card-solid); border: 1px solid var(--line); border-radius: 8px; transition: opacity .3s; pointer-events: none; z-index: 30; }
+.modal-bg { position: fixed; inset: 0; z-index: 20; background: rgba(5,4,6,.62); display: grid; place-items: center;
+  padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.modal { width: min(640px, 100%); max-height: calc(100% - 8px); overflow-y: auto; padding: 24px; display: grid; gap: 14px; background: var(--card-solid); border: 1px solid var(--line); border-radius: 12px; }
+#menu { position: fixed; inset: 0; z-index: 15; display: flex; align-items: stretch; pointer-events: none; }
+#menu .col { pointer-events: auto; width: min(440px, 100%); background: linear-gradient(90deg, rgba(8,6,10,.94), rgba(8,6,10,.72) 75%, rgba(8,6,10,0));
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  padding-block: 32px; padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: 48px; }
+#menu h1 { font-family: var(--display); font-weight: 700; font-size: clamp(46px, 7vw, 72px); line-height: .92; letter-spacing: .04em; margin: 0 0 6px; color: var(--gold); }
+#menu .tag { color: var(--muted); margin-bottom: 14px; max-width: 30ch; }
+#menu .btn { text-align: left; font-size: 15px; }
+#menu .note { font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.5; max-width: 34ch; }
+.beats { display: flex; justify-content: center; gap: 18px; padding: 6px 0; }
+.beat { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 30px; font-weight: 700;
+  background: #2a2430; border: 2px solid transparent; transition: transform .05s; }
+.beat.tap { border-color: var(--gold-dim); }
+.pad { height: 150px; border-radius: 12px; border: 1px solid var(--gold-dim); background: rgba(226,184,110,0.10); font-family: var(--display); font-size: 40px; font-weight: 700; letter-spacing: .1em; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.pad small { display: block; font-family: var(--body); font-size: 12px; letter-spacing: 0; color: var(--muted); font-weight: 400; }
+#fb { text-align: center; font-family: var(--mono); font-size: 22px; min-height: 30px; }
+.stars { display: flex; gap: 8px; align-items: center; }
+.star { width: 22px; height: 22px; transform: rotate(45deg); border-radius: 4px; background: #3a3238; }
+.star.on { background: var(--gold); }
+.score { font-family: var(--display); font-size: 44px; font-weight: 700; line-height: 1; }
+#loading { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: var(--ink); color: var(--muted); font-family: var(--display); font-size: 22px; letter-spacing: .08em; }
+@media (max-width: 1180px) { #brand { display: none; } }
+@media (max-width: 760px) {
+  #roster { width: auto; right: max(12px, env(safe-area-inset-right, 0px)); }
+  #side { width: auto; left: max(12px, env(safe-area-inset-left, 0px)); }
+  #brand small { display: none; }
+  .skill { grid-template-columns: 112px 1fr 40px; }
+  .btn { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="stage"></div>
+<div id="loading">Tuning the orchestra…</div>
+
+<div id="menu">
+  <div class="col">
+    <h1>Orchestra<br>Project</h1>
+    <p class="tag">Build a world-class orchestra, one musician at a time.</p>
+    <button class="btn primary" id="m-continue">Continue</button>
+    <button class="btn" id="m-new">New Game</button>
+    <button class="btn" data-go="musician">Orchestra Management</button>
+    <button class="btn" data-go="music">Music Library</button>
+    <button class="btn" data-go="practice">Practice</button>
+    <button class="btn" data-go="auditions">Auditions</button>
+    <button class="btn" data-go="music">Concerts</button>
+    <p class="note">Browser preview of the Unity game. Real string recordings (VSCO 2 Community Edition, CC0); placeholder 3D figures. Use speakers or headphones.</p>
+  </div>
+</div>
+
+<div class="ui" id="topbar" hidden>
+  <div id="brand">ORCHESTRA <small>Project</small></div>
+  <button class="btn" data-tab="roster">Roster</button>
+  <button class="btn" data-tab="musician">Musician</button>
+  <button class="btn" data-tab="music">Music &amp; Concerts</button>
+  <button class="btn" data-tab="practice">Practice</button>
+  <button class="btn" data-tab="auditions">Auditions</button>
+  <div class="spacer"></div>
+  <button class="btn" id="b-day">Next Day</button>
+  <button class="btn" id="b-week">+7 Days</button>
+  <button class="btn" id="b-menu">Menu</button>
+</div>
+
+<aside class="ui panel" id="roster" hidden></aside>
+<aside class="ui panel" id="side" hidden></aside>
+
+<div class="ui" id="bottombar" hidden>
+  <div id="progress"><i></i></div>
+  <button class="btn" data-cam="stage">Stage</button>
+  <button class="btn" data-cam="audience">Audience</button>
+  <button class="btn" data-cam="orchestra">Orchestra</button>
+  <button class="btn" data-cam="closeup">Close-up</button>
+  <button class="btn" data-cam="free">Free</button>
+  <div id="status"></div>
+  <button class="btn" id="b-stop" hidden>Stop</button>
+  <button class="btn" id="b-hide">Hide UI</button>
+</div>
+<button class="ui btn" id="b-show" hidden style="right:max(16px, env(safe-area-inset-right, 0px)); bottom:calc(16px + env(safe-area-inset-bottom, 0px))">Show UI</button>
+
+<div class="ui" id="toast" style="opacity:0"></div>
+<div id="modal-root"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+/* =====================================================================
+   DATA — skills, tiers, instruments (same values as the Unity project)
+   ===================================================================== */
+const SKILLS = [
+  ["Technique", "Technique", "Cleaner note starts, harder pieces, steadier bowing.", 1.2, [1, 8]],
+  ["Speed", "Speed", "Maximum tempo before the musician slows the ensemble down.", 0.8, [0, 6]],
+  ["Intonation", "Intonation", "How close each note is to the correct pitch (in cents).", 1.1, [3, 8]],
+  ["Tone Quality", "Tone", "Less bow noise and scratch, warmer and brighter sound.", 1.0, [2, 5]],
+  ["Musicality", "Musicality", "Phrase shaping: notes grow and relax with the melody.", 1.1, [5, 10]],
+  ["Emotional Expression", "Expression", "Vibrato depth and emotional colour on long notes.", 0.9, [4, 3]],
+  ["Rhythm", "Rhythm", "How precisely each note lands on the beat.", 1.0, [9, 8]],
+  ["Sight-reading", "Sight-reading", "Accuracy on pieces the orchestra has not rehearsed yet.", 0.6, [8, 6]],
+  ["Accuracy", "Accuracy", "Fewer wrong notes.", 1.0, [0, 2]],
+  ["Ensemble Playing", "Ensemble", "Stays together with the others instead of drifting.", 0.9, [6, 10]],
+  ["Performance Confidence", "Confidence", "Fewer nerves (and mistakes) in auditions and concerts.", 0.6, [4, 5]],
+];
+const S = { technique: 0, speed: 1, intonation: 2, tone: 3, musicality: 4, expression: 5, rhythm: 6, sight: 7, accuracy: 8, ensemble: 9, confidence: 10 };
+const TIERS = [[0, "Novice"], [20, "Student"], [35, "Intermediate"], [50, "Advanced"], [65, "Professional"], [80, "World-Class"], [92, "Master"]];
+const tierName = v => { let n = TIERS[0][1]; for (const [t, name] of TIERS) if (v >= t) n = name; return n; };
+const nextTier = v => { for (const [t] of TIERS) if (v < t) return t; return 100; };
+
+const INST = {
+  violin: { name: "Violin", title: "Violinist", posture: "shoulder", order: 0, lo: 55, hi: 100, center: 74, oct: 0, L: .356, W: .205, D: .06, neck: .235, endpin: 0, bow: .75, bmin: .10, bmax: .62, loud: .95, set: "Violin" },
+  viola: { name: "Viola", title: "Violist", posture: "shoulder", order: 1, lo: 48, hi: 88, center: 64, oct: -1, L: .41, W: .24, D: .065, neck: .26, endpin: 0, bow: .74, bmin: .10, bmax: .60, loud: 1.0, set: "Viola" },
+  cello: { name: "Cello", title: "Cellist", posture: "knees", order: 2, lo: 36, hi: 81, center: 52, oct: -2, L: .76, W: .44, D: .22, neck: .48, endpin: .30, bow: .73, bmin: .10, bmax: .58, loud: 1.0, set: "Cello" },
+  bass: { name: "Double Bass", title: "Double Bassist", posture: "standing", order: 3, lo: 28, hi: 67, center: 40, oct: -3, L: 1.11, W: .66, D: .30, neck: .70, endpin: .25, bow: .70, bmin: .08, bmax: .45, loud: 1.15, set: "DoubleBass" },
+};
+const INST_KEYS = Object.keys(INST);
+
+/* ---------- random helpers ---------- */
+function rngFrom(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+let rnd = rngFrom(Date.now() & 0xffffffff);
+const gauss = (r = rnd) => Math.sqrt(-2 * Math.log(1 - r())) * Math.sin(2 * Math.PI * r());
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);
+const pick = a => a[Math.floor(rnd() * a.length)];
+
+/* ---------- musicians ---------- */
+const NAMES = {
+  f: ["Clara", "Sofia", "Hana", "Elena", "Amira", "Ingrid", "Lucía", "Mei", "Anya", "Chiara", "Nadia", "Yuki", "Beatriz", "Freya", "Leila", "Marta"],
+  m: ["Tomás", "Felix", "Kenji", "Mateo", "Jonas", "Arjun", "Luca", "Pavel", "Samuel", "Oskar", "Rafael", "Daniel", "Henrik", "Omar", "Viktor", "André"],
+  last: ["Moreau", "Lindqvist", "Takahashi", "Rossi", "Novak", "Fernandes", "Weber", "Kowalski", "Haddad", "Okafor", "Petrov", "Silva", "Brennan", "Castellano", "Jansen", "Mendes", "Ito", "Kaya", "Dubois", "Nieminen"],
+  country: ["France", "Sweden", "Japan", "Italy", "Czechia", "Brazil", "Germany", "Poland", "Lebanon", "Nigeria", "Bulgaria", "Portugal", "Ireland", "Spain", "Netherlands", "Finland", "Turkey", "Korea", "Austria", "Canada"],
+};
+const overall = m => { let s = 0, w = 0; SKILLS.forEach((k, i) => { s += m.skills[i] * k[3]; w += k[3]; }); return s / w; };
+function createMusician(inst, mean, strength, second) {
+  const female = rnd() < 0.5;
+  const m = { id: Math.random().toString(36).slice(2, 10), female, first: pick(female ? NAMES.f : NAMES.m), last: pick(NAMES.last), country: pick(NAMES.country),
+    inst, skills: new Array(11).fill(0), talent: 0.8 + rnd() * 0.5, energy: 100, focus: -1, sessions: 0, concerts: 0, seed: Math.floor(rnd() * 1e9) };
+  strength ??= Math.floor(rnd() * 11); second ??= Math.floor(rnd() * 11);
+  let weak = Math.floor(rnd() * 11); if (weak === strength) weak = (weak + 3) % 11;
+  for (let i = 0; i < 11; i++) { let v = mean + gauss() * 4.5; if (i === strength) v += 9; if (i === second) v += 5; if (i === weak) v -= 8; m.skills[i] = clamp(v, 0, 100); }
+  const c = mean - overall(m); for (let i = 0; i < 11; i++) m.skills[i] = clamp(m.skills[i] + c, 0, 100);
+  m.age = 19 + Math.floor(mean / 3) + Math.floor(rnd() * 12);
+  m.years = Math.max(2, Math.floor(mean / 4.5) + Math.floor(rnd() * 6) - 2);
+  return m;
+}
+const fullName = m => m.first + " " + m.last;
+
+/* ---------- training & recruitment (same formulas as Unity) ---------- */
+const T = { base: 1.4, sec: 0.35, ePractice: 20, eRehearse: 15, eConcert: 25, recover: 60, minE: 10, directorSessions: 2 };
+const headroom = v => Math.max(0.01, Math.pow(Math.max(0, 1 - v / 100), 1.1));
+const energyFactor = e => e < 25 ? 0.45 : 0.65 + 0.35 * e / 100;
+function gain(m, i, f, log) { const b = m.skills[i]; m.skills[i] = clamp(b + f * headroom(b), 0, 100); log.push([m.id, i, b, m.skills[i]]); }
+function practice(m, focus, quality = 1) {
+  if (m.energy < T.minE) return { ok: false, msg: m.first + " is too tired to practise. Advance to the next day." };
+  const log = [], f = T.base * m.talent * energyFactor(m.energy) * quality * (0.85 + rnd() * 0.3);
+  gain(m, focus, f, log); for (const r of SKILLS[focus][4]) gain(m, r, f * T.sec, log);
+  m.energy = Math.max(0, m.energy - T.ePractice); m.sessions++;
+  return { ok: true, msg: m.first + " practised " + SKILLS[focus][0] + ".", log };
+}
+function rehearse(players, prog) {
+  const act = players.filter(p => p.energy >= T.minE);
+  if (!act.length) return { ok: false, msg: "Everyone is too tired to rehearse. Advance to the next day." };
+  const log = []; let tal = 0;
+  for (const m of act) { const f = T.base * m.talent * energyFactor(m.energy) * (0.85 + rnd() * 0.3);
+    gain(m, S.ensemble, f * .8, log); gain(m, S.rhythm, f * .3, log); gain(m, S.sight, f * .2, log); gain(m, S.confidence, f * .2, log);
+    m.energy = Math.max(0, m.energy - T.eRehearse); tal += m.talent; }
+  tal /= act.length; const before = prog.prep;
+  prog.prep = Math.min(1, prog.prep + (1 - prog.prep) * 0.2 * tal * act.length / players.length); prog.times++;
+  return { ok: true, msg: `Rehearsal finished. Preparation ${Math.round(before * 100)}% → ${Math.round(prog.prep * 100)}%.`, log };
+}
+function summary(r) {
+  if (!r.ok) return r.msg;
+  const ids = new Set(r.log.map(l => l[0])); const lines = [r.msg];
+  for (let i = 0; i < 11; i++) {
+    const g = r.log.filter(l => l[1] === i); if (!g.length) continue;
+    const per = {}; for (const l of g) { per[l[0]] ??= [l[2], l[3]]; per[l[0]][1] = l[3]; }
+    const ds = Object.values(per).map(([a, b]) => b - a); const avg = ds.reduce((a, b) => a + b, 0) / ds.length;
+    if (avg > 0.005) lines.push(`${SKILLS[i][1]} +${avg.toFixed(1)}${ids.size > 1 ? " avg" : ""}`);
+  }
+  return lines.join("\n");
+}
+const weakest = m => m.skills.indexOf(Math.min(...m.skills));
+function refreshPools(st) {
+  st.auditions = []; st.invites = [];
+  const base = 26 + st.rep * 0.45;
+  for (let i = 0; i < 3; i++) st.auditions.push(createMusician(pick(INST_KEYS), clamp(base + rnd() * 16 - 6, 18, 85)));
+  for (let i = 0; i < 2; i++) st.invites.push(createMusician(pick(INST_KEYS), clamp(base + 12 + rnd() * 12, 30, 95)));
+  st.poolDay = st.day;
+}
+const acceptChance = (st, c) => clamp(0.75 - (overall(c) - (30 + st.rep * 0.6)) / 40, 0.1, 0.95);
+
+/* ---------- music ---------- */
+function noteToMidi(n) { const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[n[0]]; let i = 1, pc = base; while (n[i] === "#" || n[i] === "b") { pc += n[i] === "#" ? 1 : -1; i++; } return (parseInt(n.slice(i)) + 1) * 12 + pc; }
+const parseNotes = s => s.split(/[\s|]+/).filter(Boolean).map(t => { const [p, b] = t.split(":"); return { midi: p === "R" ? -1 : noteToMidi(p), beats: parseFloat(b) }; });
+const parseChords = s => s.split(/[\s|]+/).filter(Boolean).map(t => { const [c, b] = t.split(":"); return { sym: c, beats: parseFloat(b) }; });
+const PIECES = [
+  { id: "twinkle", title: "Twinkle, Twinkle, Little Star", composer: "Traditional (French melody, 18th c.)", diff: 1, character: "Gentle and simple", bpm: 88, bpb: 4, pickup: 0, phrase: 2,
+    melody: parseNotes("C5:1 C5:1 G5:1 G5:1 | A5:1 A5:1 G5:2 | F5:1 F5:1 E5:1 E5:1 | D5:1 D5:1 C5:2 | G5:1 G5:1 F5:1 F5:1 | E5:1 E5:1 D5:2 | G5:1 G5:1 F5:1 F5:1 | E5:1 E5:1 D5:2 | C5:1 C5:1 G5:1 G5:1 | A5:1 A5:1 G5:2 | F5:1 F5:1 E5:1 E5:1 | D5:1 D5:1 C5:4"),
+    chords: parseChords("C:4 | F:2 C:2 | F:2 C:2 | G:2 C:2 | C:2 G7:2 | C:2 G:2 | C:2 G7:2 | C:2 G:2 | C:4 | F:2 C:2 | F:2 C:2 | G:2 C:4") },
+  { id: "mary", title: "Mary Had a Little Lamb", composer: "Traditional (19th c. American)", diff: 1, character: "Light and cheerful", bpm: 100, bpb: 4, pickup: 0, phrase: 4,
+    melody: parseNotes("E5:1 D5:1 C5:1 D5:1 | E5:1 E5:1 E5:2 | D5:1 D5:1 D5:2 | E5:1 G5:1 G5:2 | E5:1 D5:1 C5:1 D5:1 | E5:1 E5:1 E5:1 E5:1 | D5:1 D5:1 E5:1 D5:1 | C5:4"),
+    chords: parseChords("C:4 | C:4 | G:4 | C:4 | C:4 | C:4 | G7:4 | C:4") },
+  { id: "birthday", title: "Happy Birthday", composer: "Mildred J. Hill & Patty Hill (melody, 1893)", diff: 1, character: "Warm and celebratory, in 3/4", bpm: 96, bpb: 3, pickup: 1, phrase: 2,
+    melody: parseNotes("G4:0.75 G4:0.25 | A4:1 G4:1 C5:1 | B4:2 G4:0.75 G4:0.25 | A4:1 G4:1 D5:1 | C5:2 G4:0.75 G4:0.25 | G5:1 E5:1 C5:1 | B4:1 A4:1 F5:0.75 F5:0.25 | E5:1 C5:1 D5:1 | C5:3"),
+    chords: parseChords("C:1 | C:3 | G:3 | G7:3 | C:3 | C:3 | F:3 | C:2 G7:1 | C:3") },
+];
+const pieceById = id => PIECES.find(p => p.id === id);
+const totalBeats = p => p.melody.reduce((a, n) => a + n.beats, 0);
+function chordTones(sym) {
+  const root = sym.length > 1 && (sym[1] === "#" || sym[1] === "b") ? sym.slice(0, 2) : sym[0];
+  const q = sym.slice(root.length); const r = noteToMidi(root + "4") % 12;
+  const iv = { "": [0, 4, 7], m: [0, 3, 7], "7": [0, 4, 7, 10], maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], dim: [0, 3, 6] }[q];
+  return iv.map(i => (r + i) % 12);
+}
+function chordAt(p, beat) { let t = 0; for (const c of p.chords) { if (beat < t + c.beats - 1e-4) return c.sym; t += c.beats; } return p.chords.at(-1).sym; }
+const fit = (m, d) => { while (m < d.lo) m += 12; while (m > d.hi) m -= 12; return m; };
+const nearest = (pc, near, lo, hi) => { let b = -1; for (let m = lo; m <= hi; m++) if (m % 12 === pc && (b < 0 || Math.abs(m - near) < Math.abs(b - near))) b = m; return b < 0 ? lo : b; };
+function arrange(p, mode, inst) {
+  const d = INST[inst];
+  const doubling = role => ({ role, notes: p.melody.map(n => n.midi < 0 ? n : { midi: fit(n.midi + 12 * d.oct, d), beats: n.beats }) });
+  if (mode === "same") return doubling("Melody (octave doubling)");
+  if (inst === "violin") return doubling("Melody");
+  if (inst === "viola") {
+    let t = 0, prev = d.center; const notes = [];
+    for (const n of p.melody) {
+      if (n.midi < 0) { notes.push(n); t += n.beats; continue; }
+      const ch = chordTones(chordAt(p, t)); let best = -1, cost = 1e9;
+      for (let m = d.lo; m <= Math.min(d.hi, n.midi - 1); m++) {
+        if (!ch.includes(m % 12)) continue; const below = n.midi - m; let c = Math.abs(m - prev);
+        if (below < 3 || below > 9) c += 8 + Math.abs(below - 6); else if (below === 5 || below === 7) c += 5;
+        if (m < 55) c += (55 - m) * 0.5; if (c < cost) { cost = c; best = m; }
+      }
+      if (best < 0) best = fit(n.midi - 12, d); notes.push({ midi: best, beats: n.beats }); prev = best; t += n.beats;
+    }
+    return { role: "Harmony", notes };
+  }
+  if (inst === "cello") {
+    const notes = []; let prev = 52, idx = 0;
+    for (const c of p.chords) { let left = c.beats; while (left > 1e-3) { const b = Math.min(2, left); const tn = chordTones(c.sym);
+      const m = nearest(tn[idx % 2 === 0 ? 1 : Math.min(2, tn.length - 1)], prev, 45, 60); notes.push({ midi: m, beats: b }); prev = m; idx++; left -= b; } }
+    return { role: "Lower harmony", notes };
+  }
+  const notes = []; let prev = 36;
+  for (const c of p.chords) { const tn = chordTones(c.sym); const root = nearest(tn[0], prev, 31, 43);
+    if (c.beats >= 4) { notes.push({ midi: root, beats: c.beats / 2 }); const f5 = nearest(tn[2], root, 28, 43); notes.push({ midi: f5, beats: c.beats / 2 }); prev = f5; }
+    else { notes.push({ midi: root, beats: c.beats }); prev = root; } }
+  return { role: "Bass line", notes };
+}
+
+/* ---------- skills → played notes (PerformanceRenderer port) ---------- */
+const sk = (m, i) => m.skills[i] / 100;
+const comfortNps = m => 1.5 + 9 * (0.6 * sk(m, S.speed) + 0.4 * sk(m, S.technique));
+const fastestNps = (part, bpm) => { const mb = Math.min(...part.notes.filter(n => n.midi >= 0).map(n => n.beats)); return 1 / (mb * 60 / bpm); };
+function tempoScale(players, parts, p) { let s = 1; for (const m of players) { const need = Math.min(fastestNps(parts[m.inst], p.bpm), 1.6 * p.bpm / 60); const can = comfortNps(m); if (need > can) s = Math.min(s, can / need); } return Math.max(0.7, s); }
+function renderPart(m, part, p, prep, ctx, bpm) {
+  const r = rngFrom(m.seed + Math.floor(rnd() * 1e6));
+  const [rhythm, ens, inton, tech, tone, expr, mus, conf, acc, sight] = [S.rhythm, S.ensemble, S.intonation, S.technique, S.tone, S.expression, S.musicality, S.confidence, S.accuracy, S.sight].map(i => sk(m, i));
+  const nerves = (1 - conf) * (ctx === "concert" ? 0.6 : ctx === "audition" ? 0.45 : 0.15);
+  const ready = lerp(sight, 1, prep), nps = fastestNps(part, bpm), comfort = comfortNps(m), stress = clamp((nps - comfort) / comfort, 0, 1);
+  const diffF = 1 + 0.6 * (p.diff - 1) * (1 - tech);
+  const tSd = lerp(.035, .003, rhythm) * (1 + nerves + stress * 1.5) * lerp(1.3, .85, prep);
+  const dStep = lerp(.022, .002, ens) * (1 + nerves), dPull = lerp(.15, .65, ens);
+  const cSd = lerp(22, 2, inton) * (1 + nerves * .7 + stress * .5);
+  const pWrong = Math.min(.4, lerp(.05, .001, .55 * acc + .25 * tech + .2 * ready) * (1 + stress * 3) * (1 + nerves) * diffF);
+  const spb = 60 / bpm, phraseB = p.phrase * p.bpb, notes = [];
+  let beat = 0, drift = 0, down = p.pickup <= 0, sumT = 0, sumC = 0, wrong = 0;
+  part.notes.forEach((n, i) => {
+    if (n.midi < 0) { beat += n.beats; return; }
+    drift = drift * (1 - dPull) + gauss(r) * dStep; const te = drift + gauss(r) * tSd;
+    const dur = Math.max(.06, n.beats * spb * lerp(.88, .97, tech) + gauss(r) * tSd * .5);
+    const isWrong = r() < pWrong; let midi = n.midi; if (isWrong) midi += (r() < .5 ? -1 : 1) * (r() < .7 ? 1 : 2);
+    const cents = gauss(r) * cSd;
+    const pp = (((beat - p.pickup) % phraseB) + phraseB) % phraseB / phraseB;
+    let vel = .68 + mus * .22 * Math.sin(Math.PI * pp) + (n.beats >= 2 ? .05 * mus : 0) + gauss(r) * .08 * (1 - tone);
+    if (i === part.notes.length - 1) vel *= lerp(1, .85, mus); vel = clamp(vel, .25, 1);
+    notes.push({ start: beat * spb + te, dur, midi: midi + cents / 100, vel, vib: dur > .3 ? lerp(2, 18, expr) : lerp(0, 6, expr), vibRate: 4.6 + 1.6 * expr + r() * .4,
+      vibDelay: lerp(.35, .12, tech), attack: lerp(.11, .035, tech), noise: lerp(.10, .012, tone) * (1 + nerves * .5), bright: .3 + .6 * tone, te, wrong: isWrong, down });
+    down = !down; sumT += Math.abs(te); sumC += Math.abs(cents); if (isWrong) wrong++; beat += n.beats;
+  });
+  return { m, notes, length: beat * spb, timingMs: sumT / notes.length * 1000, cents: sumC / notes.length, wrong, count: notes.length };
+}
+function evaluate(parts, p, mode, ctx, ts) {
+  let R = 0, I = 0, A = 0, Art = 0; const lines = [];
+  for (const pr of parts) { R += 100 * Math.exp(-pr.timingMs / 45); I += 100 * Math.exp(-pr.cents / 18); A += Math.max(0, 100 * (1 - pr.wrong / pr.count * 4));
+    Art += (pr.m.skills[S.musicality] + pr.m.skills[S.expression] + pr.m.skills[S.tone]) / 3;
+    lines.push(`${fullName(pr.m)} (${INST[pr.m.inst].name}): timing ±${pr.timingMs.toFixed(0)} ms, pitch ±${pr.cents.toFixed(0)} cents, ${pr.wrong} wrong note${pr.wrong === 1 ? "" : "s"}`); }
+  const n = parts.length; R /= n; I /= n; A /= n; Art /= n;
+  let E = R;
+  if (n > 1) { const b = {}; for (const pr of parts) for (const nt of pr.notes) { const k = Math.round((nt.start - nt.te) * 1000); (b[k] ??= []).push(nt.te); }
+    let sum = 0, c = 0; for (const l of Object.values(b)) { if (l.length < 2) continue; const mean = l.reduce((a, v) => a + v, 0) / l.length; sum += Math.sqrt(l.reduce((a, v) => a + (v - mean) ** 2, 0) / l.length) * 1000; c++; }
+    E = c ? 100 * Math.exp(-(sum / c) / 30) : 70; }
+  let o = .22 * R + .2 * I + .2 * A + .2 * E + .18 * Art + (mode === "parts" ? 2 : 0);
+  o *= .8 + .2 * clamp((ts - .7) / .3, 0, 1); o = clamp(o, 0, 100);
+  const stars = o >= 88 ? 5 : o >= 75 ? 4 : o >= 60 ? 3 : o >= 45 ? 2 : 1;
+  const cats = { rhythm: R, intonation: I, "note accuracy": A, "ensemble coordination": E, "musical expression": Art };
+  const weakestCat = Object.entries(cats).sort((a, b) => a[1] - b[1])[0][0];
+  const head = ["A difficult evening. The orchestra needs much more preparation.", "An earnest effort, but the seams were audible.", "A solid performance with moments of genuine music-making.", "A polished and moving performance with real character.", "A radiant, world-class performance. The hall rose to its feet."][stars - 1];
+  return { R, I, A, E, Art, overall: o, stars, lines, review: `${head} Weakest area: ${weakestCat}.${ts < .98 ? ` The tempo was held back to ${Math.round(ts * 100)}% of the marking.` : ""}` };
+}
+
+/* ---------- rhythm exercises ---------- */
+const EXERCISES = [
+  { name: "Four Steady Beats", bpm: 80, taps: [0, 1, 2, 3, 4, 5, 6, 7], min: 0, text: "You will hear 4 count-in clicks. Then tap exactly with each of the next 8 clicks (two bars of four beats)." },
+  { name: "Half Notes and Quarters", bpm: 88, taps: [0, 2, 3, 4, 6, 7], min: 35, text: "After the count-in, tap on beats 1, 3 and 4 of each bar (long, short, short). Skip beat 2." },
+  { name: "Off-beat Eighths", bpm: 76, taps: [.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5], min: 50, text: "After the count-in, tap exactly between the clicks, on every 'and'. The hardest of the three." },
+];
+
+/* =====================================================================
+   STATE & SAVE (browser storage; the Unity game saves to a JSON file)
+   ===================================================================== */
+const SAVE_KEY = "orchestra-project-save-v1";
+let state = null, selectedId = null;
+function newGame() {
+  state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
+    roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
+    auditions: [], invites: [] };
+  refreshPools(state); save();
+}
+const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
+function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { state = s; return true; } } catch (e) { } return false; }
+const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
+const selected = () => state?.roster.find(m => m.id === selectedId) || null;
+
+/* =====================================================================
+   AUDIO — real recordings (VSCO 2 CE, CC0) through Web Audio
+   ===================================================================== */
+let actx = null, master = null, reverbIn = null, samples = {}, noiseBuf = null, audioReady = null;
+async function initAudio() {
+  if (audioReady) return audioReady;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  master = actx.createGain(); master.gain.value = 0.9; master.connect(actx.destination);
+  // Concert-hall reverb: generated stereo impulse response (2.4 s)
+  const len = Math.floor(actx.sampleRate * 2.4), ir = actx.createBuffer(2, len, actx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < len; i++) { const t = i / actx.sampleRate; lp += ((Math.random() * 2 - 1) - lp) * (0.55 - 0.4 * Math.min(1, t / 2.4)); d[i] = lp * Math.exp(-t / 0.62) * (t < 0.012 ? 0 : 1); } }
+  const conv = actx.createConvolver(); conv.buffer = ir; const wet = actx.createGain(); wet.gain.value = 0.55; conv.connect(wet); wet.connect(master);
+  reverbIn = conv;
+  noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  audioReady = (async () => {
+    const manifest = await (await fetch("samples.json")).json();
+    const jobs = [];
+    for (const [set, list] of Object.entries(manifest)) {
+      samples[set] = [];
+      for (const s of list) jobs.push(fetch("audio/" + encodeURIComponent(s.f) + ".mp3").then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => actx.decodeAudioData(b, ok, no))).then(buf => samples[set].push({ ...s, buf })));
+    }
+    await Promise.all(jobs);
+  })();
+  return audioReady;
+}
+function nearestSample(set, midi) { let best = null, cost = 1e9; for (const s of samples[set]) { const d = midi - s.m; const c = d >= 0 ? d : -d * 1.6; if (c < cost) { cost = c; best = s; } } return best; }
+function musicianChain(m, rp, pan) {
+  const d = INST[m.inst]; const b = rp.notes.reduce((a, n) => a + n.bright, 0) / rp.notes.length;
+  const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(18000, 2200 + 9000 * Math.pow(b, 1.5)); lp.Q.value = 0.7;
+  const p = actx.createStereoPanner ? actx.createStereoPanner() : null; const out = actx.createGain(); out.gain.value = 0.55 * d.loud * rp.sectionGain;
+  lp.connect(out); if (p) { p.pan.value = pan; out.connect(p); p.connect(master); p.connect(reverbIn); } else { out.connect(master); out.connect(reverbIn); }
+  return { input: lp, nodes: [lp, out, p].filter(Boolean) };
+}
+const scheduled = [];
+function scheduleNote(chain, set, n, t0) {
+  if (t0 + n.dur < actx.currentTime) return;
+  const s = nearestSample(set, n.midi); const targetHz = 440 * Math.pow(2, (n.midi - 69) / 12);
+  const src = actx.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = targetHz / s.hz;
+  const env = actx.createGain(); env.gain.value = 0; const t1 = t0 + n.dur, rel = 0.16;
+  const atk = Math.max(0.006, n.attack * 0.25);
+  env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(n.vel, t0 + atk); env.gain.setTargetAtTime(0, t1, rel / 4);
+  // Pitch: slide-in for weaker players, plus skill vibrato on top of the recorded vibrato
+  const scoop = n.noise * 120; src.detune.setValueAtTime(-scoop, t0); src.detune.setTargetAtTime(0, t0, 0.03);
+  const depth = n.vib * 0.25;
+  if (depth > 0.5) { const lfo = actx.createOscillator(); lfo.frequency.value = n.vibRate; const lg = actx.createGain(); lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(0, t0 + n.vibDelay); lg.gain.linearRampToValueAtTime(depth, t0 + n.vibDelay + .25);
+    lfo.connect(lg); lg.connect(src.detune); lfo.start(t0); lfo.stop(t1 + rel + .1); scheduled.push(lfo); }
+  src.connect(env); env.connect(chain.input); src.start(t0); src.stop(t1 + rel + 0.05); scheduled.push(src);
+  if (n.noise > 0.02) { // bow scratch for weaker tone
+    const ns = actx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
+    const ng = actx.createGain(); const lvl = n.noise * n.vel * 0.6; ng.gain.setValueAtTime(lvl * 1.6, t0); ng.gain.setTargetAtTime(lvl * 0.5, t0 + 0.12, 0.05); ng.gain.setTargetAtTime(0, t1, 0.03);
+    ns.connect(hp); hp.connect(ng); ng.connect(chain.input); ns.start(t0, Math.random() * 0.5); ns.stop(t1 + 0.2); scheduled.push(ns); }
+}
+function stopAllAudio() { for (const s of scheduled) { try { s.stop(); } catch (e) { } } scheduled.length = 0; }
+
+/* =====================================================================
+   3D — concert hall and musicians (PLACEHOLDER shapes, real proportions)
+   The world root is mirrored on X so the same coordinates as the
+   Unity project produce the same picture (Unity is left-handed).
+   ===================================================================== */
+const stageEl = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stageEl.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x060506); scene.fog = new THREE.FogExp2(0x17120d, 0.012);
+const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 140);
+const world = new THREE.Group(); world.scale.x = -1; scene.add(world);
+const U = (x, y, z) => new THREE.Vector3(-x, y, z);            // Unity-space → three world
+
+function canvasTex(w, h, draw, rep = [1, 1]) { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
+function noiseFill(g, w, h, base, vary, streak) { const img = g.createImageData(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const n = Math.sin(y * streak + Math.sin(x * 0.05 + y * 0.002) * 3) * 0.5 + 0.5; const v = base + vary * n + (Math.random() - .5) * vary * .4; const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = clamp(v, 0, 255); img.data[i + 3] = 255; } g.putImageData(img, 0, 0); }
+const TEX = {
+  planks: canvasTex(512, 512, (g, w, h) => { noiseFill(g, w, h, 205, 20, 0.9); g.fillStyle = "rgba(0,0,0,.35)"; for (let i = 0; i < 8; i++) { g.fillRect(0, i * 64, w, 2); g.fillRect((i * 131) % w, i * 64, 2, 64); } }, [8, 5]),
+  grain: canvasTex(256, 256, (g, w, h) => noiseFill(g, w, h, 205, 45, 0.15)),
+  fabric: canvasTex(128, 128, (g, w, h) => noiseFill(g, w, h, 215, 30, 1.7), [2, 2]),
+  sheet: canvasTex(256, 320, (g, w, h) => { g.fillStyle = "#f6f2e8"; g.fillRect(0, 0, w, h); g.strokeStyle = "#555"; g.fillStyle = "#222"; for (let s = 0; s < 8; s++) { const top = 26 + s * 36; for (let l = 0; l < 5; l++) { g.beginPath(); g.moveTo(14, top + l * 4); g.lineTo(w - 14, top + l * 4); g.stroke(); } for (let x = 30; x < w - 20; x += 14 + (x * 7 % 9)) { const y = top + ((x * 13) % 17); g.beginPath(); g.ellipse(x, y, 3.4, 2.4, -0.4, 0, Math.PI * 2); g.fill(); g.fillRect(x + 2.6, y - 12, 1, 12); } } }),
+};
+const mats = {};
+function mat(key, color, rough = 0.6, metal = 0, map = null) { return mats[key] ??= new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, map }); }
+const M = {
+  floor: () => mat("floor", 0xc79262, .45, 0, TEX.planks), warm: () => mat("warm", 0x9e6639, .5, 0, TEX.grain), dark: () => mat("dark", 0x4b2c1a, .5, 0, TEX.grain),
+  velvet: () => mat("velvet", 0x7a1016, .85, 0, TEX.fabric), carpet: () => mat("carpet", 0x4a0b10, .95, 0, TEX.fabric), plaster: () => mat("plaster", 0xd6c8b0, .85), plaster2: () => mat("plaster2", 0xb1a18a, .85),
+  gold: () => mat("gold", 0xd9a95a, .3, .9), pipe: () => mat("pipe", 0xd0ccc4, .25, 1), ceil: () => mat("ceil", 0x5a3b26, .7, 0, TEX.grain), lamp: () => mat("lamp", 0xffe2a8, .4, 0),
+  black: () => mat("black", 0x0c0c0e, .78, 0, TEX.fabric), shirt: () => mat("shirt", 0xe2ded6, .7), leather: () => mat("leather", 0x151313, .55), steel: () => mat("steel", 0x121214, .4, .8),
+  varnish: () => mat("varnish", 0xa4481a, .18, 0, TEX.grain), varnish2: () => mat("varnish2", 0x6e2e12, .18, 0, TEX.grain), ebony: () => mat("ebony", 0x080605, .3), maple: () => mat("maple", 0xdcbb8c, .55),
+  string: () => mat("string", 0xcfcac2, .2, 1), hair: () => mat("bowhair", 0xeee8d8, .6), stick: () => mat("stick", 0x4a200e, .3), sheet: () => mat("sheet", 0xffffff, .9, 0, TEX.sheet), ring: () => mat("ring", 0xffcf6a, .25, .6),
+};
+M.lamp().emissive = new THREE.Color(0xffc979); M.lamp().emissiveIntensity = 1.6;
+M.ring().emissive = new THREE.Color(0xb07d2a); M.ring().emissiveIntensity = 0.8;
+const GEO = { box: new THREE.BoxGeometry(1, 1, 1), sph: new THREE.SphereGeometry(0.5, 24, 16), cyl: new THREE.CylinderGeometry(0.5, 0.5, 2, 20), cap: new THREE.CapsuleGeometry(0.5, 1, 6, 14) };
+const deg = Math.PI / 180;
+const euler = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x * deg, y * deg, z * deg, "YXZ"));
+function lookRot(f, u) { const z = f.clone().normalize(); const x = new THREE.Vector3().crossVectors(u, z).normalize(); const y = new THREE.Vector3().crossVectors(z, x); return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); }
+function part(parent, geo, material, pos, scale, quat, shadow = true) {
+  const m = new THREE.Mesh(GEO[geo], material); m.position.set(...pos); m.scale.set(...scale); if (quat) m.quaternion.copy(quat);
+  m.castShadow = shadow; m.receiveShadow = true; parent.add(m); return m;
+}
+const STAGE_H = 1.0, CONDUCTOR = [0, STAGE_H, 0.9];
+
+function buildHall() {
+  const g = new THREE.Group(); world.add(g);
+  part(g, "box", M.dark(), [0, STAGE_H / 2 - .02, 5.5], [22, STAGE_H - .04, 14]);
+  part(g, "box", M.floor(), [0, STAGE_H - .01, 5.5], [22, .02, 14]);
+  for (let i = 0; i < 6; i++) { const w = 18 - i * 2.4; part(g, "box", M.dark(), [0, STAGE_H / 2 - .02, -1.6 - i * .25], [w, STAGE_H - .04, .3]); part(g, "box", M.floor(), [0, STAGE_H - .01, -1.6 - i * .25], [w, .02, .3]); }
+  part(g, "box", M.gold(), [0, STAGE_H - .05, -1.48], [19, .04, .03]);
+  part(g, "box", M.dark(), [0, STAGE_H + .1, CONDUCTOR[2]], [.9, .2, .9]); part(g, "box", M.velvet(), [0, STAGE_H + .205, CONDUCTOR[2]], [.84, .01, .84]);
+  part(g, "cyl", M.gold(), [0, STAGE_H + .65, CONDUCTOR[2] - .42], [.03, .45, .03]); part(g, "box", M.gold(), [0, STAGE_H + 1.1, CONDUCTOR[2] - .42], [.8, .03, .03]);
+  // Acoustic shell
+  for (let i = 0; i < 13; i++) { const a = lerp(-72, 72, i / 12) * deg; const p = [Math.sin(a) * 9.5, STAGE_H + 3.6, 3.5 + Math.cos(a) * 9.5];
+    const rot = lookRot(new THREE.Vector3(-p[0], 0, 3.5 - p[2]), new THREE.Vector3(0, 1, 0)); part(g, "box", i % 2 ? M.dark() : M.warm(), p, [2.35, 7.2, .18], rot);
+    for (let s = 0; s < 4; s++) { const off = new THREE.Vector3(0, -2.6 + s * 1.7, -.12).applyQuaternion(rot); part(g, "box", M.dark(), [p[0] + off.x, p[1] + off.y, p[2] + off.z], [2.2, .12, .08], rot); } }
+  // Organ
+  part(g, "box", M.dark(), [0, 10.5, 12.7], [12, 7, .6]); part(g, "box", M.gold(), [0, 7.1, 12.35], [12.2, .15, .3]);
+  for (let i = 0; i < 31; i++) { const x = -5.6 + i * 11.2 / 30, t = Math.abs(x) / 5.6, h = lerp(6.2, 2.8, t) + (i % 2) * .4, d = lerp(.3, .16, t); part(g, "cyl", M.pipe(), [x, 7.3 + h / 2, 12.25], [d, h / 2, d]); }
+  // Room
+  const HW = 14, FZ = -32, BZ = 13, HH = 16, len = BZ - FZ, mid = (BZ + FZ) / 2;
+  for (const side of [-1, 1]) { const x = side * HW;
+    part(g, "box", M.plaster(), [x + side * .2, HH / 2, mid], [.4, HH, len], null, false); part(g, "box", M.dark(), [x - side * .05, 1.2, mid], [.12, 2.4, len], null, false);
+    for (let z = FZ + 3; z < BZ - 1; z += 4.5) { part(g, "box", M.plaster2(), [x - side * .25, HH / 2, z], [.5, HH, .8], null, false); part(g, "box", M.gold(), [x - side * .52, 4.6, z], [.08, .5, .25], null, false); part(g, "sph", M.lamp(), [x - side * .6, 5, z], [.28, .36, .28], null, false); } }
+  part(g, "box", M.plaster(), [0, HH / 2, FZ - .2], [HW * 2, HH, .4], null, false); part(g, "box", M.plaster(), [0, HH / 2, BZ + .2], [HW * 2, HH, .4], null, false);
+  part(g, "box", M.ceil(), [0, HH + .2, mid], [HW * 2, .4, len], null, false);
+  for (let z = FZ + 2.5; z < BZ; z += 3.5) part(g, "box", M.dark(), [0, HH - .25, z], [HW * 2, .5, .35], null, false);
+  for (let x = -HW + 3.5; x < HW; x += 3.5) part(g, "box", M.dark(), [x, HH - .25, mid], [.35, .5, len], null, false);
+  for (let i = 0; i < 3; i++) part(g, "box", M.warm(), [0, 10.5 + i * .4, 1.5 + i * 3.2], [12 - i * 1.5, .15, 2.6], euler(-12 + i * 4, 0, 0));
+  part(g, "box", M.carpet(), [0, -.05, FZ / 2], [HW * 2, .1, -FZ], null, false);
+  // Audience: instanced seats (stalls + balcony)
+  const seats = [];
+  const rows = matchMedia("(max-width: 760px)").matches ? 16 : 22;
+  for (let r = 0; r < rows; r++) { const z = -4.2 - r * .95, y = r * .14; part(g, "box", M.carpet(), [0, y / 2, z - .475 + .475], [HW * 2, y + .01, .95], null, false);
+    [[-12.6, 14], [-4.2, 15], [4.6, 14]].forEach(([x0, n]) => { for (let s = 0; s < n; s++) seats.push([x0 + s * .56, y, z]); }); }
+  const bz = FZ + 8, by = 6.2;
+  part(g, "box", M.dark(), [0, by - .25, (bz + FZ) / 2], [HW * 2, .5, bz - FZ], null, false); part(g, "box", M.plaster(), [0, by + .5, bz], [HW * 2, 1.1, .25], null, false);
+  part(g, "box", M.gold(), [0, by + 1.07, bz - .02], [HW * 2, .06, .3], null, false); part(g, "box", M.gold(), [0, by - .05, bz - .02], [HW * 2, .08, .3], null, false);
+  for (let x = -10.5; x <= 10.5; x += 7) part(g, "cyl", M.plaster(), [x, by / 2, bz + .6], [.5, by / 2, .5], null, false);
+  for (let r = 0; r < 5; r++) for (let s = 0; s < 44; s++) seats.push([-12.2 + s * .56, by + r * .35, bz - 1 - r]);
+  const seatParts = [[M.velvet(), [0, .44, .02], [.5, .1, .46], null], [M.velvet(), [0, .78, -.24], [.5, .62, .09], euler(-8, 0, 0)], [M.dark(), [.27, .6, -.02], [.05, .05, .42], null], [M.steel(), [0, .2, -.05], [.42, .4, .06], null]];
+  const tmp = new THREE.Object3D();
+  for (const [material, off, sc, q] of seatParts) { const im = new THREE.InstancedMesh(GEO.box, material, seats.length); im.receiveShadow = true;
+    seats.forEach((p, i) => { tmp.position.set(p[0] + off[0], p[1] + off[1], p[2] + off[2]); tmp.scale.set(...sc); tmp.quaternion.copy(q || new THREE.Quaternion()); tmp.updateMatrix(); im.setMatrixAt(i, tmp.matrix); });
+    g.add(im); }
+}
+function buildLights() {
+  scene.add(new THREE.HemisphereLight(0xffe7c4, 0x1a1410, 0.55));
+  const key = new THREE.DirectionalLight(0xffeed8, 1.2); const dir = new THREE.Vector3(0, -Math.sin(52 * deg), Math.cos(52 * deg));
+  key.position.copy(U(0, 1, 3.5)).addScaledVector(dir, -20); key.target.position.copy(U(0, 1, 3.5)); scene.add(key, key.target);
+  key.castShadow = true; key.shadow.mapSize.set(2048, 2048); const sc = key.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 9; sc.bottom = -9; sc.near = 1; sc.far = 50; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+  for (const x of [-6, -3, 0, 3, 6]) { const s = new THREE.SpotLight(0xffe2b8, 230, 0, 0.45, 0.55, 2); s.position.copy(U(x, 11.5, -5)); s.target.position.copy(U(x * .55, STAGE_H, 3.2)); scene.add(s, s.target);
+    if (x === 0) { s.castShadow = true; s.shadow.mapSize.set(1024, 1024); s.shadow.bias = -0.0005; } }
+  for (let i = 0; i < 2; i++) { const p = new THREE.PointLight(0xffcf99, 26, 26, 2); p.position.copy(U(0, 12, -10 - i * 12)); scene.add(p); }
+}
+
+/* ---------- musician figure (port of MusicianView) ---------- */
+const views = new Map(); let auditionView = null;
+function limb(parent, material, r) { const m = new THREE.Mesh(GEO.cap, material); m.castShadow = true; m.userData.r = r; m.scale.set(r * 2, 1, r * 2); parent.add(m); return m; }
+function placeLimb(m, a, b) { m.position.addVectors(a, b).multiplyScalar(.5); const d = new THREE.Vector3().subVectors(b, a); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize()); m.scale.y = Math.max(.01, d.length() / 2 + m.userData.r * .5); }
+function buildInstrument(d, parent) {
+  const g = new THREE.Group(); parent.add(g); const { endpin: e, L, W, D } = d; const v = d.posture === "shoulder" && d === INST.violin ? M.varnish() : M.varnish2();
+  if (e > 0) part(g, "cyl", M.string(), [0, -D * .1, e / 2], [.012, e / 2, .012], euler(90, 0, 0));
+  part(g, "sph", v, [0, 0, e + L * .28], [W, D, L * .58]); part(g, "sph", v, [0, 0, e + L * .74], [W * .82, D, L * .5]); part(g, "box", v, [0, 0, e + L * .5], [W * .62, D * .9, L * .3]);
+  const top = D / 2, bridgeZ = e + L * .55, bh = L * (d.posture === "shoulder" ? .09 : .12), fb = e + L * .66, nb = e + L, nut = e + L + d.neck * .58, scroll = e + L + d.neck * .85;
+  for (const s of [-1, 1]) part(g, "box", M.ebony(), [s * W * .2, top * .97, bridgeZ], [W * .025, .002, L * .2], euler(0, s * 8, 0), false);
+  part(g, "box", M.ebony(), [0, top + bh * .45, (fb + nut) / 2], [W * .2, L * .02, nut - fb], euler(-4, 0, 0));
+  part(g, "box", M.maple(), [0, top * .5, (nb + nut) / 2], [W * .14, D * .45, nut - nb]);
+  part(g, "box", v, [0, top * .4, (nut + scroll) / 2], [W * .13, D * .5, scroll - nut]); part(g, "sph", v, [0, top * .5, scroll + L * .03], [W * .16, D * .75, L * .1]);
+  part(g, "box", M.maple(), [0, top + bh / 2, bridgeZ], [W * .32, bh, .006]);
+  const t0 = e + L * .08, t1 = e + L * .38; part(g, "box", M.ebony(), [0, top + bh * .2, (t0 + t1) / 2], [W * .22, .012, t1 - t0]);
+  for (let s = 0; s < 4; s++) { const x = (s - 1.5) * W * .045; const a = new THREE.Vector3(x, top + bh * .3, t1), b = new THREE.Vector3(x * .7, top + bh * .62, nut);
+    const st = part(g, "cyl", M.string(), [0, 0, 0], [.0018 + s * .0006, b.distanceTo(a) / 2, .0018 + s * .0006], null, false); st.position.addVectors(a, b).multiplyScalar(.5); st.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); }
+  return { g, contact: new THREE.Vector3(0, top + bh * .93, e + L * .6), nut, neckBody: nb };
+}
+function buildBow(d, parent) { const g = new THREE.Group(); parent.add(g); const l = d.bow;
+  part(g, "cyl", M.stick(), [0, .014, l / 2], [.008, l / 2, .008], euler(90, 0, 0)); part(g, "box", M.hair(), [0, 0, l / 2], [.009, .002, l * .96]);
+  part(g, "box", M.ebony(), [0, .008, .02], [.014, .022, .045]); part(g, "box", M.hair(), [0, .01, l], [.009, .02, .012]); return g; }
+function buildFurniture(root, d) {
+  if (d.posture === "standing") { const s = new THREE.Group(); s.position.set(.05, 0, -.35); root.add(s); part(s, "cyl", M.leather(), [0, .74, 0], [.36, .03, .36]);
+    for (let i = 0; i < 3; i++) { const a = i * 120 * deg, f = new THREE.Vector3(Math.sin(a) * .22, 0, Math.cos(a) * .22), t = new THREE.Vector3(Math.sin(a) * .1, .73, Math.cos(a) * .1); const l = part(s, "cyl", M.steel(), [0, 0, 0], [.022, f.distanceTo(t) / 2, .022]); l.position.addVectors(f, t).multiplyScalar(.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), t.clone().sub(f).normalize()); } }
+  else { const c = new THREE.Group(); c.position.set(0, 0, -.02); root.add(c); part(c, "box", M.leather(), [0, .45, 0], [.46, .06, .44]); part(c, "box", M.leather(), [0, .78, -.21], [.44, .4, .04], euler(-8, 0, 0)); for (let i = 0; i < 4; i++) part(c, "cyl", M.steel(), [(i % 2 ? 1 : -1) * .2, .21, (i < 2 ? -1 : 1) * .19], [.025, .21, .025]); }
+  const st = new THREE.Group(); st.position.set(d.posture === "knees" ? .45 : d.posture === "standing" ? .55 : .35, 0, .95); root.add(st); const h = d.posture === "standing" ? 1.15 : .85;
+  part(st, "cyl", M.steel(), [0, .01, 0], [.4, .01, .4]); part(st, "cyl", M.steel(), [0, h / 2, 0], [.025, h / 2, .025]);
+  const desk = new THREE.Group(); desk.position.set(0, h + .12, 0); desk.quaternion.copy(euler(-28, 180, 0)); st.add(desk);
+  part(desk, "box", M.steel(), [0, 0, 0], [.52, .36, .012]); part(desk, "box", M.steel(), [0, -.18, .03], [.52, .015, .06]);
+  part(desk, "box", M.sheet(), [-.12, .01, .008], [.23, .31, .002], null, false); part(desk, "box", M.sheet(), [.12, .01, .008], [.23, .31, .002], null, false);
+}
+function buildMusician(m) {
+  const d = INST[m.inst]; const r = rngFrom(m.seed); const root = new THREE.Group(); world.add(root);
+  const tone = r(); const skin = mat("skin" + Math.round(tone * 10), new THREE.Color(0xedc2a3).lerp(new THREE.Color(0x5c3824), Math.round(tone * 10) / 10), .55);
+  const hairCol = [0x0d0a09, 0x3a2213, 0x7b5530, 0xa68c66, 0x8c8c8c][Math.floor(r() * 5)]; const hair = mat("hair" + hairCol, hairCol, .6);
+  const standing = d.posture === "standing", knees = d.posture === "knees", hipY = standing ? .95 : .52, shY = standing ? 1.43 : 1.0;
+  buildFurniture(root, d);
+  const kx = knees ? .24 : .13;
+  for (const s of [-1, 1]) { const hip = new THREE.Vector3(s * .1, hipY, .02), k = standing ? new THREE.Vector3(s * .12, .5, .04) : new THREE.Vector3(s * kx, .52, .44), an = standing ? new THREE.Vector3(s * .14, .08, 0) : new THREE.Vector3(s * (kx - .01), .08, .5);
+    placeLimb(limb(root, M.black(), .075), hip, k); placeLimb(limb(root, M.black(), .058), k, an); part(root, "box", M.leather(), [an.x, an.y - .04, an.z + .07], [.1, .08, .26]); }
+  const spine = new THREE.Group(); spine.position.set(0, hipY, 0); root.add(spine); const th = shY - hipY;
+  part(spine, "cap", M.black(), [0, .04, .01], [.34, .12, .26]); part(spine, "cap", M.black(), [0, th * .55, 0], [.36, th * .55, .23]);
+  part(spine, "box", m.female ? M.black() : M.shirt(), [0, th * .85, .1], [.1, th * .35, .03]); part(spine, "cyl", skin, [0, th + .06, 0], [.1, .05, .1]);
+  const head = new THREE.Group(); head.position.set(0, th + .2, .02); spine.add(head);
+  part(head, "sph", skin, [0, 0, 0], [.18, .23, .21]); part(head, "sph", skin, [0, -.01, .1], [.035, .05, .04]); part(head, "sph", hair, [0, .035, -.015], [.195, .2, .22]);
+  if (m.female) part(head, "cap", hair, [0, -.07, -.07], [.19, .13, .1]);
+  const shL = new THREE.Object3D(), shR = new THREE.Object3D(); shL.position.set(-.19, th - .02, 0); shR.position.set(.19, th - .02, 0); spine.add(shL, shR);
+  part(spine, "sph", M.black(), [-.19, th - .02, 0], [.12, .12, .12]); part(spine, "sph", M.black(), [.19, th - .02, 0], [.12, .12, .12]);
+  let ip, fwd, up, parent, poleL, poleR;
+  if (d.posture === "shoulder") { parent = spine; ip = new THREE.Vector3(-.03, shY + .02 - hipY, .07); fwd = new THREE.Vector3(-.48, .06, .88); up = new THREE.Vector3(.55, .83, .05); head.quaternion.copy(euler(12, -10, 14)); poleL = new THREE.Vector3(.15, -1, .2); poleR = new THREE.Vector3(1, -.7, -.3); }
+  else if (knees) { parent = root; ip = new THREE.Vector3(0, 0, .5); fwd = new THREE.Vector3(-.1, 1, -.38); up = new THREE.Vector3(.05, .3, 1); head.quaternion.copy(euler(6, 8, -6)); poleL = new THREE.Vector3(-1, -.2, .2); poleR = new THREE.Vector3(1, -.6, -.4); }
+  else { parent = root; ip = new THREE.Vector3(-.1, 0, .42); fwd = new THREE.Vector3(-.18, 1, -.22); up = new THREE.Vector3(.12, .2, 1); head.quaternion.copy(euler(8, 12, -4)); poleL = new THREE.Vector3(-1, 0, .3); poleR = new THREE.Vector3(1, -.5, -.5); }
+  const ins = buildInstrument(d, parent); ins.g.position.copy(ip); ins.g.quaternion.copy(lookRot(fwd, up));
+  const bow = buildBow(d, world);
+  const arms = { uL: limb(world, M.black(), .052), fL: limb(world, M.black(), .045), uR: limb(world, M.black(), .052), fR: limb(world, M.black(), .045) };
+  const hL = part(world, "sph", skin, [0, 0, 0], [.07, .09, .05]), hR = part(world, "sph", skin, [0, 0, 0], [.07, .09, .05]);
+  const ring = part(root, "cyl", M.ring(), [0, .005, .2], [1.3, .004, 1.3], null, false); ring.visible = false;
+  const hit = new THREE.Mesh(new THREE.CapsuleGeometry(.5, .8, 4, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, .9, .2); hit.userData.musicianId = m.id; root.add(hit);
+  const v = { m, d, root, spine, head, ins, bow, arms, hL, hR, shL, shR, poleL, poleR, ring, hit, notes: null, startT: 0, idx: 0, bowPos: (d.bmin + d.bmax) / 2, from: 0, to: 0, strokeIdx: -1, lift: 1, phase: (m.seed % 1000) * .01, pan: 0, extra: [bow, ...Object.values(arms), hL, hR] };
+  return v;
+}
+function disposeView(v) { world.remove(v.root); for (const o of v.extra) world.remove(o); }
+const uMat = o => { o.updateWorldMatrix(true, false); return new THREE.Matrix4().makeScale(-1, 1, 1).multiply(o.matrixWorld); };
+function solveArm(v, sh, target, pole, upper, fore, hand) {
+  let a = .30, b = .28; const toT = target.clone().sub(sh); let dist = toT.length();
+  if (dist > a + b - .001) { const k = dist / (a + b - .001); a *= k; b *= k; }
+  dist = Math.max(dist, Math.abs(a - b) + .001); const dir = toT.normalize();
+  const cosA = clamp((a * a + dist * dist - b * b) / (2 * a * dist), -1, 1);
+  let bend = pole.clone().sub(dir.clone().multiplyScalar(pole.dot(dir))); if (bend.lengthSq() < 1e-6) bend.set(0, -1, 0); bend.normalize();
+  const elbow = sh.clone().addScaledVector(dir, cosA * a).addScaledVector(bend, Math.sqrt(1 - cosA * cosA) * a);
+  placeLimb(upper, sh, elbow); placeLimb(fore, elbow, target); hand.position.copy(target); hand.quaternion.copy(lookRot(target.clone().sub(elbow), pole));
+}
+function animateMusician(v, now, time) {
+  const d = v.d; const t = v.notes ? now - v.startT : -1; let cur = null, p = 0, sounding = false;
+  if (v.notes && v.notes.length) { while (v.idx < v.notes.length - 1 && t >= v.notes[v.idx + 1].start) v.idx++; if (t >= v.notes[v.idx].start) { cur = v.notes[v.idx]; p = clamp((t - cur.start) / cur.dur, 0, 1); sounding = t <= cur.start + cur.dur; } else cur = v.notes[0]; }
+  const amp = v.notes ? 1.2 + 3 * sk(v.m, S.musicality) : .5, tt = time + v.phase;
+  v.spine.quaternion.copy(euler(Math.sin(tt * .9) * amp, Math.sin(tt * .43) * amp * .6, Math.sin(tt * .61) * amp * .7));
+  if (cur && v.idx !== v.strokeIdx && t >= cur.start) { v.strokeIdx = v.idx; const len = clamp(cur.dur * (.22 + .25 * cur.vel), .08, d.bmax - d.bmin); v.from = v.bowPos;
+    v.to = cur.down ? Math.min(d.bmax, v.bowPos + len) : Math.max(d.bmin, v.bowPos - len); if (Math.abs(v.to - v.from) < .05) v.to = cur.down ? d.bmin + len : d.bmax - len; }
+  const dt = 1 / 60;
+  if (sounding) { const s = p * p * (3 - 2 * p); v.bowPos = lerp(v.from, v.to, s); v.lift = Math.max(0, v.lift - dt * 12); }
+  else { if (!v.notes) v.bowPos += ((d.bmin + d.bmax) / 2 - v.bowPos) * .02; v.lift += ((v.notes ? .3 : 1) - v.lift) * .1; }
+  const pitch = cur ? cur.midi : d.center; const pn = clamp((pitch - d.lo) / (d.hi - d.lo), 0, 1), hn = clamp((pitch - (d.lo + 10)) / 22, 0, 1);
+  const IM = uMat(v.ins.g), RM = uMat(v.root);
+  const ix = new THREE.Vector3(), iy = new THREE.Vector3(), iz = new THREE.Vector3(); IM.extractBasis(ix, iy, iz); ix.normalize(); iy.normalize(); iz.normalize();
+  const rx = new THREE.Vector3(); RM.extractBasis(rx, new THREE.Vector3(), new THREE.Vector3());
+  let across = ix.clone(); if (across.dot(rx) < 0) across.negate();
+  across.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(iz, lerp(16, -16, pn) * deg));
+  const contact = v.ins.contact.clone().applyMatrix4(IM).addScaledVector(iy, .03 * v.lift);
+  const frog = contact.clone().addScaledVector(across, v.bowPos);
+  v.bow.position.copy(frog); v.bow.quaternion.copy(lookRot(across.clone().negate(), iy));
+  let vib = 0; if (sounding && cur.vib > 1 && t - cur.start > cur.vibDelay) vib = Math.sin(t * cur.vibRate * Math.PI * 2) * cur.vib / 18 * .006 * (d.L / .36);
+  const hz = lerp(v.ins.nut - .03 * (d.L / .36), v.ins.neckBody + .02, hn) + vib;
+  const leftT = new THREE.Vector3(-.012, -.012, hz).applyMatrix4(IM);
+  const bowUp = new THREE.Vector3(0, 1, 0).applyQuaternion(v.bow.quaternion);
+  const rightT = frog.clone().addScaledVector(bowUp, .02);
+  const shL = new THREE.Vector3().setFromMatrixPosition(uMat(v.shL)), shR = new THREE.Vector3().setFromMatrixPosition(uMat(v.shR));
+  const rq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(RM));
+  solveArm(v, shL, leftT, v.poleL.clone().applyQuaternion(rq), v.arms.uL, v.arms.fL, v.hL);
+  solveArm(v, shR, rightT, v.poleR.clone().applyQuaternion(rq), v.arms.uR, v.arms.fR, v.hR);
+}
+function seating(roster) {
+  const order = roster.map((m, i) => i).sort((a, b) => INST[roster[a].inst].order - INST[roster[b].inst].order || overall(roster[b]) - overall(roster[a]));
+  const seats = new Array(roster.length); let placed = 0, row = 0;
+  while (placed < order.length) { const cap = 4 + row * 4, n = Math.min(cap, order.length - placed), rad = 2.3 + row * 1.35, arc = Math.min(68, 17 * n + 10);
+    for (let k = 0; k < n; k++) { const a = (n === 1 ? 0 : lerp(-arc, arc, k / (n - 1))) * deg; const pos = [CONDUCTOR[0] + Math.sin(a) * rad, STAGE_H, CONDUCTOR[2] + Math.cos(a) * rad];
+      const yaw = Math.atan2(CONDUCTOR[0] - pos[0], CONDUCTOR[2] - pos[2]); seats[order[placed + k]] = { pos, yaw }; }
+    placed += n; row++; }
+  return seats;
+}
+function syncStage() {
+  const ids = new Set(state.roster.map(m => m.id));
+  for (const [id, v] of views) if (!ids.has(id)) { disposeView(v); views.delete(id); }
+  for (const m of state.roster) if (!views.has(m.id)) views.set(m.id, buildMusician(m));
+  const seats = seating(state.roster);
+  state.roster.forEach((m, i) => { const v = views.get(m.id); v.m = m; v.root.position.set(...seats[i].pos); v.root.quaternion.copy(euler(0, seats[i].yaw / deg, 0)); v.pan = clamp(seats[i].pos[0] / 4, -.8, .8); });
+  for (const [id, v] of views) v.ring.visible = id === selectedId;
+}
+
+/* ---------- cameras ---------- */
+const controls = new OrbitControls(camera, renderer.domElement); controls.enabled = false; controls.enableDamping = true; controls.maxDistance = 40; controls.target.copy(U(0, 1.5, 3));
+let camMode = "menu", camGoal = null, orbitA = 200;
+function camPreset(mode) {
+  const st = (x, y, z) => U(x, STAGE_H + y, z);
+  if (mode === "stage") return [st(0, 1.55, .1), st(0, .8, 3.2), 55];
+  if (mode === "audience") return [U(-2.5, 4, -14), st(0, 1, 3), 38];
+  if (mode === "orchestra") return [U(0, 7.5, -5.5), st(0, .4, 3.3), 50];
+  if (mode === "closeup") { const v = views.get(selectedId) || [...views.values()][0]; if (!v) return camPreset("stage");
+    const fu = new THREE.Vector3(0, v.d.posture === "standing" ? 1.25 : .95, .25).applyMatrix4(uMat(v.root));
+    const rq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(uMat(v.root)));
+    const off = new THREE.Vector3(.9, .35, 1.9).applyQuaternion(rq); const pos = fu.clone().add(off);
+    return [new THREE.Vector3(-pos.x, pos.y, pos.z), new THREE.Vector3(-fu.x, fu.y, fu.z), 34]; }
+  return null;
+}
+function setCam(mode) { camMode = mode; controls.enabled = mode === "free"; if (mode === "free") { const dir = new THREE.Vector3(); camera.getWorldDirection(dir); controls.target.copy(camera.position).addScaledVector(dir, 8); controls.update(); }
+  document.querySelectorAll("[data-cam]").forEach(b => b.classList.toggle("on", b.dataset.cam === mode)); }
+function updateCamera(dt) {
+  if (camMode === "free") { controls.update(); return; }
+  let goal;
+  if (camMode === "menu") { orbitA += dt * 4; const a = orbitA * deg, c = U(0, STAGE_H + .8, 3); goal = [U(Math.sin(a) * 11, STAGE_H + .8 + 3.2, 3 + Math.cos(a) * 9.9), c, 45]; }
+  else goal = camPreset(camMode);
+  const k = 1 - Math.exp(-dt * (camMode === "menu" ? 2 : 4.5));
+  camera.position.lerp(goal[0], k); const look = new THREE.Vector3(); camGoalLook.lerp(goal[1], k); camera.lookAt(camGoalLook);
+  camera.fov += (goal[2] - camera.fov) * k; camera.updateProjectionMatrix();
+}
+const camGoalLook = U(0, 1.8, 3);
+
+/* =====================================================================
+   PERFORMANCE
+   ===================================================================== */
+let perf = null; // {piece, mode, ctx, t0, end, players, parts, ts, prep, status}
+async function perform(pieceId, mode, ctx, players, opts = {}) {
+  await initAudio(); try { await audioReady; } catch (e) { toast("The recordings could not be loaded. Check your connection and reload the page."); return; }
+  if (actx.state !== "running") await actx.resume();
+  stopPerformance(true);
+  const p = pieceById(pieceId), parts = {};
+  for (const m of players) parts[m.inst] ??= arrange(p, mode, m.inst);
+  const ts = tempoScale(players, parts, p), bpm = p.bpm * ts, prep = opts.prep ?? prog(pieceId).prep;
+  const sect = {}; players.forEach(m => sect[m.inst] = (sect[m.inst] || 0) + 1);
+  const rendered = players.map(m => { const rp = renderPart(m, parts[m.inst], p, prep, ctx, bpm); rp.sectionGain = 1 / Math.sqrt(sect[m.inst]) * (players.length > 1 ? .85 : 1.1); return rp; });
+  const t0 = actx.currentTime + 0.35;
+  rendered.forEach(rp => { const v = ctx === "audition" ? auditionView : views.get(rp.m.id); const chain = musicianChain(rp.m, rp, v ? v.pan : 0);
+    for (const n of rp.notes) scheduleNote(chain, INST[rp.m.inst].set, n, t0 + n.start);
+    if (v) { v.notes = rp.notes; v.startT = t0; v.idx = 0; v.strokeIdx = -1; } });
+  const length = Math.max(...rendered.map(r => r.length));
+  perf = { p, mode, ctx, t0, end: t0 + length + 1.2, players, rendered, ts, onDone: opts.onDone };
+  perf.status = ({ concert: "Concert", audition: "Audition", rehearsal: "Rehearsing", preview: "Playing" })[ctx] + `: <b>${p.title}</b> · ${mode === "parts" ? "separate parts" : "same melody"}${ts < .99 ? ` · tempo ${Math.round(ts * 100)}%` : ""}`;
+  renderUI();
+}
+function stopPerformance(silent) {
+  if (!perf) return; stopAllAudio(); for (const v of views.values()) v.notes = null; if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) v.root.visible = true; }
+  perf = null; if (!silent) renderUI();
+}
+function finishPerformance() {
+  const pf = perf; perf = null; for (const v of views.values()) v.notes = null;
+  if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) v.root.visible = true; }
+  const res = evaluate(pf.rendered, pf.p, pf.mode, pf.ctx, pf.ts); let gains = null;
+  const pr = prog(pf.p.id);
+  if (pf.ctx === "rehearsal") gains = rehearse(pf.players, pr);
+  if (pf.ctx === "concert") { state.lastConcert = state.day; const log = [];
+    for (const m of pf.players) { const f = T.base * m.talent * (.6 + res.overall / 100); gain(m, S.confidence, f * 1.2, log); gain(m, S.musicality, f * .3, log); gain(m, S.expression, f * .3, log); m.energy = Math.max(0, m.energy - T.eConcert); m.concerts++; }
+    const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
+    state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
+    gains = { ok: true, msg: `Concert experience. Reputation +${rg.toFixed(1)} (now ${state.rep.toFixed(0)}).`, log }; }
+  save(); renderUI(); showResult(pf, res, gains); if (pf.onDone) pf.onDone(res);
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let tab = "musician", rosterOpen = true, hidden = false, focusSkill = 0, pieceSel = "twinkle", modeSel = "parts", expanded = null, toastTimer = 0;
+const skillColor = v => v >= 80 ? "#f0c463" : v >= 65 ? "#8fcf9a" : v >= 50 ? "#7fb3e0" : v >= 35 ? "#a5a2c4" : "#a88a86";
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = 0, 3200 + msg.split("\n").length * 600); }
+const isNarrow = () => matchMedia("(max-width: 760px)").matches;
+
+function renderUI() {
+  if (!state) return;
+  const inGame = !$("#topbar").hidden || hidden;
+  $("#roster").hidden = !rosterOpen || hidden || !inGame;
+  $("#side").hidden = !tab || hidden || !inGame;
+  document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === "roster" ? rosterOpen : b.dataset.tab === tab));
+  $("#b-stop").hidden = !perf;
+  if (!$("#roster").hidden) renderRoster();
+  if (!$("#side").hidden) renderSide();
+}
+function renderRoster() {
+  const r = $("#roster"); const list = [...state.roster].sort((a, b) => INST[a.inst].order - INST[b.inst].order || overall(b) - overall(a));
+  r.innerHTML = `<div class="eyebrow">Orchestra · ${state.roster.length} musicians</div>` + list.map(m => `
+    <button class="card ${m.id === selectedId ? "on" : ""}" data-sel="${m.id}"><span class="t">${esc(fullName(m))}</span>
+    <span class="s"><span style="color:var(--gold)">${INST[m.inst].title}</span> · ${tierName(overall(m))} ${overall(m).toFixed(0)} · energy ${m.energy.toFixed(0)}</span></button>`).join("")
+    + `<p class="muted small">Tap a musician on stage or in this list to select them.</p>`;
+}
+function bar(v, color) { return `<div class="bar"><i style="width:${clamp(v, 0, 100)}%;background:${color}"></i></div>`; }
+function renderSide() {
+  const s = $("#side"); const m = selected();
+  if (tab === "musician") {
+    if (!m) { s.innerHTML = `<p>Select a musician.</p>`; return; }
+    const o = overall(m), nt = nextTier(o);
+    s.innerHTML = `<div class="eyebrow">${INST[m.inst].title}</div><h2>${esc(fullName(m))}</h2>
+      <p class="muted">${esc(m.country)} · age ${m.age} · ${m.years} years playing · ${m.talent > 1.15 ? "fast learner" : m.talent < .92 ? "slow, steady learner" : "average learner"}</p>
+      <div class="kv"><span>Overall <span class="tier">${tierName(o)}</span></span><span>${o.toFixed(1)}${nt < 100 ? ` <span class="muted small">next level at ${nt}</span>` : ""}</span></div>
+      <div class="kv"><span>Energy</span><span>${m.energy.toFixed(0)} / 100</span></div>${bar(m.energy, m.energy >= 40 ? "var(--good)" : "var(--bad)")}
+      <h3>Skills</h3><p class="muted small">Tap a skill to choose a practice focus.</p>
+      <div>${SKILLS.map((k, i) => `<button class="skill ${i === focusSkill ? "on" : ""}" data-skill="${i}"><span>${k[0]}</span>${bar(m.skills[i], skillColor(m.skills[i]))}<span class="v">${m.skills[i].toFixed(1)}</span></button>`).join("")}</div>
+      <p class="muted small"><i>${SKILLS[focusSkill][2]}</i></p>
+      <button class="btn primary" id="a-practice" ${m.energy < T.minE || perf ? "disabled" : ""}>Quick Practice: ${SKILLS[focusSkill][0]} (−${T.ePractice} energy)</button>
+      <div class="row"><button class="btn" id="a-plan">Daily plan → ${SKILLS[focusSkill][1]}</button><button class="btn" id="a-balanced">Daily plan → Balanced</button></div>
+      <p class="muted small">Current daily plan: <b>${m.focus < 0 ? "Balanced" : SKILLS[m.focus][0]}</b>. In Director style each musician practises it twice whenever a day passes.</p>
+      <div class="row"><button class="btn" id="a-rhythm">Rhythm mini-game</button><button class="btn" id="a-close">Close-up camera</button></div>
+      <p class="muted small">Practice sessions ${m.sessions} · concerts ${m.concerts}</p>`;
+  } else if (tab === "music") {
+    const p = pieceById(pieceSel); const insts = [...new Set(state.roster.map(x => x.inst))];
+    const canConcert = state.lastConcert !== state.day && state.roster.every(x => x.energy >= T.eConcert);
+    const why = state.lastConcert === state.day ? "The hall is booked once per day. Advance to the next day." : canConcert ? "" : "Some musicians need more energy (25). Rest first.";
+    s.innerHTML = `<div class="eyebrow">Music library</div>` + PIECES.map(x => { const pr = prog(x.id); return `<button class="card ${x.id === pieceSel ? "on" : ""}" data-piece="${x.id}"><span class="t">${esc(x.title)}</span><span class="s">${esc(x.composer)} · Beginner · prepared ${Math.round(pr.prep * 100)}%${pr.best ? ` · best concert ${pr.best.toFixed(0)}` : ""}</span></button>`; }).join("")
+      + `<p class="muted small">Bach, Vivaldi, Saint-Saëns and Elgar arrive with the library expansion.</p>
+      <div class="eyebrow">Arrangement</div><div class="row"><button class="btn ${modeSel === "same" ? "on" : ""}" data-mode="same">Same Melody</button><button class="btn ${modeSel === "parts" ? "on" : ""}" data-mode="parts">Separate Parts</button></div>
+      <p class="muted small">${insts.map(i => `${INST[i].name}: ${arrange(p, modeSel, i).role}`).join("<br>")}</p>
+      <p class="muted small">${esc(p.character)} · ${p.bpm} bpm · ${p.bpb}/4 · public-domain melody, arrangement generated by the game</p>
+      <div class="eyebrow">Play</div>
+      <button class="btn" id="a-listen" ${perf ? "disabled" : ""}>Listen (no training, no energy)</button>
+      <button class="btn" id="a-rehearse" ${perf ? "disabled" : ""}>Rehearse with playback (−${T.eRehearse} energy)</button>
+      <button class="btn" id="a-quick" ${perf ? "disabled" : ""}>Quick rehearsal (instant)</button>
+      <div class="eyebrow">Concert</div>
+      <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)}</button>
+      <p class="small ${canConcert ? "muted" : ""}" style="${canConcert ? "" : "color:var(--bad)"}">${canConcert ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians." : why}</p>
+      <div class="kv"><span>Reputation</span><span>${state.rep.toFixed(0)}</span></div><div class="kv"><span>Concerts · best rating</span><span>${state.concerts} · ${state.best.toFixed(0)}</span></div>`;
+  } else if (tab === "practice") {
+    if (!m) { s.innerHTML = `<p>Select a musician.</p>`; return; }
+    s.innerHTML = `<div class="eyebrow">Practising</div><h2>${esc(fullName(m))}</h2><p class="muted">${INST[m.inst].title} · energy ${m.energy.toFixed(0)}</p>
+      <h3>Rhythm mini-game</h3><p class="muted small">Tap along with a metronome. Your accuracy decides how much ${esc(m.first)}'s Rhythm improves, up to twice a quick practice.</p>
+      ${EXERCISES.map((e, i) => `<button class="btn ${m.skills[S.rhythm] >= e.min ? "on" : ""}" data-ex="${i}">${e.name} · ${e.bpm} bpm${m.skills[S.rhythm] >= e.min ? "" : ` · recommended Rhythm ${e.min}`}</button>`).join("")}
+      <h3>Quick practice</h3><p class="muted small">One tap, −${T.ePractice} energy. Gains shrink as a skill approaches mastery.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${SKILLS.map((k, i) => `<button class="btn" data-qp="${i}" ${m.energy < T.minE || perf ? "disabled" : ""}>${k[1]} <span class="muted">${m.skills[i].toFixed(0)}</span></button>`).join("")}</div>`;
+  } else if (tab === "auditions") {
+    const card = (c, inv) => { const lead = state.roster.filter(x => x.inst === c.inst).sort((a, b) => overall(b) - overall(a))[0]; const diff = lead ? overall(c) - overall(lead) : null;
+      const str = c.skills.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]); const nm = l => l.map(([, i]) => SKILLS[i][1]).join(", ");
+      return `<div class="card" style="gap:6px"><span class="t">${esc(fullName(c))} · ${INST[c.inst].title}</span>
+      <span class="s">${tierName(overall(c))} ${overall(c).toFixed(0)} · age ${c.age} · ${c.years} yrs · ${lead ? `vs your ${esc(lead.first)}: <b style="color:${diff >= 0 ? "var(--good)" : "var(--bad)"}">${diff >= 0 ? "+" : ""}${diff.toFixed(0)}</b>` : `<b style="color:var(--good)">fills an empty section</b>`}</span>
+      <span class="s"><span style="color:var(--good)">Strengths</span> ${nm(str.slice(0, 2))} · <span style="color:var(--bad)">Weaknesses</span> ${nm(str.slice(-2))}</span>
+      ${inv ? `<span class="s" style="color:var(--gold)">Chance to accept: ${(acceptChance(state, c) * 100).toFixed(0)}% (one attempt)</span>` : ""}
+      ${expanded === c.id ? `<div>${SKILLS.map((k, i) => `<div class="skill" style="padding:2px 0"><span class="small">${k[1]}</span>${bar(c.skills[i], skillColor(c.skills[i]))}<span class="v small">${c.skills[i].toFixed(0)}${lead ? ` <span class="muted">(${lead.skills[i].toFixed(0)})</span>` : ""}</span></div>`).join("")}${lead ? `<p class="muted small">Grey numbers: your current ${INST[c.inst].title.toLowerCase()}.</p>` : ""}</div>` : ""}
+      <div class="row"><button class="btn" data-hear="${c.id}" ${perf ? "disabled" : ""}>${inv ? "Hear recording" : "Hear audition"}</button><button class="btn" data-exp="${c.id}">${expanded === c.id ? "Hide details" : "Compare skills"}</button>
+      <button class="btn primary" data-${inv ? "invite" : "hire"}="${c.id}" ${perf ? "disabled" : ""}>${inv ? "Send invitation" : "Hire"}</button></div></div>`; };
+    const refresh = Math.max(0, 7 - (state.day - state.poolDay));
+    s.innerHTML = `<div class="eyebrow">Recruitment</div><h2>Auditions &amp; Invitations</h2><p class="muted small">New applicants every 7 days (next in ${refresh}). Higher reputation attracts stronger players.</p>
+      <h3>Applicants</h3>${state.auditions.map(c => card(c, false)).join("") || `<p class="muted">No applicants right now.</p>`}
+      <h3>Invitations</h3>${state.invites.map(c => card(c, true)).join("") || `<p class="muted">No one to invite this week.</p>`}`;
+  }
+}
+function updateStatus() {
+  if (!state) return;
+  if (perf) { $("#status").innerHTML = perf.status; $("#progress i").style.width = clamp((actx.currentTime - perf.t0) / (perf.end - perf.t0) * 100, 0, 100) + "%"; }
+  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `Day <b>${state.day}</b> · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
+}
+function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visible = vid === id; renderUI(); }
+function advance(days) {
+  if (perf) return toast("Wait until the performance ends.");
+  let sessions = 0;
+  for (let d = 0; d < days; d++) { state.day++; for (const m of state.roster) m.energy = Math.min(100, m.energy + T.recover);
+    if (state.style === "director") for (const m of state.roster) for (let i = 0; i < T.directorSessions; i++) if (practice(m, m.focus >= 0 ? m.focus : weakest(m)).ok) sessions++;
+    for (const p of Object.values(state.pieces)) p.prep *= .985;
+    if (state.day - state.poolDay >= 7) refreshPools(state); }
+  save(); toast(`Day ${state.day} begins.${sessions ? ` Musicians completed ${sessions} practice sessions from their training plans.` : ""}`); renderUI();
+}
+function enterGame(t) {
+  $("#menu").hidden = true; $("#topbar").hidden = false; $("#bottombar").hidden = false; tab = t; rosterOpen = !isNarrow() || t === "roster"; if (isNarrow() && t !== "roster") rosterOpen = false;
+  syncStage(); if (!selectedId || !selected()) select(state.roster[0].id); setCam("orchestra"); renderUI(); initAudio();
+}
+function showMenu() { stopPerformance(true); $("#menu").hidden = false; $("#topbar").hidden = true; $("#bottombar").hidden = true; $("#roster").hidden = true; $("#side").hidden = true; setCam("menu"); camMode = "menu"; $("#m-continue").disabled = !hasSave() && !state; }
+
+/* ---------- modals ---------- */
+function modal(html) { const bg = el(`<div class="modal-bg"><div class="modal">${html}</div></div>`); $("#modal-root").appendChild(bg); return bg; }
+function showResult(pf, r, gains) {
+  const kind = { concert: "Concert review", audition: "Audition", rehearsal: "Rehearsal report", preview: "Performance" }[pf.ctx];
+  const cat = (n, v) => `<div class="skill" style="padding:2px 0"><span>${n}</span>${bar(v, skillColor(v))}<span class="v">${v.toFixed(0)}</span></div>`;
+  const bg = modal(`<div class="eyebrow">${kind}</div><h2>${esc(pf.p.title)} <span class="muted" style="font-size:16px">(${pf.mode === "parts" ? "separate parts" : "same melody"})</span></h2>
+    <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" style="margin-left:12px">${r.overall.toFixed(0)}</span><span class="muted">/ 100</span></div>
+    <p><i>“${esc(r.review)}”</i></p>
+    <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
+    <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
+    ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
+    <button class="btn primary" data-close>Continue</button>`);
+  bg.querySelector("[data-close]").onclick = () => { bg.remove(); renderUI(); };
+}
+let rhythm = null;
+function openRhythm(m, exIndex = 0) {
+  const bg = modal(`<div class="eyebrow">Rhythm practice</div><h2 id="r-title"></h2><p class="muted small" id="r-who"></p>
+    <div class="beats">${[1, 2, 3, 4].map(i => `<div class="beat" id="beat${i - 1}">${i}</div>`).join("")}</div><p id="r-count" class="muted" style="text-align:center"></p>
+    <div id="r-ready" style="display:grid;gap:10px"><p id="r-text"></p><div class="row"><button class="btn" id="r-easier">Easier</button><button class="btn" id="r-harder">Harder</button></div><button class="btn primary" id="r-start" style="min-height:64px;font-size:18px">Start practice</button></div>
+    <div id="r-play" hidden style="display:grid;gap:10px"><div id="fb"></div><button class="pad" id="r-pad">TAP<small>or press Space</small></button><p id="r-stats" class="muted small" style="text-align:center"></p></div>
+    <div id="r-result" hidden style="display:grid;gap:10px"></div>
+    <button class="btn" id="r-close">Close</button>`);
+  rhythm = { m, ex: exIndex, phase: "ready", bg };
+  const q = s => bg.querySelector(s);
+  const showReady = () => { cancelRhythm(); const e = EXERCISES[rhythm.ex]; q("#r-title").textContent = e.name; q("#r-who").textContent = `${fullName(m)} (${INST[m.inst].title}) · Rhythm ${m.skills[S.rhythm].toFixed(1)} · energy ${m.energy.toFixed(0)} · ${e.bpm} bpm`;
+    q("#r-text").innerHTML = esc(e.text) + (m.energy < T.minE ? `<br><span style="color:var(--bad)">${esc(m.first)} is too tired: you can play, but no skill will be gained.</span>` : "");
+    q("#r-count").textContent = "Pattern: " + patternText(e); q("#r-ready").hidden = false; q("#r-play").hidden = true; q("#r-result").hidden = true; litBeat(-1); };
+  q("#r-easier").onclick = () => { rhythm.ex = Math.max(0, rhythm.ex - 1); showReady(); };
+  q("#r-harder").onclick = () => { rhythm.ex = Math.min(EXERCISES.length - 1, rhythm.ex + 1); showReady(); };
+  q("#r-start").onclick = () => startRhythm(q);
+  q("#r-pad").addEventListener("pointerdown", e => { e.preventDefault(); tapRhythm(e.timeStamp); });
+  q("#r-close").onclick = () => { cancelRhythm(); bg.remove(); rhythm = null; renderUI(); };
+  rhythm.showReady = showReady; showReady();
+}
+function patternText(e) { let s = ""; for (let b = 0; b < 4; b++) { const on = e.taps.some(t => t % 4 === b), and = e.taps.some(t => t % 4 === b + .5); s += (on ? b + 1 : "·") + (and ? " &  " : "    "); } return s.trim() + "  (repeat)"; }
+function litBeat(i, countIn, flash = 0) { for (let k = 0; k < 4; k++) { const b = rhythm.bg.querySelector("#beat" + k); if (!b) return; const on = k === i; b.style.background = on ? (countIn ? `rgba(130,170,240,${.35 + .65 * flash})` : `rgba(226,184,110,${.35 + .65 * flash})`) : (countIn ? "#26303f" : "#2a2430"); b.style.transform = on ? `scale(${1 + .12 * flash})` : "none"; b.classList.toggle("tap", !countIn && EXERCISES[rhythm.ex].taps.some(t => Math.floor(t) % 4 === k)); } }
+async function startRhythm(q) {
+  await initAudio(); if (actx.state !== "running") await actx.resume();
+  const e = EXERCISES[rhythm.ex], spb = 60 / e.bpm, total = 4 + 8 + 1, t0 = actx.currentTime + .6;
+  rhythm.nodes = [];
+  for (let i = 0; i < total; i++) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = i % 4 === 0 ? 1760 : 1320; const t = t0 + i * spb;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(i % 4 === 0 ? .5 : .35, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + .06); o.connect(g); g.connect(master); o.start(t); o.stop(t + .08); rhythm.nodes.push(o); }
+  Object.assign(rhythm, { phase: "play", t0, spb, targets: e.taps.map(b => t0 + (4 + b) * spb), matched: e.taps.map(() => null), reported: e.taps.map(() => false), extra: 0, counts: { p: 0, g: 0, o: 0, m: 0, x: 0 } });
+  q("#r-ready").hidden = true; q("#r-result").hidden = true; q("#r-play").hidden = false; q("#fb").textContent = "Listen…"; q("#fb").style.color = "var(--muted)"; q("#r-stats").textContent = "";
+}
+function audioTimeOf(eventTs) { // when the sound the player heard was produced (accounts for output latency)
+  if (actx.getOutputTimestamp) { const ts = actx.getOutputTimestamp(); if (ts.performanceTime) return ts.contextTime + (eventTs - ts.performanceTime) / 1000; }
+  return actx.currentTime - (actx.outputLatency || actx.baseLatency || 0);
+}
+function tapRhythm(eventTs) {
+  if (!rhythm || rhythm.phase !== "play") return;
+  const t = audioTimeOf(eventTs ?? performance.now()); if (t < rhythm.t0 + 4 * rhythm.spb - .25) return;
+  let best = -1, bd = 1e9; rhythm.targets.forEach((x, i) => { if (rhythm.matched[i] === null && Math.abs(t - x) < bd) { bd = Math.abs(t - x); best = i; } });
+  const fb = rhythm.bg.querySelector("#fb");
+  if (best < 0 || bd > .25) { rhythm.extra++; rhythm.counts.x++; fb.textContent = "EXTRA TAP"; fb.style.color = "var(--bad)"; }
+  else { const off = t - rhythm.targets[best], a = Math.abs(off); rhythm.matched[best] = off; const ms = `${off >= 0 ? "+" : ""}${(off * 1000).toFixed(0)} ms`;
+    if (a <= .035) { rhythm.counts.p++; fb.textContent = "PERFECT " + ms; fb.style.color = "var(--gold)"; }
+    else if (a <= .075) { rhythm.counts.g++; fb.textContent = "GOOD " + ms; fb.style.color = "var(--good)"; }
+    else { rhythm.counts.o++; fb.textContent = (off < 0 ? "EARLY " : "LATE ") + ms; fb.style.color = "#e3b27a"; } }
+  rhythmStats();
+}
+function rhythmStats() { const c = rhythm.counts; rhythm.bg.querySelector("#r-stats").textContent = `Perfect ${c.p} · Good ${c.g} · Off-beat ${c.o} · Missed ${c.m} · Extra ${c.x}`; }
+function cancelRhythm() { if (rhythm?.nodes) for (const n of rhythm.nodes) { try { n.stop(); } catch (e) { } } if (rhythm) { rhythm.phase = "ready"; rhythm.nodes = null; } }
+function rhythmTick() {
+  if (!rhythm || rhythm.phase !== "play") return;
+  const now = audioTimeOf(performance.now()), pos = (now - rhythm.t0) / rhythm.spb, e = EXERCISES[rhythm.ex];
+  if (pos < 0) { litBeat(-1, true); rhythm.bg.querySelector("#r-count").textContent = "Get ready…"; }
+  else { const b = Math.floor(pos), ci = b < 4; litBeat(b % 4, ci, 1 - clamp((pos - b) * 2.5, 0, 1));
+    rhythm.bg.querySelector("#r-count").textContent = ci ? `Count-in: ${b + 1}. Start tapping after 4.` : `Bar ${Math.floor((b - 4) / 4) + 1} of 2 · ${patternText(e)}`; }
+  rhythm.targets.forEach((x, i) => { if (rhythm.matched[i] === null && !rhythm.reported[i] && now > x + .25) { rhythm.reported[i] = true; rhythm.counts.m++; const fb = rhythm.bg.querySelector("#fb"); fb.textContent = "MISS"; fb.style.color = "var(--bad)"; rhythmStats(); } });
+  if (now > rhythm.targets.at(-1) + .55) {
+    rhythm.phase = "done";
+    const pts = rhythm.matched.map(o => o === null ? 0 : Math.abs(o) <= .035 ? 1 : Math.abs(o) <= .075 ? .75 : Math.abs(o) <= .13 ? .4 : .15);
+    const score = clamp((pts.reduce((a, b) => a + b, 0) - .25 * rhythm.extra) / pts.length, 0, 1);
+    const hits = rhythm.matched.filter(o => o !== null), avgAbs = hits.length ? hits.reduce((a, o) => a + Math.abs(o), 0) / hits.length * 1000 : 0, bias = hits.length ? hits.reduce((a, o) => a + o, 0) / hits.length * 1000 : 0;
+    const res = practice(rhythm.m, S.rhythm, .3 + 1.7 * score); save();
+    const verdict = score >= .9 ? "Excellent: a rock-steady pulse." : score >= .75 ? "Very good: a reliable pulse." : score >= .55 ? "Good effort. Keep listening to the click." : score >= .3 ? "Unsteady. Try counting the beats out loud." : "Off the beat. Listen to the count-in and try again.";
+    const r = rhythm.bg.querySelector("#r-result");
+    r.innerHTML = `<div class="stars"><span class="score">${Math.round(score * 100)}%</span><span style="margin-left:12px">${verdict}</span></div>
+      <p class="muted">Hits ${hits.length} / ${pts.length} · extra taps ${rhythm.extra} · average error ±${avgAbs.toFixed(0)} ms, ${Math.abs(bias) < 15 ? "centred on the beat" : bias < 0 ? `rushing (${bias.toFixed(0)} ms)` : `dragging (+${bias.toFixed(0)} ms)`}</p>
+      <p style="white-space:pre-line;color:var(--gold)">${esc(summary(res))}</p>
+      <div class="row"><button class="btn primary" id="r-again">Try again</button><button class="btn" id="r-other">Other exercise</button></div>`;
+    rhythm.bg.querySelector("#r-play").hidden = true; r.hidden = false; litBeat(-1); rhythm.bg.querySelector("#r-count").textContent = "";
+    r.querySelector("#r-again").onclick = () => startRhythm(s => rhythm.bg.querySelector(s));
+    r.querySelector("#r-other").onclick = () => rhythm.showReady();
+    renderUI();
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.tab) { if (d.tab === "roster") { rosterOpen = !rosterOpen; if (rosterOpen && isNarrow()) tab = null; } else { tab = tab === d.tab ? null : d.tab; if (tab && isNarrow()) rosterOpen = false; } renderUI(); }
+  else if (d.cam) setCam(d.cam);
+  else if (d.sel) { select(d.sel); if (isNarrow()) { rosterOpen = false; tab = "musician"; } else if (!tab || tab === "auditions") tab = "musician"; renderUI(); }
+  else if (d.skill) { focusSkill = +d.skill; toast(SKILLS[focusSkill][0] + ": " + SKILLS[focusSkill][2]); renderUI(); }
+  else if (d.piece) { pieceSel = d.piece; renderUI(); }
+  else if (d.mode) { modeSel = d.mode; renderUI(); }
+  else if (d.ex) openRhythm(selected(), +d.ex);
+  else if (d.qp) { const r = practice(selected(), +d.qp); toast(summary(r)); save(); renderUI(); }
+  else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }
+  else if (d.hear) { const c = [...state.auditions, ...state.invites].find(x => x.id === d.hear); hearAudition(c); }
+  else if (d.hire) { const c = state.auditions.find(x => x.id === d.hire); if (state.roster.length >= 40) return toast("The stage is full (40 musicians)."); state.auditions = state.auditions.filter(x => x !== c); c.energy = 100; state.roster.push(c); save(); syncStage(); select(c.id); toast(`${fullName(c)} joins the orchestra as ${INST[c.inst].title}.`); }
+  else if (d.invite) { const c = state.invites.find(x => x.id === d.invite); state.invites = state.invites.filter(x => x !== c);
+    if (rnd() < acceptChance(state, c)) { c.energy = 100; state.roster.push(c); syncStage(); select(c.id); toast(`${fullName(c)} accepted and joins as ${INST[c.inst].title}.`); }
+    else toast(`${fullName(c)} politely declined. Build reputation with concerts to attract stronger players.`); save(); renderUI(); }
+  else if (d.go) { if (!state && !load()) newGame(); enterGame(d.go); }
+});
+function hearAudition(c) {
+  const p = pick(PIECES); for (const v of views.values()) v.root.visible = false;
+  auditionView = buildMusician(c); auditionView.root.position.set(0, STAGE_H, -.6); auditionView.root.quaternion.copy(euler(0, 180, 0)); auditionView.pan = 0;
+  setCam("audience"); toast(`${fullName(c)} plays ${p.title} for you.`);
+  perform(p.id, "same", "audition", [c], { prep: .6 });
+}
+$("#side").addEventListener("click", e => {
+  const id = e.target.closest("button")?.id; const m = selected();
+  if (id === "a-practice") { toast(summary(practice(m, focusSkill))); save(); renderUI(); }
+  if (id === "a-plan") { m.focus = focusSkill; save(); toast(`${m.first}'s daily plan: ${SKILLS[focusSkill][0]}.`); renderUI(); }
+  if (id === "a-balanced") { m.focus = -1; save(); toast(`${m.first}'s daily plan: Balanced (weakest skill first).`); renderUI(); }
+  if (id === "a-rhythm") openRhythm(m);
+  if (id === "a-close") setCam("closeup");
+  if (id === "a-listen") perform(pieceSel, modeSel, "preview", state.roster);
+  if (id === "a-rehearse") { if (state.roster.every(x => x.energy < T.minE)) return toast("Everyone is too tired to rehearse. Advance to the next day."); perform(pieceSel, modeSel, "rehearsal", state.roster); }
+  if (id === "a-quick") { toast(summary(rehearse(state.roster, prog(pieceSel)))); save(); renderUI(); }
+  if (id === "a-concert") { setCam("audience"); perform(pieceSel, modeSel, "concert", state.roster); }
+});
+$("#b-day").onclick = () => advance(1); $("#b-week").onclick = () => advance(7); $("#b-menu").onclick = showMenu;
+$("#b-stop").onclick = () => stopPerformance(); $("#b-hide").onclick = () => { hidden = true; $("#topbar").hidden = true; $("#bottombar").hidden = true; $("#b-show").hidden = false; renderUI(); };
+$("#b-show").onclick = () => { hidden = false; $("#topbar").hidden = false; $("#bottombar").hidden = false; $("#b-show").hidden = true; renderUI(); };
+$("#m-continue").onclick = () => { if (state || load()) enterGame("musician"); else toast("No saved game found."); };
+let confirmNew = false;
+$("#m-new").onclick = () => { if (hasSave() && !confirmNew) { confirmNew = true; $("#m-new").textContent = "Tap again to overwrite the saved game"; return; } confirmNew = false; $("#m-new").textContent = "New Game"; newGame(); selectedId = null; enterGame("musician"); toast("Welcome, Music Director. Your four string players are waiting on stage."); };
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && rhythm?.phase === "play") { e.preventDefault(); tapRhythm(e.timeStamp); return; }
+  if (e.target.closest?.("input,textarea")) return;
+  const map = { Digit1: "stage", Digit2: "audience", Digit3: "orchestra", Digit4: "closeup", Digit5: "free" };
+  if (map[e.code] && $("#menu").hidden) setCam(map[e.code]);
+  if (e.code === "Escape" && hidden) $("#b-show").click();
+});
+// tap a musician on stage
+const ray = new THREE.Raycaster(); let downAt = null;
+renderer.domElement.addEventListener("pointerdown", e => downAt = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 8 || !state || !$("#menu").hidden) return;
+  const r = renderer.domElement.getBoundingClientRect(); ray.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1), camera);
+  const hits = ray.intersectObjects([...views.values()].map(v => v.hit)); if (hits.length) { select(hits[0].object.userData.musicianId); if (!tab) tab = "musician"; if (isNarrow()) rosterOpen = false; renderUI(); if (camMode === "closeup") setCam("closeup"); }
+});
+controls.addEventListener("start", () => { if (camMode !== "free") setCam("free"); });
+
+/* ---------- main loop ---------- */
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize);
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
+  const audioNow = actx ? actx.currentTime : 0;
+  for (const v of views.values()) if (v.root.visible) animateMusician(v, audioNow, t);
+  if (auditionView) animateMusician(auditionView, audioNow, t);
+  if (perf && actx.currentTime > perf.end) finishPerformance();
+  rhythmTick(); updateCamera(dt); updateStatus();
+  renderer.render(scene, camera); requestAnimationFrame(frame);
+}
+buildHall(); buildLights(); resize();
+// Show the starting orchestra on stage behind the menu (new players see the four musicians immediately)
+if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } }
+syncStage();
+camera.position.copy(U(0, 5, -8)); camera.lookAt(camGoalLook);
+$("#m-continue").disabled = !hasSave();
+$("#loading").hidden = true;
+requestAnimationFrame(frame);
+window.__orchestra = { get state() { return state; } };
+</script>

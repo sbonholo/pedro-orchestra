@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Data/*.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/TrainingSystem.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/RecruitmentSystem.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Music/*.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Performance/PerformanceRenderer.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Performance/PerformanceEvaluator.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Audio/StringSynth.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Audio/SampleVoice.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Practice/RhythmExercise.cs" />
+  </ItemGroup>
+</Project>
