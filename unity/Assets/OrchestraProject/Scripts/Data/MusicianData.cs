@@ -25,6 +25,7 @@ namespace OrchestraProject
         public int practiceSessions;
         public int concertsPlayed;
         public int appearanceSeed;
+        public bool rareTalent;            // 1 % applicants/invitations: world-class
         public string instrumentModel = "";   // Economy catalog id; "" = the player's own student instrument
 
         public string FullName { get { return firstName + " " + lastName; } }

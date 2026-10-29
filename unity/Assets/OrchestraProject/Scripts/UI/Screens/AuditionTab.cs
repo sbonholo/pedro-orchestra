@@ -28,7 +28,7 @@ namespace OrchestraProject
         {
             var card = UIFactory.Panel(root, "Card", UITheme.PanelLight);
             UIFactory.Vertical(card, 6, 12);
-            var title = UIFactory.Label(card.transform, "<b>" + c.FullName + "</b>  ·  " + c.Instrument.PlayerTitle, 22);
+            var title = UIFactory.Label(card.transform, (c.rareTalent ? "<color=#" + UITheme.Hex(UITheme.Accent) + ">RARE TALENT (1 %)</color>  " : "") + "<b>" + c.FullName + "</b>  ·  " + c.Instrument.PlayerTitle, 22);
             UIFactory.Size(title, 30);
             var leader = RecruitmentSystem.SectionLeader(gm.State, c.instrument);
             string compare = leader == null ? "  ·  <color=#" + UITheme.Hex(UITheme.Good) + ">fills an empty section</color>"

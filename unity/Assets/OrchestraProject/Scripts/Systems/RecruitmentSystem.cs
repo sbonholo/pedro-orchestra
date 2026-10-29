@@ -9,6 +9,8 @@ namespace OrchestraProject
         public const int AuditionPoolSize = 3;
         public const int InvitePoolSize = 2;
         public const int RefreshEveryDays = 7;
+        /// <summary>Each applicant and each invitation has a 1 % chance to be a rare, world-class talent.</summary>
+        public const double RareTalentChance = 0.01;
 
         public static void RefreshIfDue(OrchestraState s, Random rng)
         {
@@ -26,14 +28,22 @@ namespace OrchestraProject
             for (int i = 0; i < AuditionPoolSize; i++)
             {
                 float mean = Clamp(baseLevel + (float)(rng.NextDouble() * 16.0 - 6.0), 18f, 85f);
-                s.auditionPool.Add(MusicianFactory.Create(instruments[rng.Next(instruments.Count)], mean, rng));
+                s.auditionPool.Add(Candidate(instruments[rng.Next(instruments.Count)], mean, rng));
             }
             for (int i = 0; i < InvitePoolSize; i++)
             {
                 float mean = Clamp(baseLevel + 12f + (float)(rng.NextDouble() * 12.0), 30f, 95f);
-                s.invitePool.Add(MusicianFactory.Create(instruments[rng.Next(instruments.Count)], mean, rng));
+                s.invitePool.Add(Candidate(instruments[rng.Next(instruments.Count)], mean, rng));
             }
             s.lastPoolRefreshDay = s.day;
+        }
+
+        static MusicianData Candidate(InstrumentType instrument, float mean, Random rng)
+        {
+            bool rare = rng.NextDouble() < RareTalentChance;
+            var m = MusicianFactory.Create(instrument, rare ? 86f + (float)rng.NextDouble() * 8f : mean, rng);   // rare: world-class, 86–94
+            m.rareTalent = rare;
+            return m;
         }
 
         /// <summary>Chance (0–1) that an invited musician says yes. Grows with reputation.</summary>

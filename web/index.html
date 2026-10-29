@@ -294,11 +294,14 @@ function summary(r) {
   return lines.join("\n");
 }
 const weakest = m => m.skills.indexOf(Math.min(...m.skills));
+const RARE_CHANCE = 0.01;
 function refreshPools(st) {
   st.auditions = []; st.invites = [];
   const base = 26 + st.rep * 0.45;
-  for (let i = 0; i < 3; i++) st.auditions.push(createMusician(pick(INST_KEYS), clamp(base + rnd() * 16 - 6, 18, 85)));
-  for (let i = 0; i < 2; i++) st.invites.push(createMusician(pick(INST_KEYS), clamp(base + 12 + rnd() * 12, 30, 95)));
+  // Each applicant and invitation has a 1 % chance to be a rare, world-class talent (86–94), as in RecruitmentSystem.cs
+  const cand = (inst, mean) => { const rare = rnd() < RARE_CHANCE, m = createMusician(inst, rare ? 86 + rnd() * 8 : mean); m.rare = rare; return m; };
+  for (let i = 0; i < 3; i++) st.auditions.push(cand(pick(INST_KEYS), clamp(base + rnd() * 16 - 6, 18, 85)));
+  for (let i = 0; i < 2; i++) st.invites.push(cand(pick(INST_KEYS), clamp(base + 12 + rnd() * 12, 30, 95)));
   st.poolDay = st.day;
 }
 const acceptChance = (st, c) => clamp(0.75 - (overall(c) - (30 + st.rep * 0.6)) / 40, 0.1, 0.95);
@@ -1154,7 +1157,7 @@ function renderSide() {
   } else if (tab === "auditions") {
     const card = (c, inv) => { const lead = state.roster.filter(x => x.inst === c.inst).sort((a, b) => overall(b) - overall(a))[0]; const diff = lead ? overall(c) - overall(lead) : null;
       const str = c.skills.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]); const nm = l => l.map(([, i]) => SKILLS[i][1]).join(", ");
-      return `<div class="card" style="gap:6px"><span class="t">${esc(fullName(c))} · ${INST[c.inst].title}</span>
+      return `<div class="card ${c.rare ? "on" : ""}" style="gap:6px"><span class="t">${c.rare ? `<span style="color:var(--gold)">★ RARE TALENT (1 %)</span> ` : ""}${esc(fullName(c))} · ${INST[c.inst].title}</span>
       <span class="s">${tierName(overall(c))} ${overall(c).toFixed(0)} · age ${c.age} · ${c.years} yrs · ${lead ? `vs your ${esc(lead.first)}: <b style="color:${diff >= 0 ? "var(--good)" : "var(--bad)"}">${diff >= 0 ? "+" : ""}${diff.toFixed(0)}</b>` : `<b style="color:var(--good)">fills an empty section</b>`}</span>
       <span class="s"><span style="color:var(--good)">Strengths</span> ${nm(str.slice(0, 2))} · <span style="color:var(--bad)">Weaknesses</span> ${nm(str.slice(-2))}</span>
       ${inv ? `<span class="s" style="color:var(--gold)">Chance to accept: ${(acceptChance(state, c) * 100).toFixed(0)}% (one attempt)</span>` : ""}

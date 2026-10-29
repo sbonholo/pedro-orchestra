@@ -159,6 +159,12 @@ static class Program
             Check(got.Count == 1 && got[0].Id == "first_concert" && gs.coins == c0 + 20 && again.Count == 0, "achievement Opening Night pays 20 coins once");
             Check(Achievements.All.Count == 13, "13 career goals");
         }
+        // Rare talents: about 1 % of applicants and invitations are world-class
+        {
+            var rs = OrchestraState.NewGame(12); var rr = new Random(77); int rare = 0, total = 0;
+            for (int i = 0; i < 4000; i++) { RecruitmentSystem.Refresh(rs, rr); foreach (var c in rs.auditionPool.Concat(rs.invitePool)) { total++; if (c.rareTalent) { rare++; if (c.Overall < 80f) rare -= 1000; } } }
+            Check(rare >= total * 0.006 && rare <= total * 0.014, "rare talents: " + rare + " of " + total + " (~1 %), all world-class");
+        }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);
