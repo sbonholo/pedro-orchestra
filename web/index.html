@@ -342,6 +342,10 @@ const PIECES = [
   { id: "zombiemarch", title: "Midnight Zombie March", composer: "Orchestra Project original (2026)", diff: 2, character: "Spooky, stomping march in D minor", bpm: 126, bpb: 4, pickup: 0, phrase: 2, featured: "cello",
     melody: parseNotes("D5:0.5 D5:0.5 F5:0.5 D5:0.5 A5:1 G#5:1 | A5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:2 | D5:0.5 D5:0.5 F5:0.5 D5:0.5 Bb5:1 A5:1 | G5:0.5 F5:0.5 E5:0.5 C#5:0.5 A4:2 | D5:0.5 E5:0.5 F5:0.5 G5:0.5 A5:0.5 Bb5:0.5 A5:1 | G5:0.5 A5:0.5 Bb5:0.5 A5:0.5 G5:1 F5:1 | E5:0.5 F5:0.5 G5:0.5 E5:0.5 C#5:1 E5:1 | D5:1 A4:1 D5:2"),
     chords: parseChords("Dm:4 | Dm:2 A7:2 | Bb:4 | A7:4 | Dm:4 | Gm:4 | A7:4 | Dm:4") },
+  { id: "nachtmusik", title: "Eine kleine Nachtmusik: Allegro (opening)", composer: "Wolfgang Amadeus Mozart (1787)", diff: 2, character: "Crisp, confident serenade", bpm: 132, bpb: 4, pickup: 0, phrase: 2, featured: "violin",
+    melody: parseNotes("G4:1 R:0.5 D4:0.5 G4:1 R:0.5 D4:0.5 | G4:0.5 D4:0.5 G4:0.5 B4:0.5 D5:2 | C5:1 R:0.5 A4:0.5 C5:1 R:0.5 A4:0.5 | C5:0.5 A4:0.5 F#4:0.5 A4:0.5 D4:2 | G4:4"), chords: parseChords("G:4 | G:4 | D7:4 | D7:4 | G:4") },
+  { id: "bumblebee", title: "Flight of the Bumblebee", composer: "Nikolai Rimsky-Korsakov (1900)", diff: 4, character: "Breakneck chromatic sixteenths: a virtuoso test", bpm: 144, bpb: 2, pickup: 0, phrase: 2, featured: "violin",
+    melody: parseNotes("E6:0.25 D#6:0.25 D6:0.25 C#6:0.25 D6:0.25 C#6:0.25 C6:0.25 B5:0.25 | C6:0.25 B5:0.25 Bb5:0.25 A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 B4:0.25 Bb4:0.25 A4:0.25 G#4:0.25 G4:0.25 F#4:0.25 F4:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 | F5:0.25 F#5:0.25 G5:0.25 G#5:0.25 A5:0.25 G#5:0.25 A5:0.25 Bb5:0.25 | A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 | F5:0.25 F#5:0.25 G5:0.25 G#5:0.25 A5:0.25 G#5:0.25 A5:0.25 Bb5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 Bb4:0.25 A4:0.25 | A4:2"), chords: parseChords("E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | A7:2 | A7:2 | A7:2 | A7:2 | E7:2 | E7:2 | E7:2 | Am:2") },
   { id: "bachprelude", title: "Cello Suite No. 1: Prelude (opening)", composer: "Johann Sebastian Bach (c. 1720)", diff: 3, character: "Flowing unaccompanied arpeggios", bpm: 66, bpb: 4, pickup: 0, phrase: 2, featured: "cello", unacc: true,
     melody: parseNotes([["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"], ["G5", "B5", "A5", "B5", "G5", "B5", "G5"], ["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"]]
       .map(f => ("G4:0.25 " + f.map(n => n + ":0.25").join(" ") + " ").repeat(2)).join("| ") + "| G4:4"),
@@ -468,15 +472,15 @@ const masterclassCost = v => 10 + Math.round(v * 0.5);
 const SHOP = (() => {
   const list = [];
   for (const k of INST_KEYS) { const n = INST[k].name.toLowerCase();
-    list.push({ id: k + "_workshop", name: "Workshop " + n, maker: "Modern workshop", inst: k, price: 300, q: .25 }, { id: k + "_master", name: "Master-made " + n, maker: "Contemporary luthier", inst: k, price: 1200, q: .5 }); }
+    list.push({ id: k + "_workshop", name: "Workshop " + n, maker: "Modern workshop", inst: k, price: 3000, q: .25 }, { id: k + "_master", name: "Master-made " + n, maker: "Contemporary luthier", inst: k, price: 12000, q: .5 }); }
   [["hellier", "Hellier", 1679], ["molitor", "Molitor", 1697], ["hammer", "Hammer", 1707], ["viotti", "Viotti", 1709], ["dolphin", "Dolphin", 1714], ["soil", "Soil", 1714],
-   ["alard", "Alard", 1715], ["lipinski", "Lipinski", 1715], ["ladyblunt", "Lady Blunt", 1721], ["messiah", "Messiah", 1716]]   // ten Stradivarius violins, 3,000 → 5,000
-    .forEach(([id, nm, yr], i) => list.push({ id: "strad_" + id, name: `Stradivarius “${nm}”`, maker: `Antonio Stradivari, ${yr}`, inst: "violin", price: 3000 + Math.round(i * 2000 / 9), q: .8 + .2 * i / 9 }));
-  list.push({ id: "strad_archinto", name: "Stradivarius “Archinto” viola", maker: "Antonio Stradivari, 1696", inst: "viola", price: 4000, q: .9 },
-    { id: "strad_macdonald", name: "Stradivarius “Macdonald” viola", maker: "Antonio Stradivari, 1701", inst: "viola", price: 4800, q: .98 },
-    { id: "strad_duport", name: "Stradivarius “Duport” cello", maker: "Antonio Stradivari, 1711", inst: "cello", price: 4500, q: .92 },
-    { id: "strad_davidov", name: "Stradivarius “Davidov” cello", maker: "Antonio Stradivari, 1712", inst: "cello", price: 5000, q: 1 },
-    { id: "dragonetti", name: "“Dragonetti” double bass", maker: "Gasparo da Salò, c. 1600", inst: "bass", price: 4000, q: .95 });
+   ["alard", "Alard", 1715], ["lipinski", "Lipinski", 1715], ["ladyblunt", "Lady Blunt", 1721], ["messiah", "Messiah", 1716]]   // ten Stradivarius violins, 35,000 → 50,000
+    .forEach(([id, nm, yr], i) => list.push({ id: "strad_" + id, name: `Stradivarius “${nm}”`, maker: `Antonio Stradivari, ${yr}`, inst: "violin", price: 35000 + Math.round(i * 15000 / 9 / 100) * 100, q: .8 + .2 * i / 9 }));
+  list.push({ id: "strad_archinto", name: "Stradivarius “Archinto” viola", maker: "Antonio Stradivari, 1696", inst: "viola", price: 40000, q: .9 },
+    { id: "strad_macdonald", name: "Stradivarius “Macdonald” viola", maker: "Antonio Stradivari, 1701", inst: "viola", price: 48000, q: .98 },
+    { id: "strad_duport", name: "Stradivarius “Duport” cello", maker: "Antonio Stradivari, 1711", inst: "cello", price: 45000, q: .92 },
+    { id: "strad_davidov", name: "Stradivarius “Davidov” cello", maker: "Antonio Stradivari, 1712", inst: "cello", price: 50000, q: 1 },
+    { id: "dragonetti", name: "“Dragonetti” double bass", maker: "Gasparo da Salò, c. 1600", inst: "bass", price: 40000, q: .95 });
   return list;
 })();
 const shopItem = id => SHOP.find(x => x.id === id);
@@ -922,13 +926,16 @@ function animateMusician(v, now, time) {
   solveArm(v, shL, leftT, v.poleL.clone().applyQuaternion(rq), v.arms.uL, v.arms.fL, v.hL);
   solveArm(v, shR, rightT, v.poleR.clone().applyQuaternion(rq), v.arms.uR, v.arms.fR, v.hR);
 }
+// Standard seating seen from the audience: violins left, violas middle, cellos right, double basses in a row behind the cellos (as StageManager.cs).
 function seating(roster) {
   const order = roster.map((m, i) => i).sort((a, b) => INST[roster[a].inst].order - INST[roster[b].inst].order || overall(roster[b]) - overall(roster[a]));
-  const seats = new Array(roster.length); let placed = 0, row = 0;
-  while (placed < order.length) { const cap = 4 + row * 4, n = Math.min(cap, order.length - placed), rad = 2.3 + row * 1.35, arc = Math.min(68, 17 * n + 10);
-    for (let k = 0; k < n; k++) { const a = (n === 1 ? 0 : lerp(-arc, arc, k / (n - 1))) * deg; const pos = [CONDUCTOR[0] + Math.sin(a) * rad, STAGE_H, CONDUCTOR[2] + Math.cos(a) * rad];
-      const yaw = Math.atan2(CONDUCTOR[0] - pos[0], CONDUCTOR[2] - pos[2]); seats[order[placed + k]] = { pos, yaw }; }
+  const front = order.filter(i => roster[i].inst !== "bass"), basses = order.filter(i => roster[i].inst === "bass");
+  const seat = (aDeg, rad) => { const a = aDeg * deg, pos = [CONDUCTOR[0] + Math.sin(a) * rad, STAGE_H, CONDUCTOR[2] + Math.cos(a) * rad]; return { pos, yaw: Math.atan2(CONDUCTOR[0] - pos[0], CONDUCTOR[2] - pos[2]) }; };
+  const seats = new Array(roster.length); let placed = 0, row = 0, last = 2.3;
+  while (placed < front.length) { const cap = 4 + row * 4, n = Math.min(cap, front.length - placed), rad = last = 2.3 + row * 1.35, arc = Math.min(68, 17 * n + 10);
+    for (let k = 0; k < n; k++) seats[front[placed + k]] = seat(n === 1 ? 0 : lerp(-arc, arc, k / (n - 1)), rad);
     placed += n; row++; }
+  basses.forEach((i, k) => seats[i] = seat(Math.max(5, 50 - (k % 6) * 13), last + 1.4 + Math.floor(k / 6) * 1.2));
   return seats;
 }
 function syncStage() {
@@ -1215,7 +1222,7 @@ const TUTORIAL = [
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 2,000 energy. <b>Next Day</b> restores 1,200. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Every listener also pays <b>5 coins</b> for a ticket, so a fuller hall earns more. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Every listener also pays <b>5 coins</b> for a ticket, so a fuller hall earns more. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (35,000–50,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
   ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];

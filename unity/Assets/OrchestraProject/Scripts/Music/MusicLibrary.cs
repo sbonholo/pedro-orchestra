@@ -209,6 +209,34 @@ namespace OrchestraProject
 
             pieces.Add(new PieceDefinition
             {
+                Id = "nachtmusik",
+                Title = "Eine kleine Nachtmusik: Allegro (opening)",
+                Composer = "Wolfgang Amadeus Mozart (1787)",
+                Difficulty = Difficulty.Intermediate,
+                Character = "Crisp, confident serenade",
+                Bpm = 132, BeatsPerBar = 4, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Violin,
+                Melody = NoteParser.Parse("G4:1 R:0.5 D4:0.5 G4:1 R:0.5 D4:0.5 | G4:0.5 D4:0.5 G4:0.5 B4:0.5 D5:2 | C5:1 R:0.5 A4:0.5 C5:1 R:0.5 A4:0.5 | C5:0.5 A4:0.5 F#4:0.5 A4:0.5 D4:2 | G4:4"),
+                Chords = NoteParser.ParseChords("G:4 | G:4 | D7:4 | D7:4 | G:4"),
+                Rights = "Public domain (Mozart, d. 1791). Opening bars, transcribed for the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
+                Id = "bumblebee",
+                Title = "Flight of the Bumblebee",
+                Composer = "Nikolai Rimsky-Korsakov (1900)",
+                Difficulty = Difficulty.Virtuoso,
+                Character = "Breakneck chromatic sixteenths: a virtuoso test",
+                Bpm = 144, BeatsPerBar = 2, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Violin,
+                Melody = NoteParser.Parse("E6:0.25 D#6:0.25 D6:0.25 C#6:0.25 D6:0.25 C#6:0.25 C6:0.25 B5:0.25 | C6:0.25 B5:0.25 Bb5:0.25 A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 B4:0.25 Bb4:0.25 A4:0.25 G#4:0.25 G4:0.25 F#4:0.25 F4:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 | F5:0.25 F#5:0.25 G5:0.25 G#5:0.25 A5:0.25 G#5:0.25 A5:0.25 Bb5:0.25 | A5:0.25 G#5:0.25 G5:0.25 F#5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 | F5:0.25 F#5:0.25 G5:0.25 G#5:0.25 A5:0.25 G#5:0.25 A5:0.25 Bb5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | C5:0.25 C#5:0.25 D5:0.25 D#5:0.25 E5:0.25 D#5:0.25 E5:0.25 F5:0.25 | E5:0.25 D#5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 Bb4:0.25 A4:0.25 | A4:2"),
+                Chords = NoteParser.ParseChords("E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | E7:2 | A7:2 | A7:2 | A7:2 | A7:2 | E7:2 | E7:2 | E7:2 | Am:2"),
+                Rights = "Public domain (Rimsky-Korsakov, d. 1908). Main theme, arranged for the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
                 Id = "bachprelude",
                 Title = "Cello Suite No. 1: Prelude (opening)",
                 Composer = "Johann Sebastian Bach (c. 1720)",

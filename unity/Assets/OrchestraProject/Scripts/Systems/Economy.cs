@@ -61,10 +61,10 @@ namespace OrchestraProject
             foreach (InstrumentType t in new[] { InstrumentType.Violin, InstrumentType.Viola, InstrumentType.Cello, InstrumentType.DoubleBass })
             {
                 string n = InstrumentCatalog.Get(t).DisplayName;
-                catalog.Add(new InstrumentModel { Id = t + "_workshop", Name = "Workshop " + n.ToLowerInvariant(), Maker = "Modern workshop", Type = t, Price = 300, Quality = 0.25f });
-                catalog.Add(new InstrumentModel { Id = t + "_master", Name = "Master-made " + n.ToLowerInvariant(), Maker = "Contemporary luthier", Type = t, Price = 1200, Quality = 0.5f });
+                catalog.Add(new InstrumentModel { Id = t + "_workshop", Name = "Workshop " + n.ToLowerInvariant(), Maker = "Modern workshop", Type = t, Price = 3000, Quality = 0.25f });
+                catalog.Add(new InstrumentModel { Id = t + "_master", Name = "Master-made " + n.ToLowerInvariant(), Maker = "Contemporary luthier", Type = t, Price = 12000, Quality = 0.5f });
             }
-            // Ten Stradivarius violins, 3,000 to 5,000 coins. The "Messiah" is the finest.
+            // Ten Stradivarius violins, 35,000 to 50,000 coins. The "Messiah" is the finest.
             string[,] strads =
             {
                 { "hellier", "“Hellier”", "1679" }, { "molitor", "“Molitor”", "1697" }, { "hammer", "“Hammer”", "1707" },
@@ -76,13 +76,13 @@ namespace OrchestraProject
                 catalog.Add(new InstrumentModel
                 {
                     Id = "strad_" + strads[i, 0], Name = "Stradivarius " + strads[i, 1], Maker = "Antonio Stradivari, " + strads[i, 2],
-                    Type = InstrumentType.Violin, Price = 3000 + (int)Math.Round(i * 2000 / 9.0), Quality = 0.8f + 0.2f * i / 9f
+                    Type = InstrumentType.Violin, Price = 35000 + (int)Math.Round(i * 15000 / 9.0 / 100.0) * 100, Quality = 0.8f + 0.2f * i / 9f
                 });
-            catalog.Add(new InstrumentModel { Id = "strad_archinto", Name = "Stradivarius “Archinto” viola", Maker = "Antonio Stradivari, 1696", Type = InstrumentType.Viola, Price = 4000, Quality = 0.9f });
-            catalog.Add(new InstrumentModel { Id = "strad_macdonald", Name = "Stradivarius “Macdonald” viola", Maker = "Antonio Stradivari, 1701", Type = InstrumentType.Viola, Price = 4800, Quality = 0.98f });
-            catalog.Add(new InstrumentModel { Id = "strad_duport", Name = "Stradivarius “Duport” cello", Maker = "Antonio Stradivari, 1711", Type = InstrumentType.Cello, Price = 4500, Quality = 0.92f });
-            catalog.Add(new InstrumentModel { Id = "strad_davidov", Name = "Stradivarius “Davidov” cello", Maker = "Antonio Stradivari, 1712", Type = InstrumentType.Cello, Price = 5000, Quality = 1f });
-            catalog.Add(new InstrumentModel { Id = "dragonetti", Name = "“Dragonetti” double bass", Maker = "Gasparo da Salò, c. 1600", Type = InstrumentType.DoubleBass, Price = 4000, Quality = 0.95f });
+            catalog.Add(new InstrumentModel { Id = "strad_archinto", Name = "Stradivarius “Archinto” viola", Maker = "Antonio Stradivari, 1696", Type = InstrumentType.Viola, Price = 40000, Quality = 0.9f });
+            catalog.Add(new InstrumentModel { Id = "strad_macdonald", Name = "Stradivarius “Macdonald” viola", Maker = "Antonio Stradivari, 1701", Type = InstrumentType.Viola, Price = 48000, Quality = 0.98f });
+            catalog.Add(new InstrumentModel { Id = "strad_duport", Name = "Stradivarius “Duport” cello", Maker = "Antonio Stradivari, 1711", Type = InstrumentType.Cello, Price = 45000, Quality = 0.92f });
+            catalog.Add(new InstrumentModel { Id = "strad_davidov", Name = "Stradivarius “Davidov” cello", Maker = "Antonio Stradivari, 1712", Type = InstrumentType.Cello, Price = 50000, Quality = 1f });
+            catalog.Add(new InstrumentModel { Id = "dragonetti", Name = "“Dragonetti” double bass", Maker = "Gasparo da Salò, c. 1600", Type = InstrumentType.DoubleBass, Price = 40000, Quality = 0.95f });
         }
 
         public static float Quality(MusicianData m) { var im = Get(m.instrumentModel); return im != null ? im.Quality : 0f; }

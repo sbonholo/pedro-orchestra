@@ -139,7 +139,7 @@ static class Program
         {
             var es = OrchestraState.NewGame(8); var v = es.roster.First(m => m.instrument == InstrumentType.Violin);
             var strads = Economy.Catalog.Where(i => i.Id.StartsWith("strad_") && i.Type == InstrumentType.Violin).ToList();
-            Check(strads.Count == 10 && strads.Min(i => i.Price) == 3000 && strads.Max(i => i.Price) == 5000 && strads.OrderBy(i => i.Price).Last().Id == "strad_messiah", "10 Stradivarius violins, 3,000 to 5,000 coins, Messiah the best");
+            Check(strads.Count == 10 && strads.Min(i => i.Price) == 35000 && strads.Max(i => i.Price) == 50000 && strads.OrderBy(i => i.Price).Last().Id == "strad_messiah", "10 Stradivarius violins, 35,000 to 50,000 coins, Messiah the best");
             Check(es.coins == Economy.StartingCoins, "new game starts with " + Economy.StartingCoins + " coins");
             var good = new PerformanceResult { Overall = 80, Rhythm = 80, Intonation = 80, Ensemble = 80, Artistry = 80 };
             var bad = new PerformanceResult { Overall = 35, Rhythm = 35, Intonation = 35, Ensemble = 35, Artistry = 35 };
@@ -148,7 +148,7 @@ static class Program
             float before = v.Get(SkillType.Intonation); int cost = Economy.MasterclassCost(before);
             Economy.Masterclass(es, v, SkillType.Intonation);
             Check(Math.Abs(v.Get(SkillType.Intonation) - before - 3f) < 0.01f && es.coins == Economy.StartingCoins - cost, "masterclass: +3 for " + cost + " coins");
-            es.coins = 5000; float tone0 = Economy.Played(v, SkillType.ToneQuality);
+            es.coins = 50000; float tone0 = Economy.Played(v, SkillType.ToneQuality);
             Economy.Buy(es, v, Economy.Get("strad_messiah"));
             Check(es.coins == 0 && v.instrumentModel == "strad_messiah" && Economy.Played(v, SkillType.ToneQuality) > tone0 + 19f, "Messiah Stradivarius bought: +20 tone");
         }

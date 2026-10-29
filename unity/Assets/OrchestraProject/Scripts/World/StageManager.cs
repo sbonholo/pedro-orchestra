@@ -95,28 +95,37 @@ namespace OrchestraProject
                 return c != 0 ? c : roster[b].Overall.CompareTo(roster[a].Overall); // section leader first
             });
 
+            // Standard seating seen from the audience: violins on the left, violas in the middle, cellos on the right,
+            // double basses in a row behind the cellos. Same layout as seating() in the web preview.
             var seats = new Seat[roster.Count];
             Vector3 c0 = ConcertHallBuilder.ConductorPoint;
+            var front = order.FindAll(i => roster[i].instrument != InstrumentType.DoubleBass);
+            var basses = order.FindAll(i => roster[i].instrument == InstrumentType.DoubleBass);
             int placed = 0, row = 0;
-            while (placed < order.Count)
+            float lastRadius = 2.3f;
+            while (placed < front.Count)
             {
                 int capacity = 4 + row * 4;
-                int inRow = Mathf.Min(capacity, order.Count - placed);
-                float radius = 2.3f + row * 1.35f;
+                int inRow = Mathf.Min(capacity, front.Count - placed);
+                float radius = lastRadius = 2.3f + row * 1.35f;
                 float arc = Mathf.Min(68f, 17f * inRow + 10f);
                 for (int k = 0; k < inRow; k++)
-                {
-                    float angle = inRow == 1 ? 0f : Mathf.Lerp(-arc, arc, k / (float)(inRow - 1));
-                    float rad = angle * Mathf.Deg2Rad;
-                    Vector3 pos = c0 + new Vector3(Mathf.Sin(rad) * radius, 0f, Mathf.Cos(rad) * radius);
-                    pos.y = ConcertHallBuilder.StageHeight;
-                    Vector3 look = c0 - pos; look.y = 0f;
-                    seats[order[placed + k]] = new Seat { Position = pos, Yaw = Quaternion.LookRotation(look).eulerAngles.y };
-                }
+                    seats[front[placed + k]] = SeatAt(c0, inRow == 1 ? 0f : Mathf.Lerp(-arc, arc, k / (float)(inRow - 1)), radius);
                 placed += inRow;
                 row++;
             }
+            for (int k = 0; k < basses.Count; k++)   // back row on the cello side, from the right edge inwards
+                seats[basses[k]] = SeatAt(c0, Mathf.Max(5f, 50f - (k % 6) * 13f), lastRadius + 1.4f + (k / 6) * 1.2f);
             return seats;
+        }
+
+        static Seat SeatAt(Vector3 c0, float angleDeg, float radius)
+        {
+            float rad = angleDeg * Mathf.Deg2Rad;
+            Vector3 pos = c0 + new Vector3(Mathf.Sin(rad) * radius, 0f, Mathf.Cos(rad) * radius);
+            pos.y = ConcertHallBuilder.StageHeight;
+            Vector3 look = c0 - pos; look.y = 0f;
+            return new Seat { Position = pos, Yaw = Quaternion.LookRotation(look).eulerAngles.y };
         }
     }
 }
