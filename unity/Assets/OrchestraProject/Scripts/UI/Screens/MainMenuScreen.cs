@@ -29,23 +29,21 @@ namespace OrchestraProject
             float h = UIManager.IsPhone ? 50 : 58;
             continueButton = UIFactory.Button(col, "Continue", () =>
             {
-                if (gm.InGame) { gm.Cam.SetMode(CameraMode.Orchestra); ui.ShowGame(HudTab.Musician); }
-                else if (gm.Continue()) ui.ShowGame(HudTab.Musician);
+                if (gm.InGame) { gm.Cam.SetMode(CameraMode.Orchestra); ui.ShowGame(StartTab); }
+                else if (gm.Continue()) ui.ShowGame(StartTab);
                 else gm.Notify("No saved game found.");
             }, 24, h, UITheme.AccentDim);
             newGameButton = UIFactory.Button(col, "New Game", NewGame, 24, h);
             UIFactory.Button(col, "How to Play", () => ui.Tutorial.Show(), 21, h);
-            UIFactory.Button(col, "Orchestra Management", () => Enter(HudTab.Musician), 21, h);
-            UIFactory.Button(col, "Music Library", () => Enter(HudTab.Music), 21, h);
-            UIFactory.Button(col, "Practice", () => Enter(HudTab.Practice), 21, h);
-            UIFactory.Button(col, "Auditions", () => Enter(HudTab.Auditions), 21, h);
-            UIFactory.Button(col, "Concerts", () => Enter(HudTab.Music), 21, h);
             UIFactory.Button(col, "Settings", () => ui.Settings.Show(), 21, h);
             if (!Application.isMobilePlatform) UIFactory.Button(col, "Quit", Application.Quit, 21, h);
 
-            var note = UIFactory.Label(transform, "Stage 2 build  ·  placeholder 3D models and synthesized instrument sound", 15, TextAnchor.LowerRight, UITheme.TextDim);
+            var note = UIFactory.Label(transform, "Real string recordings (VSCO 2 CE, CC0)  ·  procedural 3D musicians", 15, TextAnchor.LowerRight, UITheme.TextDim);
             UIFactory.Anchor(note.rectTransform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-700, 12), new Vector2(-16, 40));
         }
+
+        // Phones start with the stage and the Next step card visible; larger screens also show the Orchestra tab.
+        static HudTab StartTab { get { return UIManager.IsPhone ? HudTab.None : HudTab.Musician; } }
 
         public void Show()
         {
@@ -65,15 +63,9 @@ namespace OrchestraProject
                 return;
             }
             gm.NewGame();
-            ui.ShowGame(HudTab.Musician);
+            ui.ShowGame(StartTab);
             if (!TutorialScreen.Seen) ui.Tutorial.Show();
         }
 
-        void Enter(HudTab tab)
-        {
-            if (!gm.InGame && !gm.Continue()) gm.NewGame();
-            else if (gm.InGame) gm.Cam.SetMode(CameraMode.Orchestra);
-            ui.ShowGame(tab);
-        }
     }
 }

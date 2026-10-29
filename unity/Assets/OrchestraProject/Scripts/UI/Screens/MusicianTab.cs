@@ -11,7 +11,20 @@ namespace OrchestraProject
         public void Build(Transform root, GameManager gm, UIManager ui)
         {
             var m = gm.Selected;
-            if (m == null) { UIFactory.Label(root, "Select a musician in the roster or tap one on stage.", 22); return; }
+            if (m == null) { UIFactory.Label(root, "Tap a musician on stage.", 22); return; }
+
+            // Player chips: switch musician without a separate roster panel
+            var list = new System.Collections.Generic.List<MusicianData>(gm.State.roster);
+            list.Sort((a, b) => a.Instrument.SeatingOrder != b.Instrument.SeatingOrder ? a.Instrument.SeatingOrder.CompareTo(b.Instrument.SeatingOrder) : b.Overall.CompareTo(a.Overall));
+            RectTransform chips = null;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (i % 3 == 0) chips = UIFactory.Row(root, 50);
+                var mm = list[i];
+                var c = UIFactory.Button(chips, "<b>" + mm.firstName + "</b>  <size=15>" + mm.Instrument.DisplayName + " · " + mm.Overall.ToString("0") + "</size>", () => gm.Select(mm.id), 18, 50);
+                UIFactory.SetSelected(c, mm.id == m.id);
+            }
+            if (list.Count % 3 != 0) for (int i = list.Count % 3; i < 3; i++) UIFactory.Rect("Spacer", chips);
 
             var name = UIFactory.Label(root, "<b>" + m.FullName + "</b>", 30);
             UIFactory.Size(name, 40);
@@ -64,8 +77,8 @@ namespace OrchestraProject
             UIFactory.Size(pl, 50);
 
             var row2 = UIFactory.Row(root, 60);
-            UIFactory.Button(row2, "Rhythm mini-game", () => ui.RhythmScreen.Open(m), 19, 60);
-            UIFactory.Button(row2, "Close-up camera", () => gm.Cam.SetMode(CameraMode.CloseUp), 19, 60);
+            UIFactory.Button(row2, "Rhythm game (bigger Rhythm gain)", () => ui.RhythmScreen.Open(m), 19, 60);
+            UIFactory.Button(row2, "Close-up", () => gm.Cam.SetMode(CameraMode.CloseUp), 19, 60);
 
             var stats = UIFactory.Label(root, "Practice sessions: " + m.practiceSessions + "   ·   Concerts: " + m.concertsPlayed, 16, TextAnchor.UpperLeft, UITheme.TextDim);
             UIFactory.Size(stats, 30);

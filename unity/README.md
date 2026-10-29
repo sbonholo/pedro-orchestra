@@ -13,7 +13,7 @@ A 3D orchestra management and simulation game for Unity 6 (URP). Targets: Window
 | Skills change the sound | **Real.** Rhythm affects timing, Intonation affects pitch, Accuracy causes wrong notes, Tone sets bow noise and brightness, Expression sets vibrato, Musicality shapes phrases, Ensemble controls drift, Confidence adds nerves in concerts, Speed slows the tempo. |
 | Rhythm mini-game | **Real.** Every tap is measured in milliseconds. You score nothing if you don't tap. |
 | Instrument sound | **REAL RECORDINGS** from VSCO 2 Community Edition (CC0, free for commercial use; see CREDITS.md): solo violin (15 notes), viola section (13), cello section (13), solo double bass (13), all with vibrato. Skill effects are applied on top. The synthesizer remains only as a fallback. |
-| Musicians | **PLACEHOLDER.** Mannequins built from simple shapes. Bowing (down/up per note), left-hand shifts and vibrato already follow the real notes. |
+| Musicians | **Procedural figures** (built from shapes in code): tailcoats with satin lapels and bow ties or concert dresses, faces (eyes, brows, nose, lips, ears), six hairstyles, hands with fingers, polished shoes. Bowing (down/up per note), left-hand shifts and vibrato follow the real notes. Stage 3 replaces them with rigged human models. |
 | Instruments, chairs, stands, hall | **PLACEHOLDER.** Real-world proportions built from primitives, with procedural wood, velvet and sheet-music textures. Lighting, shadows, reverb and post-processing are real. |
 
 ---
@@ -51,23 +51,14 @@ If anything goes red, open **Window → General → Console**, copy the first re
 
 ## 4. How to play
 
-- **Main menu:** New Game / Continue / Orchestra Management / Music Library / Practice / Auditions / Concerts / Settings.
-- **Top bar:** Roster, Musician, Music & Concerts, Practice, Auditions, **Next Day**, **+7 Days**, Menu.
-- **Select a musician:** click or tap them on stage, or pick them in the Roster.
-- **Musician tab:** all 11 skills. Tap a skill to choose a focus, then **Quick Practice**, or set it as the musician's **daily plan**.
-- **Practice tab:**
-  - Rhythm mini-game: count-in, then tap with the click (Space or the big pad). You get live feedback (Perfect / Good / Early / Late / Miss) and a result screen. Your score multiplies the musician's Rhythm gain (up to 2× a quick practice).
-  - Quick practice: one button per skill.
-- **Music & Concerts:** pick a piece and **Same Melody** or **Separate Parts**, then choose:
-  - **Listen:** no effect on skills.
-  - **Rehearse:** builds preparation and ensemble skill.
-  - **Perform Concert:** rated 1–5 stars; raises reputation.
-- **Auditions:** hear applicants play, compare their skills against your section leader, hire them. **Invitations** go to stronger players; whether they accept depends on your reputation.
-- **Energy and days:** practice and rehearsal use energy. **Next Day** restores it. In **Director** play style (Settings), musicians also run their daily plan whenever a day passes ("watch and manage"). **Hands-on** means they only improve from practice you run yourself.
-- **Cameras:** Stage, Audience, Orchestra, Close-up, Free (keys 1–5). Free camera:
-  - PC: drag with the mouse, WASD / QE to move, Shift to go faster, scroll to zoom.
-  - Touch: drag, pinch, two-finger pan.
-- **Hide UI** to watch a performance with only the stage on screen. During a concert the side panels step aside on their own; tap any tab to bring them back.
+- **Next step card (bottom left):** always suggests the best move (Listen, Rehearse, Perform Concert, See applicant, Next Day). Tapping its button is enough to play.
+- **Top bar:** **Orchestra**, **Concerts**, **Recruit**, then **Next Day**, **+7 Days**, **?** (tutorial) and **Menu**.
+- **Orchestra tab:** tap a player chip (or a musician on stage), tap a skill, then **Quick Practice**. The **Rhythm game** (count-in, then tap with the click: Space or the pad) gives up to 2× a quick practice. **Daily plan** sets what that player trains each new day.
+- **Concerts tab:** pick a piece and **Same Melody** or **Separate Parts**. **Perform Concert** (1–5 stars, raises reputation); **Listen** (no effect), **Rehearse** (with playback) or **Quick rehearsal** build the piece's preparation.
+- **Recruit tab:** hear applicants, compare them with your player, hire. **Invitations** go to stronger players; acceptance depends on reputation.
+- **Energy and days:** practice and rehearsal use energy. **Next Day** restores it. In **Director** play style (Settings) musicians also train their daily plan whenever a day passes.
+- **Camera button:** cycles Orchestra → Stage → Audience → Close-up → Free (keys 1–5 also work). Free camera: drag, WASD / QE, Shift, scroll; on touch drag, pinch, two-finger pan.
+- **Hide UI** to watch with only the stage on screen. During a concert the side panel steps aside; tap any tab to bring it back.
 - Progress is saved automatically after every action.
 
 ## 5. Build for Windows

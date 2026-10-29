@@ -93,6 +93,20 @@ namespace OrchestraProject
             return Create(key, Color.Lerp(light, dark, Mathf.Round(tone * 10) / 10f), 0.35f);
         }
 
+        public static Material Jacket { get { return Create("Jacket", new Color(0.043f, 0.043f, 0.05f), 0.28f, 0f, ProceduralTextures.Fabric, new Vector2(1f, 1f)); } }
+        public static Material Satin { get { return Create("Satin", new Color(0.024f, 0.024f, 0.028f), 0.78f); } }
+        public static Material Shoe { get { return Create("Shoe", new Color(0.027f, 0.027f, 0.027f), 0.82f, 0.2f); } }
+        public static Material EyeWhite { get { return Create("EyeWhite", new Color(0.94f, 0.91f, 0.88f), 0.7f); } }
+        public static Material Iris { get { return Create("Iris", new Color(0.14f, 0.09f, 0.06f), 0.85f); } }
+        public static Material Pearl { get { return Create("Pearl", new Color(0.95f, 0.93f, 0.89f), 0.75f, 0.1f); } }
+
+        public static Material Lip(float tone)
+        {
+            string key = "Lip" + Mathf.RoundToInt(tone * 10);
+            Color light = new Color(0.79f, 0.54f, 0.49f), dark = new Color(0.29f, 0.16f, 0.13f);
+            return Create(key, Color.Lerp(light, dark, Mathf.Round(tone * 10) / 10f), 0.55f);
+        }
+
         public static Material Hair(int variant)
         {
             Color[] colors = { new Color(0.05f, 0.04f, 0.035f), new Color(0.22f, 0.13f, 0.07f), new Color(0.48f, 0.33f, 0.18f), new Color(0.65f, 0.55f, 0.40f), new Color(0.55f, 0.55f, 0.55f) };

@@ -116,6 +116,20 @@ static class Program
         RecruitmentSystem.Refresh(st, rng);
         Check(st.auditionPool.Count == 3 && st.invitePool.Count == 2, "pools filled");
 
+        // Next step card: listen -> rehearse until 60% -> concert -> rest
+        {
+            var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);
+            Check(NextStepAdvisor.Get(ns, tw).Action == NextStepAction.Listen, "next step starts with Listen");
+            ns.heardOrchestra = true;
+            Check(NextStepAdvisor.Get(ns, tw).Action == NextStepAction.Rehearse, "then Rehearse");
+            int guard = 0;
+            while (NextStepAdvisor.Get(ns, tw).Action == NextStepAction.Rehearse && guard++ < 20) TrainingSystem.Rehearse(ns.roster, ns.Progress("twinkle"), rr);
+            var st2 = NextStepAdvisor.Get(ns, tw).Action;
+            Check(st2 == NextStepAction.Concert || st2 == NextStepAction.NextDay, "after rehearsals: concert or rest (" + st2 + ")");
+            ns.lastConcertDay = ns.day;
+            var st3 = NextStepAdvisor.Get(ns, tw).Action;
+            Check(st3 == NextStepAction.NextDay || st3 == NextStepAction.Recruit || st3 == NextStepAction.Rehearse, "after a concert: no second concert today (" + st3 + ")");
+        }
         Console.WriteLine(fails == 0 ? "\nALL PASS" : $"\n{fails} FAILED");
         Environment.Exit(fails == 0 ? 0 : 1);
     }

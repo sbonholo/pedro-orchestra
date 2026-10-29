@@ -8,6 +8,8 @@ namespace OrchestraProject
     {
         string pieceId = "twinkle";
         ArrangementMode mode = ArrangementMode.SeparateParts;
+        public string PieceId { get { return pieceId; } }
+        public ArrangementMode Mode { get { return mode; } }
 
         public void Build(Transform root, GameManager gm, UIManager ui)
         {
@@ -45,7 +47,7 @@ namespace OrchestraProject
 
             UIFactory.Header(root, "Rehearse");
             var playRow = UIFactory.Row(root, 62);
-            var listen = UIFactory.Button(playRow, "Listen", () => gm.Listen(pieceId, mode), 20, 62);
+            var listen = UIFactory.Button(playRow, "Listen", () => { gm.State.heardOrchestra = true; gm.Save(); gm.Listen(pieceId, mode); }, 20, 62);
             var rehearse = UIFactory.Button(playRow, "Rehearse", () => gm.RehearseWithPlayback(pieceId, mode), 20, 62);
             var quick = UIFactory.Button(playRow, "Quick rehearsal", () => gm.QuickRehearsal(pieceId), 20, 62);
             listen.interactable = rehearse.interactable = quick.interactable = !busy;

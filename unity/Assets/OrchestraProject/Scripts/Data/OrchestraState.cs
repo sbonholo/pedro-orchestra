@@ -34,6 +34,7 @@ namespace OrchestraProject
         public float bestConcertRating;
         public int lastPoolRefreshDay = -100;
         public int lastConcertDay = -1;
+        public bool heardOrchestra;            // first Listen done (drives the Next step card)
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();

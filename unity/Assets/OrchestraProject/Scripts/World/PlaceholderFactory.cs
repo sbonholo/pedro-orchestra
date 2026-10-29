@@ -30,6 +30,42 @@ namespace OrchestraProject
             return go.transform;
         }
 
+        /// <summary>Like Part, but with a custom mesh (e.g. the tapered skirt).</summary>
+        public static Transform MeshPart(string name, Transform parent, Mesh mesh, Material mat, Vector3 localPos, Vector3 localScale, Quaternion? localRot = null)
+        {
+            var go = new GameObject(name);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localRotation = localRot ?? Quaternion.identity;
+            go.transform.localScale = localScale;
+            return go.transform;
+        }
+
+        static Mesh skirt;
+        /// <summary>Closed cone section, height 1, top radius 0.34, bottom radius 0.5 (same as the web preview's skirt).</summary>
+        public static Mesh Skirt
+        {
+            get
+            {
+                if (skirt != null) return skirt;
+                const int n = 24; const float rt = 0.34f, rb = 0.5f;
+                var v = new System.Collections.Generic.List<Vector3>(); var tri = new System.Collections.Generic.List<int>();
+                for (int i = 0; i <= n; i++)
+                {
+                    float a = i * Mathf.PI * 2f / n, c = Mathf.Cos(a), s = Mathf.Sin(a);
+                    v.Add(new Vector3(c * rt, 0.5f, s * rt)); v.Add(new Vector3(c * rb, -0.5f, s * rb));
+                }
+                for (int i = 0; i < n; i++) { int k = i * 2; tri.AddRange(new[] { k, k + 2, k + 1, k + 1, k + 2, k + 3 }); }
+                int top = v.Count; v.Add(new Vector3(0, 0.5f, 0)); int bottom = v.Count; v.Add(new Vector3(0, -0.5f, 0));
+                for (int i = 0; i < n; i++) { int k = i * 2; tri.AddRange(new[] { top, k + 2, k }); tri.AddRange(new[] { bottom, k + 1, k + 3 }); }
+                skirt = new Mesh { name = "Skirt" };
+                skirt.SetVertices(v); skirt.SetTriangles(tri, 0); skirt.RecalculateNormals(); skirt.RecalculateBounds();
+                return skirt;
+            }
+        }
+
         public static Transform Empty(string name, Transform parent, Vector3 localPos)
         {
             var t = new GameObject(name).transform;

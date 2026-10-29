@@ -10,14 +10,10 @@ namespace OrchestraProject
 
         static readonly string[][] Pages =
         {
-            new[] { "Welcome, Music Director", "Four musicians are on stage: violin, viola, cello and double bass.", "They start around 31–36 out of 100: experienced amateurs.", "Your job: train them into a world-class orchestra. Use headphones." },
-            new[] { "1 · Meet your musicians", "Tap <b>Roster</b>, or tap a musician on stage.", "The <b>Musician</b> tab shows 11 skills (0–100), an overall level from Novice to Master, and energy." },
-            new[] { "2 · Hear them as they are", "Open <b>Music & Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area." },
-            new[] { "3 · Train", "<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day." },
-            new[] { "4 · Rehearse and rest", "<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "<b>Next Day</b> restores energy. <b>+7 Days</b> skips a week." },
-            new[] { "5 · Perform", "<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "You get 1–5 stars. Good concerts raise <b>reputation</b>, which attracts better musicians." },
-            new[] { "6 · Grow the orchestra", "<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation." },
-            new[] { "7 · Cameras and a winning routine", "Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~60 days, Professional after ~140, World-Class after ~275." },
+            new[] { "Welcome, Music Director", "Four musicians are on stage: violin, viola, cello and double bass. They start as experienced amateurs (about 31–36 out of 100).", "Your goal: a world-class orchestra. Use headphones." },
+            new[] { "Follow the Next step card", "The card at the bottom left always suggests the best move: <b>listen</b>, <b>rehearse</b>, <b>perform</b> or <b>rest</b>.", "Tap its button. That alone is enough to play." },
+            new[] { "Train your players", "<b>Orchestra</b> tab: pick a player, tap a skill, then <b>Quick Practice</b>. The <b>Rhythm game</b> gives bigger gains.", "Each new day, every player trains their <b>daily plan</b> on their own." },
+            new[] { "Concerts and recruiting", "Concerts earn 1–5 stars and <b>reputation</b>. Reputation attracts stronger applicants in <b>Recruit</b>.", "The <b>Camera</b> button switches views; <b>Hide UI</b> lets you just watch." },
         };
 
         Text title, body, dots;
