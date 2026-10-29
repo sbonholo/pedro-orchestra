@@ -151,6 +151,14 @@ static class Program
             Economy.Buy(es, v, Economy.Get("strad_messiah"));
             Check(es.coins == 0 && v.instrumentModel == "strad_messiah" && Economy.Played(v, SkillType.ToneQuality) > tone0 + 19f, "Messiah Stradivarius bought: +20 tone");
         }
+        // Achievements pay once
+        {
+            var gs = OrchestraState.NewGame(4); int c0 = gs.coins;
+            gs.concertsPerformed = 1; var got = Achievements.Check(gs);
+            var again = Achievements.Check(gs);
+            Check(got.Count == 1 && got[0].Id == "first_concert" && gs.coins == c0 + 20 && again.Count == 0, "achievement Opening Night pays 20 coins once");
+            Check(Achievements.All.Count == 13, "13 career goals");
+        }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);

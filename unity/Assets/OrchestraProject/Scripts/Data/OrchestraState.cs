@@ -37,7 +37,13 @@ namespace OrchestraProject
         public bool heardOrchestra;
         public bool playerConducts;
         public int coins = Economy.StartingCoins;
-        public List<string> ownedInstruments = new List<string>();            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
+        public List<string> ownedInstruments = new List<string>();
+        // Career statistics for achievements
+        public List<string> achievements = new List<string>();
+        public List<string> concertPieces = new List<string>();
+        public int judgeApprovals, bestStars, musiciansHired;
+        public float bestConducting;
+        public bool soloApproved;            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();
@@ -79,6 +85,8 @@ namespace OrchestraProject
             }
             if (saveVersion < 3) { coins = Economy.StartingCoins; saveVersion = 3; }
             if (ownedInstruments == null) ownedInstruments = new List<string>();
+            if (achievements == null) achievements = new List<string>();
+            if (concertPieces == null) concertPieces = new List<string>();
             if (coins < 0) coins = 0;
             foreach (var m in roster) m.Validate();
             foreach (var m in auditionPool) m.Validate();

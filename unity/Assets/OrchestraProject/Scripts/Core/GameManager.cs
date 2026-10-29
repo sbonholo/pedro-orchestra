@@ -77,8 +77,17 @@ namespace OrchestraProject
             Save();
         }
 
+        /// <summary>Raised for each newly unlocked achievement (the UI shows a banner).</summary>
+        public event Action<Achievement> AchievementUnlocked;
+
         public void Save()
         {
+            if (State != null)
+                foreach (var a in Achievements.Check(State))
+                {
+                    State.Log("Achievement: " + a.Title + " (+" + a.Reward + " coins)");
+                    if (AchievementUnlocked != null) AchievementUnlocked(a);
+                }
             if (State != null && !SaveSystem.Save(State)) Notify("Warning: the game could not be saved (see Console).");
             if (StateChanged != null) StateChanged();
         }
@@ -211,6 +220,11 @@ namespace OrchestraProject
                     result.Judges = Economy.Judge(result, Rng);
                     result.CoinsEarned = Economy.ConcertCoins(result.Judges);
                     State.coins += result.CoinsEarned;
+                    if (result.CoinsEarned == Economy.CoinsApproved) { State.judgeApprovals++; if (result.Mode == ArrangementMode.Solo) State.soloApproved = true; }
+                    State.bestStars = Math.Max(State.bestStars, result.Stars);
+                    if (result.ConductingScore >= 0f) State.bestConducting = Math.Max(State.bestConducting, result.ConductingScore);
+                    if (!State.concertPieces.Contains(result.Piece.Id)) State.concertPieces.Add(result.Piece.Id);
+                    StageBow.Begin();
                     State.Log("Concert: " + result.Piece.Title + " — " + result.Stars + "/5 (" + result.Overall.ToString("0") + ").");
                     break;
             }
@@ -242,6 +256,7 @@ namespace OrchestraProject
         public void Hire(MusicianData candidate)
         {
             Notify(RecruitmentSystem.Hire(State, candidate));
+            State.musiciansHired++;
             Stage.Sync(State.roster);
             Select(candidate.id);
             Save();
@@ -251,7 +266,7 @@ namespace OrchestraProject
         {
             bool accepted;
             Notify(RecruitmentSystem.Invite(State, candidate, Rng, out accepted));
-            if (accepted) { Stage.Sync(State.roster); Select(candidate.id); }
+            if (accepted) { Stage.Sync(State.roster); Select(candidate.id); State.musiciansHired++; }
             Save();
         }
 

@@ -148,7 +148,7 @@ namespace OrchestraProject
             // Body: breathing when idle, musical sway when playing (more for musical players).
             float musical = Data.Get01(SkillType.Musicality);
             float amp = notes != null ? 1.2f + 3.0f * musical : 0.5f;
-            spine.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.9f) * amp, Mathf.Sin(time * 0.43f) * amp * 0.6f, Mathf.Sin(time * 0.61f) * amp * 0.7f);
+            spine.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.9f) * amp + StageBow.Weight * 24f, Mathf.Sin(time * 0.43f) * amp * 0.6f, Mathf.Sin(time * 0.61f) * amp * 0.7f);   // + bow after a concert
 
             // Bow stroke for the current note.
             if (current != null && noteIndex != strokeNote && t >= current.StartSec)

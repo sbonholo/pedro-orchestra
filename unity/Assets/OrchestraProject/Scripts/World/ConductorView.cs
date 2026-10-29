@@ -67,7 +67,11 @@ namespace OrchestraProject
                 right = new Vector3(0.24f, 0.98f + Mathf.Sin(time * 0.9f) * 0.005f, 0.06f);
                 left = new Vector3(-0.24f, 0.98f, 0.06f);
             }
-            fig.spine.localRotation = Quaternion.Euler(2f + Mathf.Sin(time * 0.7f) * 0.6f, 0, Mathf.Sin(time * 0.5f) * 0.4f);
+            // After a concert the conductor turns to the audience and bows.
+            float bow = StageBow.Weight;
+            body.transform.localRotation = Quaternion.Euler(0, Mathf.Lerp(0f, 180f, Mathf.Clamp01(bow * 1.6f)), 0);
+            if (bow > 0f) { right = new Vector3(0.24f, 0.98f, 0.06f); left = new Vector3(-0.24f, 0.98f, 0.06f); }
+            fig.spine.localRotation = Quaternion.Euler(2f + Mathf.Sin(time * 0.7f) * 0.6f + bow * 35f, 0, Mathf.Sin(time * 0.5f) * 0.4f);
             fig.head.localRotation = Quaternion.Euler(8f + nod, 0, 0);
             var root = body.transform;
             HumanFigure.SolveArm(fig.shoulderR.position, root.TransformPoint(right), root.TransformDirection(new Vector3(1f, -0.6f, -0.3f)), fig.upperArmR, fig.foreArmR, fig.handR);

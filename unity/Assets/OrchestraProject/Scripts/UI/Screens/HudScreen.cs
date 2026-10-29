@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace OrchestraProject
 {
-    public enum HudTab { None, Roster, Musician, Music, Practice, Auditions, Shop }
+    public enum HudTab { None, Roster, Musician, Music, Practice, Auditions, Shop, Goals }
 
     /// <summary>
     /// In-game interface: navigation bar on top, roster on the left, the active tab on the right,
@@ -39,6 +39,7 @@ namespace OrchestraProject
         public readonly PracticeTab PracticeTab = new PracticeTab();
         public readonly AuditionTab AuditionTab = new AuditionTab();
         public readonly ShopTab ShopTab = new ShopTab();
+        public readonly GoalsTab GoalsTab = new GoalsTab();
 
         public void Build(UIManager uiManager, GameManager gameManager)
         {
@@ -54,7 +55,7 @@ namespace OrchestraProject
             if (!phone)
             {
                 var title = UIFactory.Label(topBar, "<b>ORCHESTRA</b> PROJECT", 24, TextAnchor.MiddleLeft, UITheme.Accent);
-                UIFactory.Size(title, -1, 300);
+                UIFactory.Size(title, -1, 240);
             }
             AddNav(HudTab.Roster, "Roster");
             AddNav(HudTab.Musician, "Musician");
@@ -62,6 +63,7 @@ namespace OrchestraProject
             AddNav(HudTab.Practice, "Practice");
             AddNav(HudTab.Auditions, "Auditions");
             AddNav(HudTab.Shop, "Shop");
+            AddNav(HudTab.Goals, "Goals");
             var spacer = UIFactory.Rect("Spacer", topBar); UIFactory.Size(spacer, -1, 0, 1);
             Nav("Next Day", () => gm.AdvanceDays(1), phone ? 130 : 150);
             Nav("+7 Days", () => gm.AdvanceDays(7), phone ? 120 : 140);
@@ -137,6 +139,7 @@ namespace OrchestraProject
             showUiButton.gameObject.SetActive(false);
 
             gm.StateChanged += Refresh;
+            gm.AchievementUnlocked += a => gm.Notify("ACHIEVEMENT UNLOCKED: " + a.Title + "\n" + a.Description + "   +" + a.Reward + " coins");
             gm.SelectionChanged += Refresh;
             gm.Cam.ModeChanged += m => UpdateCamButtons();
             rosterOpen = !phone;
@@ -144,7 +147,7 @@ namespace OrchestraProject
 
         void AddNav(HudTab tab, string label)
         {
-            var b = Nav(label, () => Toggle(tab), UIManager.IsPhone ? (tab == HudTab.Music ? 190 : 140) : (tab == HudTab.Music ? 210 : 150));
+            var b = Nav(label, () => Toggle(tab), UIManager.IsPhone ? (tab == HudTab.Music ? 190 : 120) : (tab == HudTab.Music ? 190 : 130));
             navButtons[tab] = b;
         }
 
@@ -248,6 +251,7 @@ namespace OrchestraProject
                 case HudTab.Practice: tabTitle.text = "Practice"; PracticeTab.Build(tabContent, gm, ui); break;
                 case HudTab.Auditions: tabTitle.text = "Auditions & Invitations"; AuditionTab.Build(tabContent, gm, ui); break;
                 case HudTab.Shop: tabTitle.text = "Shop: upgrades & instruments"; ShopTab.Build(tabContent, gm, ui); break;
+                case HudTab.Goals: tabTitle.text = "Career goals"; GoalsTab.Build(tabContent, gm, ui); break;
             }
         }
 

@@ -83,6 +83,14 @@ p { margin: 0; line-height: 1.5; }
 .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
 .kv span:last-child { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .tier { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; letter-spacing: .06em; border: 1px solid var(--gold-dim); color: var(--gold); }
+#achv { right: max(16px, env(safe-area-inset-right, 0px)); top: var(--top, 76px); width: min(320px, calc(100vw - 32px)); padding: 14px 16px; display: grid; gap: 4px; z-index: 31; pointer-events: none;
+  background: linear-gradient(135deg, #2a2116, #19151b); border: 1px solid var(--gold); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  opacity: 0; transform: translateY(-12px); transition: opacity .35s, transform .35s; }
+#achv.show { opacity: 1; transform: none; }
+@keyframes starPop { 0% { transform: rotate(45deg) scale(.2); opacity: 0; } 70% { transform: rotate(45deg) scale(1.25); opacity: 1; } 100% { transform: rotate(45deg) scale(1); } }
+.stars .star.on { animation: starPop .45s ease-out both; }
+.stars .star.on:nth-child(2) { animation-delay: .25s; } .stars .star.on:nth-child(3) { animation-delay: .5s; } .stars .star.on:nth-child(4) { animation-delay: .75s; } .stars .star.on:nth-child(5) { animation-delay: 1s; }
+input[type=range] { width: 100%; accent-color: var(--gold); }
 #toast { left: 50%; top: 84px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 12px 16px; white-space: pre-line; font-size: 13px;
   background: var(--card-solid); border: 1px solid var(--line); border-radius: 8px; transition: opacity .3s; pointer-events: none; z-index: 30; }
 .modal-bg { position: fixed; inset: 0; z-index: 20; background: rgba(5,4,6,.62); display: grid; place-items: center;
@@ -134,6 +142,7 @@ p { margin: 0; line-height: 1.5; }
     <button class="btn primary" id="m-continue">Continue</button>
     <button class="btn" id="m-new">New Game</button>
     <button class="btn" id="m-help">How to Play</button>
+    <button class="btn" id="m-settings">Settings</button>
     <button class="btn" data-go="musician">Orchestra Management</button>
     <button class="btn" data-go="music">Music Library</button>
     <button class="btn" data-go="practice">Practice</button>
@@ -151,6 +160,7 @@ p { margin: 0; line-height: 1.5; }
   <button class="btn" data-tab="practice">Practice</button>
   <button class="btn" data-tab="auditions">Auditions</button>
   <button class="btn" data-tab="shop">Shop</button>
+  <button class="btn" data-tab="goals">Goals</button>
   <div class="spacer"></div>
   <button class="btn" id="b-day">Next Day</button>
   <button class="btn" id="b-week">+7 Days</button>
@@ -177,6 +187,7 @@ p { margin: 0; line-height: 1.5; }
 
 <button class="ui pad" id="conduct-pad" hidden style="left:50%;transform:translateX(-50%);bottom:calc(var(--bot, 76px) + 8px);width:min(420px, calc(100vw - 32px));height:120px;font-size:30px">TAP THE BEAT</button>
 <div class="ui" id="toast" style="opacity:0"></div>
+<div class="ui" id="achv"></div>
 <div id="modal-root"></div>
 
 <script type="importmap">
@@ -482,6 +493,32 @@ function judge(r) {
     return { name, focus: f, score, ok: score >= ECO.pass, comment: score >= 8.5 ? "Outstanding." : score >= ECO.pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
 }
 const concertCoins = js => js.filter(j => j.ok).length >= 2 ? ECO.yes : ECO.no;
+// Career goals with coin rewards (same list, order and rewards as Achievements.cs). Each pays once.
+const avgLevel = st => st.roster.reduce((a, m) => a + overall(m), 0) / Math.max(1, st.roster.length);
+const ACHIEVEMENTS = [
+  ["first_concert", "Opening Night", "Perform your first concert.", 20, st => st.concerts >= 1],
+  ["approved", "Judges' Approval", "Win the approval of two judges.", 30, st => st.judgeApprovals >= 1],
+  ["three_stars", "A Fine Evening", "Earn 3 stars in a concert.", 40, st => st.bestStars >= 3],
+  ["hire", "New Talent", "Hire or invite a new musician.", 30, st => st.hired >= 1],
+  ["instrument", "A Finer Instrument", "Buy an instrument in the Shop.", 30, st => st.owned.length >= 1],
+  ["soloist", "Soloist", "Win the judges' approval with a solo.", 50, st => st.soloApproved],
+  ["maestro", "Maestro", "Conduct a concert yourself with 90 % of beats on time.", 80, st => st.bestConducting >= .9],
+  ["repertoire", "Repertoire", "Perform 5 different pieces in concert.", 100, st => st.concertPieces.length >= 5],
+  ["advanced", "Advanced Ensemble", "Reach orchestra level 50 (Advanced).", 100, st => avgLevel(st) >= 50],
+  ["renowned", "Renowned", "Reach reputation 50.", 150, st => st.rep >= 50],
+  ["professional", "Professional Orchestra", "Reach orchestra level 65 (Professional).", 250, st => avgLevel(st) >= 65],
+  ["five_stars", "World-Class Evening", "Earn 5 stars in a concert.", 300, st => st.bestStars >= 5],
+  ["strad", "A Stradivarius", "Own a Stradivarius.", 500, st => st.owned.some(id => id.startsWith("strad_"))],
+].map(([id, title, desc, reward, done]) => ({ id, title, desc, reward, done }));
+function checkAchievements() {
+  if (!state) return; for (const k of ["achievements", "concertPieces"]) state[k] ??= []; for (const k of ["judgeApprovals", "bestStars", "hired", "bestConducting"]) state[k] ??= 0;
+  for (const a of ACHIEVEMENTS) if (!state.achievements.includes(a.id) && a.done(state)) { state.achievements.push(a.id); state.coins += a.reward; banner(a); }
+}
+let bannerQueue = [], bannerBusy = false;
+function banner(a) { bannerQueue.push(a); if (!bannerBusy) nextBanner(); }
+function nextBanner() { const a = bannerQueue.shift(), el = $("#achv"); if (!a) { bannerBusy = false; return; } bannerBusy = true;
+  el.innerHTML = `<div class="eyebrow">Achievement unlocked</div><b>${esc(a.title)}</b><span class="muted small">${esc(a.desc)}</span><span style="color:var(--gold)">+${a.reward} coins</span>`;
+  el.classList.add("show"); setTimeout(() => { el.classList.remove("show"); setTimeout(nextBanner, 450); }, 3400); }
 
 /* =====================================================================
    STATE & SAVE (browser storage; the Unity game saves to a JSON file)
@@ -491,11 +528,11 @@ let state = null, selectedId = null;
 function newGame() {
   state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
     roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
-    auditions: [], invites: [], energy1000: true, coins: ECO.start, owned: [] };
+    auditions: [], invites: [], energy1000: true, coins: ECO.start, owned: [], achievements: [], concertPieces: [], judgeApprovals: 0, bestStars: 0, hired: 0, bestConducting: 0, soloApproved: false };
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
+function save() { checkAchievements(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
 function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } state = s; return true; } } catch (e) { } return false; }
 const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
 const selected = () => state?.roster.find(m => m.id === selectedId) || null;
@@ -507,7 +544,7 @@ let actx = null, master = null, reverbIn = null, samples = {}, noiseBuf = null, 
 async function initAudio() {
   if (audioReady) return audioReady;
   actx = new (window.AudioContext || window.webkitAudioContext)();
-  master = actx.createGain(); master.gain.value = 0.9; master.connect(actx.destination);
+  master = actx.createGain(); master.gain.value = settings.volume; master.connect(actx.destination);
   // Concert-hall reverb: generated stereo impulse response (2.4 s)
   const len = Math.floor(actx.sampleRate * 2.4), ir = actx.createBuffer(2, len, actx.sampleRate);
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < len; i++) { const t = i / actx.sampleRate; lp += ((Math.random() * 2 - 1) - lp) * (0.55 - 0.4 * Math.min(1, t / 2.4)); d[i] = lp * Math.exp(-t / 0.62) * (t < 0.012 ? 0 : 1); } }
@@ -646,14 +683,24 @@ function buildHall() {
     seats.forEach((p, i) => { tmp.position.set(p[0] + off[0], p[1] + off[1], p[2] + off[2]); tmp.scale.set(...sc); tmp.quaternion.copy(q || new THREE.Quaternion()); tmp.updateMatrix(); im.setMatrixAt(i, tmp.matrix); });
     g.add(im); }
 }
+// Theatre lighting: house lights dim and the stage brightens during concerts (same factors as HouseLights.cs).
+const houseLights = { spots: [], house: [], dim: 0 };
+function updateHouseLights(dt) {
+  const target = (perf && perf.ctx === "concert") || bowWeight() > 0 ? 1 : 0; if (houseLights.dim === target) return;
+  houseLights.dim = target > houseLights.dim ? Math.min(1, houseLights.dim + dt / 1.5) : Math.max(0, houseLights.dim - dt / 1.5); const d = houseLights.dim;
+  for (const l of houseLights.house) l.intensity = l.userData.base * lerp(1, .25, d);
+  for (const l of houseLights.spots) l.intensity = l.userData.base * lerp(1, 1.2, d);
+  houseLights.key.intensity = houseLights.key.userData.base * lerp(1, .6, d); houseLights.hemi.intensity = houseLights.hemi.userData.base * lerp(1, .55, d);
+}
 function buildLights() {
-  scene.add(new THREE.HemisphereLight(0xffe7c4, 0x1a1410, 0.55));
-  const key = new THREE.DirectionalLight(0xffeed8, 1.2); const dir = new THREE.Vector3(0, -Math.sin(52 * deg), Math.cos(52 * deg));
+  const hemi = new THREE.HemisphereLight(0xffe7c4, 0x1a1410, 0.55); scene.add(hemi); houseLights.hemi = hemi;
+  const key = new THREE.DirectionalLight(0xffeed8, 1.2); houseLights.key = key; const dir = new THREE.Vector3(0, -Math.sin(52 * deg), Math.cos(52 * deg));
   key.position.copy(U(0, 1, 3.5)).addScaledVector(dir, -20); key.target.position.copy(U(0, 1, 3.5)); scene.add(key, key.target);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048); const sc = key.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 9; sc.bottom = -9; sc.near = 1; sc.far = 50; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
-  for (const x of [-6, -3, 0, 3, 6]) { const s = new THREE.SpotLight(0xffe2b8, 230, 0, 0.45, 0.55, 2); s.position.copy(U(x, 11.5, -5)); s.target.position.copy(U(x * .55, STAGE_H, 3.2)); scene.add(s, s.target);
+  for (const x of [-6, -3, 0, 3, 6]) { const s = new THREE.SpotLight(0xffe2b8, 230, 0, 0.45, 0.55, 2); s.position.copy(U(x, 11.5, -5)); houseLights.spots.push(s); s.target.position.copy(U(x * .55, STAGE_H, 3.2)); scene.add(s, s.target);
     if (x === 0) { s.castShadow = true; s.shadow.mapSize.set(1024, 1024); s.shadow.bias = -0.0005; } }
-  for (let i = 0; i < 2; i++) { const p = new THREE.PointLight(0xffcf99, 26, 26, 2); p.position.copy(U(0, 12, -10 - i * 12)); scene.add(p); }
+  for (let i = 0; i < 2; i++) { const p = new THREE.PointLight(0xffcf99, 26, 26, 2); p.position.copy(U(0, 12, -10 - i * 12)); scene.add(p); houseLights.house.push(p); }
+  for (const l of [houseLights.hemi, houseLights.key, ...houseLights.spots, ...houseLights.house]) l.userData.base = l.intensity;
 }
 
 /* ---------- musician figure (port of MusicianView) ---------- */
@@ -781,7 +828,9 @@ function animateConductor(now, time) {
       right = base.clone().add(off); left = new THREE.Vector3(-.12 - off.x * .5, 1.36 + off.y * .5, .34); nod = Math.sin(fr * Math.PI) * 3;
     }
   } else { right = new THREE.Vector3(.24, .98 + Math.sin(time * .9) * .005, .06); left = new THREE.Vector3(-.24, .98, .06); }
-  c.spine.quaternion.copy(euler(2 + Math.sin(time * .7) * .6, 0, Math.sin(time * .5) * .4)); c.head.quaternion.copy(euler(8 + nod, 0, 0));
+  const bow = bowWeight(); c.root.quaternion.copy(euler(0, lerp(0, 180, bow * 1.6), 0));   // turns to the audience and bows
+  if (bow > 0) { right = new THREE.Vector3(.24, .98, .06); left = new THREE.Vector3(-.24, .98, .06); }
+  c.spine.quaternion.copy(euler(2 + Math.sin(time * .7) * .6 + bow * 35, 0, Math.sin(time * .5) * .4)); c.head.quaternion.copy(euler(8 + nod, 0, 0));
   const RM = uMat(c.root), rq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(RM));
   const shL = new THREE.Vector3().setFromMatrixPosition(uMat(c.shL)), shR = new THREE.Vector3().setFromMatrixPosition(uMat(c.shR));
   solveArm(c, shR, right.applyMatrix4(RM), new THREE.Vector3(1, -.6, -.3).applyQuaternion(rq), c.arms.uR, c.arms.fR, c.hR);
@@ -803,7 +852,7 @@ function updateAudience() { if (!audience || !state) return; const n = Math.roun
 // Applause: many short filtered noise bursts (generated, no recording needed). Louder and longer for better concerts and fuller halls.
 function applause(stars) {
   if (!actx) return; const fill = audienceFill(state.rep), dur = 2.2 + stars * .9, claps = Math.round((60 + 340 * fill) * (.4 + stars * .15) * dur), t0 = actx.currentTime + .1;
-  const out = actx.createGain(); out.gain.value = .5 * (.5 + .1 * stars); out.connect(master); out.connect(reverbIn);
+  const out = actx.createGain(); out.gain.value = .5 * (.5 + .1 * stars) * settings.applause; out.connect(master); out.connect(reverbIn);
   const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1500; bp.Q.value = .6; bp.connect(out);
   for (let i = 0; i < claps; i++) { const t = t0 + Math.pow(Math.random(), 1.3) * dur, src = actx.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = .7 + Math.random() * .8;
     const g = actx.createGain(), lvl = (.04 + Math.random() * .06) * (1 - .6 * (t - t0) / dur); g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(.0001, t + .03 + Math.random() * .03);
@@ -832,11 +881,14 @@ function solveArm(v, sh, target, pole, upper, fore, hand) {
   const elbow = sh.clone().addScaledVector(dir, cosA * a).addScaledVector(bend, Math.sqrt(1 - cosA * cosA) * a);
   placeLimb(upper, sh, elbow); placeLimb(fore, elbow, target); hand.position.copy(target); hand.quaternion.copy(lookRot(target.clone().sub(elbow), pole));
 }
+// The bow after a concert: musicians lean forward, the conductor turns to the audience (same timing as StageBow.cs).
+const BOW_SEC = 3.2; let bowUntil = -1;
+function bowWeight() { const t = 1 - (bowUntil - performance.now() / 1000) / BOW_SEC; if (t < 0 || t > 1) return 0; return Math.sin(Math.PI * Math.min(1, t * 1.25)) * (t < .8 ? 1 : 1 - (t - .8) / .2); }
 function animateMusician(v, now, time) {
   const d = v.d; const t = v.notes ? now - v.startT : -1; let cur = null, p = 0, sounding = false;
   if (v.notes && v.notes.length) { while (v.idx < v.notes.length - 1 && t >= v.notes[v.idx + 1].start) v.idx++; if (t >= v.notes[v.idx].start) { cur = v.notes[v.idx]; p = clamp((t - cur.start) / cur.dur, 0, 1); sounding = t <= cur.start + cur.dur; } else cur = v.notes[0]; }
   const amp = v.notes ? 1.2 + 3 * sk(v.m, S.musicality) : .5, tt = time + v.phase;
-  v.spine.quaternion.copy(euler(Math.sin(tt * .9) * amp, Math.sin(tt * .43) * amp * .6, Math.sin(tt * .61) * amp * .7));
+  v.spine.quaternion.copy(euler(Math.sin(tt * .9) * amp + bowWeight() * 24, Math.sin(tt * .43) * amp * .6, Math.sin(tt * .61) * amp * .7));   // + bow after a concert
   if (cur && v.idx !== v.strokeIdx && t >= cur.start) { v.strokeIdx = v.idx; const len = clamp(cur.dur * (.22 + .25 * cur.vel), .08, d.bmax - d.bmin); v.from = v.bowPos;
     v.to = cur.down ? Math.min(d.bmax, v.bowPos + len) : Math.max(d.bmin, v.bowPos - len); if (Math.abs(v.to - v.from) < .05) v.to = cur.down ? d.bmin + len : d.bmax - len; }
   const dt = 1 / 60;
@@ -967,7 +1019,10 @@ function finishPerformance() {
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
     gains = { ok: true, msg: `Concert experience. Reputation +${rg.toFixed(1)} (now ${state.rep.toFixed(0)}).`, log }; }
-  if (pf.ctx === "concert") { applause(res.stars); res.judges = judge(res); res.coins = concertCoins(res.judges); state.coins += res.coins; }
+  if (pf.ctx === "concert") { applause(res.stars); res.judges = judge(res); res.coins = concertCoins(res.judges); state.coins += res.coins; checkAchievements();
+    if (res.coins === ECO.yes) { state.judgeApprovals++; if (pf.mode === "solo") state.soloApproved = true; }
+    state.bestStars = Math.max(state.bestStars, res.stars); if (pf.cond) state.bestConducting = Math.max(state.bestConducting, conductScore(pf.cond));
+    if (!state.concertPieces.includes(pf.p.id)) state.concertPieces.push(pf.p.id); bowUntil = performance.now() / 1000 + BOW_SEC; }
   save(); updateAudience(); renderUI(); showResult(pf, res, gains); if (pf.onDone) pf.onDone(res);
 }
 
@@ -1076,6 +1131,10 @@ function renderSide() {
       ${EXERCISES.map((e, i) => `<button class="btn ${m.skills[S.rhythm] >= e.min ? "on" : ""}" data-ex="${i}">${e.name} · ${e.bpm} bpm${m.skills[S.rhythm] >= e.min ? "" : ` · recommended Rhythm ${e.min}`}</button>`).join("")}
       <h3>Quick practice</h3><p class="muted small">One tap, −${T.ePractice} energy. Gains shrink as a skill approaches mastery.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${SKILLS.map((k, i) => `<button class="btn" data-qp="${i}" ${m.energy < T.minE || perf ? "disabled" : ""}>${k[1]} <span class="muted">${m.skills[i].toFixed(0)}</span></button>`).join("")}</div>`;
+  } else if (tab === "goals") {
+    checkAchievements(); const got = state.achievements;
+    s.innerHTML = `<div class="eyebrow">Career</div><h2>Goals ${got.length} / ${ACHIEVEMENTS.length}</h2><p class="muted small">Each goal pays coins once. Concerts so far: ${state.concerts} · best stars: ${state.bestStars}</p>`
+      + ACHIEVEMENTS.map(a => `<div class="card ${got.includes(a.id) ? "on" : ""}"><span class="t">${got.includes(a.id) ? "✓ " : ""}${esc(a.title)} <span style="float:right;color:var(--gold)">+${a.reward}</span></span><span class="s">${esc(a.desc)}</span></div>`).join("");
   } else if (tab === "shop") {
     const plain = { [S.intonation]: "plays in tune", [S.rhythm]: "plays notes on time", [S.accuracy]: "fewer wrong notes", [S.tone]: "more beautiful sound", [S.expression]: "vibrato and feeling", [S.musicality]: "shapes the phrases", [S.ensemble]: "stays together", [S.technique]: "cleaner playing", [S.speed]: "plays fast pieces", [S.sight]: "new pieces", [S.confidence]: "calm on stage" };
     const order = [S.intonation, S.rhythm, S.accuracy, S.tone, S.expression, S.musicality, S.ensemble, S.technique, S.speed, S.sight, S.confidence];
@@ -1128,7 +1187,7 @@ function showResult(pf, r, gains) {
   const kind = { concert: "Concert review", audition: "Audition", rehearsal: "Rehearsal report", preview: "Performance" }[pf.ctx];
   const cat = (n, v) => `<div class="skill" style="padding:2px 0"><span>${n}</span>${bar(v, skillColor(v))}<span class="v">${v.toFixed(0)}</span></div>`;
   const bg = modal(`<div class="eyebrow">${kind}</div><h2>${esc(pf.p.title)} <span class="muted" style="font-size:16px">(${pf.mode === "parts" ? "separate parts" : pf.mode === "solo" ? INST[pf.solo].name.toLowerCase() + " solo" : "same melody"})</span></h2>
-    <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" style="margin-left:12px">${r.overall.toFixed(0)}</span><span class="muted">/ 100</span></div>
+    <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" id="score-count" style="margin-left:12px">0</span><span class="muted">/ 100</span></div>
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
     ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of 3 approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
@@ -1137,6 +1196,8 @@ function showResult(pf, r, gains) {
     ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
     <button class="btn primary" data-close>Continue</button>`);
   bg.querySelector("[data-close]").onclick = () => { bg.remove(); renderUI(); };
+  const sc = bg.querySelector("#score-count"), t0 = performance.now();   // the score counts up as the stars appear
+  const count = now => { const k = Math.min(1, (now - t0) / 1200); sc.textContent = Math.round(r.overall * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(count); }; requestAnimationFrame(count);
 }
 const TUTORIAL = [
   ["Welcome, Music Director", ["Four musicians are on stage: violin, viola, cello and double bass, led by your conductor.", "They start around 31–36 out of 100: experienced amateurs.", "Your job: train them into a world-class orchestra. Use headphones.", "Not sure what to do? The <b>Next step</b> card (bottom left) always suggests a good move."]],
@@ -1259,9 +1320,9 @@ document.addEventListener("click", e => {
   else if (d.mode) { modeSel = d.mode; renderUI(); }
   else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }
   else if (d.hear) { const c = [...state.auditions, ...state.invites].find(x => x.id === d.hear); hearAudition(c); }
-  else if (d.hire) { const c = state.auditions.find(x => x.id === d.hire); if (state.roster.length >= 40) return toast("The stage is full (40 musicians)."); state.auditions = state.auditions.filter(x => x !== c); c.energy = T.maxE; state.roster.push(c); save(); syncStage(); select(c.id); toast(`${fullName(c)} joins the orchestra as ${INST[c.inst].title}.`); }
+  else if (d.hire) { const c = state.auditions.find(x => x.id === d.hire); if (state.roster.length >= 40) return toast("The stage is full (40 musicians)."); state.auditions = state.auditions.filter(x => x !== c); c.energy = T.maxE; state.roster.push(c); state.hired = (state.hired || 0) + 1; save(); syncStage(); select(c.id); toast(`${fullName(c)} joins the orchestra as ${INST[c.inst].title}.`); }
   else if (d.invite) { const c = state.invites.find(x => x.id === d.invite); state.invites = state.invites.filter(x => x !== c);
-    if (rnd() < acceptChance(state, c)) { c.energy = T.maxE; state.roster.push(c); syncStage(); select(c.id); toast(`${fullName(c)} accepted and joins as ${INST[c.inst].title}.`); }
+    if (rnd() < acceptChance(state, c)) { c.energy = T.maxE; state.roster.push(c); state.hired = (state.hired || 0) + 1; syncStage(); select(c.id); toast(`${fullName(c)} accepted and joins as ${INST[c.inst].title}.`); }
     else toast(`${fullName(c)} politely declined. Build reputation with concerts to attract stronger players.`); save(); renderUI(); }
 });
 function hearAudition(c) {
@@ -1290,6 +1351,25 @@ $("#m-continue").onclick = () => { if (state || load()) enterGame("musician"); e
 let confirmNew = false;
 $("#m-new").onclick = () => { if (hasSave() && !confirmNew) { confirmNew = true; $("#m-new").textContent = "Tap again to overwrite the saved game"; return; } confirmNew = false; $("#m-new").textContent = "New Game"; newGame(); selectedId = null; enterGame("musician"); if (!tutorialSeen()) openTutorial(); else toast("Welcome, Music Director. Your four string players are waiting on stage."); };
 $("#m-help").onclick = () => openTutorial();
+// Settings: volume, applause volume, graphics quality (saved in this browser only)
+const SET_KEY = "orchestra-settings"; let settings = { volume: .9, applause: 1, quality: "high" };
+try { Object.assign(settings, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch (e) { }
+function applySettings() { if (master) master.gain.value = settings.volume; renderer.shadowMap.enabled = settings.quality === "high"; renderer.setPixelRatio(settings.quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize();
+  scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) { } }
+$("#m-settings").onclick = () => {
+  const bg = modal(`<div class="eyebrow">Settings</div><h2>Settings</h2>
+    <label>Volume <span class="muted" id="sv-v"></span><input type="range" min="0" max="100" id="s-vol" value="${Math.round(settings.volume / .9 * 100)}"></label>
+    <label>Applause <span class="muted" id="sv-a"></span><input type="range" min="0" max="100" id="s-app" value="${Math.round(settings.applause * 100)}"></label>
+    <div class="eyebrow">Graphics</div><div class="row"><button class="btn ${settings.quality === "high" ? "on" : ""}" data-q="high">High (shadows)</button><button class="btn ${settings.quality === "low" ? "on" : ""}" data-q="low">Fast (phones, older PCs)</button></div>
+    <div class="eyebrow">Saved game</div><button class="btn" id="s-reset">Delete saved game and start over</button>
+    <button class="btn primary" data-close>Done</button>`);
+  const show = () => { bg.querySelector("#sv-v").textContent = Math.round(settings.volume / .9 * 100) + "%"; bg.querySelector("#sv-a").textContent = Math.round(settings.applause * 100) + "%"; };
+  bg.querySelector("#s-vol").oninput = e => { settings.volume = e.target.value / 100 * .9; applySettings(); show(); };
+  bg.querySelector("#s-app").oninput = e => { settings.applause = e.target.value / 100; applySettings(); show(); };
+  bg.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { settings.quality = b.dataset.q; applySettings(); bg.querySelectorAll("[data-q]").forEach(x => x.classList.toggle("on", x === b)); });
+  let sure = false; bg.querySelector("#s-reset").onclick = e => { if (!sure) { sure = true; e.target.textContent = "Tap again to delete the saved game"; return; } try { localStorage.removeItem(SAVE_KEY); } catch (er) { } location.reload(); };
+  bg.querySelector("[data-close]").onclick = () => bg.remove(); show();
+};
 $("#b-help").onclick = () => openTutorial();
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && rhythm?.phase === "play") { e.preventDefault(); tapRhythm(e.timeStamp); return; }
@@ -1327,10 +1407,10 @@ function frame(now) {
   animateConductor(audioNow, t);
   if (auditionView) animateMusician(auditionView, audioNow, t);
   if (perf && actx.currentTime > perf.end) finishPerformance();
-  rhythmTick(); updateCamera(dt); updateStatus(); if (perf?.cond || !$("#conduct-pad").hidden) updateConductPad();
+  rhythmTick(); updateCamera(dt); updateStatus(); updateHouseLights(dt); if (perf?.cond || !$("#conduct-pad").hidden) updateConductPad();
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }
-buildHall(); buildLights(); buildConductor(); buildAudience(); resize();
+buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (settings.quality !== "high") applySettings();
 // Show the starting orchestra on stage behind the menu (new players see the four musicians immediately)
 if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } }
 syncStage();

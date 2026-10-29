@@ -193,6 +193,7 @@ namespace OrchestraProject
             key.shadowStrength = 0.75f;
 
             // Stage wash spotlights hung in front of the stage.
+            var spots = new System.Collections.Generic.List<Light>(); var houses = new System.Collections.Generic.List<Light>();
             float[] xs = MobileQuality ? new[] { -4f, 0f, 4f } : new[] { -6f, -3f, 0f, 3f, 6f };
             foreach (var x in xs)
             {
@@ -207,6 +208,7 @@ namespace OrchestraProject
                 spot.intensity = MobileQuality ? 160f : 110f;
                 spot.color = new Color(1f, 0.9f, 0.76f);
                 spot.shadows = (!MobileQuality && Mathf.Approximately(x, 0f)) ? LightShadows.Soft : LightShadows.None;
+                spots.Add(spot);
             }
 
             // Dim house lights over the audience.
@@ -220,6 +222,7 @@ namespace OrchestraProject
                 house.intensity = 14f;
                 house.color = new Color(1f, 0.82f, 0.6f);
                 house.shadows = LightShadows.None;
+                houses.Add(house);
             }
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
@@ -230,6 +233,7 @@ namespace OrchestraProject
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = new Color(0.09f, 0.075f, 0.06f);
             RenderSettings.fogDensity = 0.012f;
+            gameObject.AddComponent<HouseLights>().Init(key, spots, houses);
 
             // Reflections for the varnish, brass and floor.
             var probe = new GameObject("Reflection Probe").AddComponent<ReflectionProbe>();
