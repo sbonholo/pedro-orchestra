@@ -159,7 +159,7 @@ namespace OrchestraProject
             if (PlayerConducting)
             {
                 var beats = new List<double>();
-                for (double b = BeatZeroDsp; b < MusicEndDsp - 0.05; b += SecondsPerBeat) beats.Add(b);
+                for (double b = BeatZeroDsp + (PickupBeats % 1f) * SecondsPerBeat; b < MusicEndDsp - 0.05; b += SecondsPerBeat) beats.Add(b);   // on the real beats, also after a half-beat pickup
                 conductScorer = new RhythmScorer(beats);
             }
             Status = (ctx == PerformanceContext.Concert ? "Concert: " : ctx == PerformanceContext.Audition ? "Audition: " : ctx == PerformanceContext.Rehearsal ? "Rehearsing: " : "Playing: ")

@@ -51,9 +51,11 @@ namespace OrchestraProject
                 if (bt < 0f) { right = b0 + new Vector3(0.02f, 0.14f, 0); left = new Vector3(-0.16f, 1.55f, 0.35f); }   // preparation
                 else
                 {
-                    int i = Mathf.FloorToInt(bt);
-                    float fr = bt - i;
-                    int k = (((i + bpb - Mathf.RoundToInt(perf.PickupBeats)) % bpb) + bpb) % bpb;
+                    // count bars from the first downbeat (pickups can be fractional, e.g. Spring's half-beat upbeat)
+                    float x = bt - (perf.PlayerConducting ? Mathf.Floor(perf.PickupBeats) : perf.PickupBeats);
+                    int i = Mathf.FloorToInt(x);
+                    float fr = x - i;
+                    int k = ((i % bpb) + bpb) % bpb;
                     Vector3 off = Vector3.Lerp(pat[k], pat[(k + 1) % bpb], fr * fr * (3f - 2f * fr));
                     off.y += 0.09f * Mathf.Sin(Mathf.PI * Mathf.Min(1f, fr * 1.6f));        // rebound after each beat
                     if (!perf.PlayerConducting && now > perf.MusicEndDsp - 0.2) off *= Mathf.Max(0f, (float)((perf.MusicEndDsp - now) / 0.2));   // cut-off

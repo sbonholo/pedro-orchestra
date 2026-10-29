@@ -92,7 +92,7 @@ namespace OrchestraProject
             UIFactory.Size(info, 52);
             var rep = UIFactory.Label(root, "Reputation " + s.reputation.ToString("0") + "  ·  concerts " + s.concertsPerformed + "  ·  best rating " + s.bestConcertRating.ToString("0"), 17, TextAnchor.UpperLeft, UITheme.Text);
             UIFactory.Size(rep, 30);
-            var more = UIFactory.Label(root, "Elgar's Cello Concerto, Vivaldi and Saint-Saëns arrive with the next library expansion.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
+            var more = UIFactory.Label(root, "Elgar's Cello Concerto and Saint-Saëns arrive with the next library expansion.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
             UIFactory.Size(more, 44);
         }
     }

@@ -333,6 +333,12 @@ const PIECES = [
   { id: "greensleeves", title: "Greensleeves", composer: "Traditional English (16th c.)", diff: 2, character: "Wistful folk song in A minor", bpm: 100, bpb: 3, pickup: 1, phrase: 2, featured: "cello",
     melody: parseNotes("A4:1 | C5:2 D5:1 | E5:1.5 F5:0.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:0.5 B4:1 | C5:2 A4:1 | A4:1.5 G#4:0.5 A4:1 | B4:2 G#4:1 | E4:2 A4:1 | C5:2 D5:1 | E5:1.5 F5:0.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:0.5 B4:1 | C5:1.5 B4:0.5 A4:1 | G#4:1.5 F#4:0.5 G#4:1 | A4:2"),
     chords: parseChords("Am:1 | Am:3 | C:3 | G:3 | Em:3 | Am:3 | Am:3 | E:3 | E:2 Am:1 | Am:3 | C:3 | G:3 | Em:3 | Am:3 | E:3 | Am:2") },
+  { id: "spring", title: "The Four Seasons: Spring (opening)", composer: "Antonio Vivaldi (1725)", diff: 2, character: "Bright, sunny ritornello with echoes", bpm: 100, bpb: 4, pickup: 0.5, phrase: 3, featured: "violin",
+    melody: parseNotes("E5:0.5 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 A5:0.5 B5:0.5 A5:0.5 G#5:0.5 F#5:0.5 E5:0.5 E5:0.5 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 A5:0.5 B5:0.5 A5:0.5 G#5:0.5 F#5:0.5 E5:1 | E5:3.5"),
+    chords: parseChords("E:0.5 | E:4 | E:4 | E:2 B7:2 | E:4 | E:4 | E:2 B7:1 E:1 | E:3.5") },
+  { id: "zombiemarch", title: "Midnight Zombie March", composer: "Orchestra Project original (2026)", diff: 2, character: "Spooky, stomping march in D minor", bpm: 126, bpb: 4, pickup: 0, phrase: 2, featured: "cello",
+    melody: parseNotes("D5:0.5 D5:0.5 F5:0.5 D5:0.5 A5:1 G#5:1 | A5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:2 | D5:0.5 D5:0.5 F5:0.5 D5:0.5 Bb5:1 A5:1 | G5:0.5 F5:0.5 E5:0.5 C#5:0.5 A4:2 | D5:0.5 E5:0.5 F5:0.5 G5:0.5 A5:0.5 Bb5:0.5 A5:1 | G5:0.5 A5:0.5 Bb5:0.5 A5:0.5 G5:1 F5:1 | E5:0.5 F5:0.5 G5:0.5 E5:0.5 C#5:1 E5:1 | D5:1 A4:1 D5:2"),
+    chords: parseChords("Dm:4 | Dm:2 A7:2 | Bb:4 | A7:4 | Dm:4 | Gm:4 | A7:4 | Dm:4") },
   { id: "bachprelude", title: "Cello Suite No. 1: Prelude (opening)", composer: "Johann Sebastian Bach (c. 1720)", diff: 3, character: "Flowing unaccompanied arpeggios", bpm: 66, bpb: 4, pickup: 0, phrase: 2, featured: "cello", unacc: true,
     melody: parseNotes([["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"], ["G5", "B5", "A5", "B5", "G5", "B5", "G5"], ["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"]]
       .map(f => ("G4:0.25 " + f.map(n => n + ":0.25").join(" ") + " ").repeat(2)).join("| ") + "| G4:4"),
@@ -821,7 +827,8 @@ function animateConductor(now, time) {
     const bt = perf.cond ? (perf.cond.taps ? perf.cond.taps - 1 + Math.min(.999, (now - perf.cond.last) / spb) : -1) : (now - perf.t0) / spb, base = new THREE.Vector3(.12, 1.45, .38);
     if (bt < 0) { right = base.clone().add(new THREE.Vector3(.02, .14, 0)); left = new THREE.Vector3(-.16, 1.55, .35); }   // preparation: arms raised
     else {
-      const i = Math.floor(bt), fr = bt - i, k = ((i + bpb - perf.p.pickup) % bpb + bpb) % bpb;
+      // count bars from the first downbeat (pickups can be fractional, e.g. Spring's half-beat upbeat)
+      const x = bt - (perf.cond ? Math.floor(perf.p.pickup) : perf.p.pickup), i = Math.floor(x), fr = x - i, k = (i % bpb + bpb) % bpb;
       const a = new THREE.Vector3(...pat[k]), b = new THREE.Vector3(...pat[(k + 1) % bpb]), e = fr * fr * (3 - 2 * fr);
       const off = a.lerp(b, e); off.y += .09 * Math.sin(Math.PI * Math.min(1, fr * 1.6));   // rebound after each beat
       if (!perf.cond && now > perf.end - 1.4) off.multiplyScalar(Math.max(0, (perf.end - 1.2 - now) / .2));   // cut-off at the end
@@ -998,7 +1005,7 @@ async function perform(pieceId, mode, ctx, players, opts = {}) {
   const length = Math.max(...rendered.map(r => r.length));
   perf = { p, mode, solo: soloSel, ctx, t0, end: t0 + length + 1.2, players, rendered, ts, onDone: opts.onDone };
   if (state.conduct && ctx !== "audition" && players.length > 1) {   // "You conduct": beats to hit, scored like the rhythm game
-    const spb = 60 / bpm, beats = []; for (let b = t0; b < t0 + length - .05; b += spb) beats.push(b);
+    const spb = 60 / bpm, beats = []; for (let b = t0 + (p.pickup % 1) * spb; b < t0 + length - .05; b += spb) beats.push(b);
     perf.cond = { beats, pts: beats.map(() => null), extra: 0, taps: 0, last: 0, fb: "" };
   }
   perf.status = ({ concert: "Concert", audition: "Audition", rehearsal: "Rehearsing", preview: "Playing" })[ctx] + `: <b>${p.title}</b> · ${mode === "parts" ? "separate parts" : mode === "solo" ? INST[soloSel].name.toLowerCase() + " solo" : "same melody"}${ts < .99 ? ` · tempo ${Math.round(ts * 100)}%` : ""}`;
@@ -1123,7 +1130,7 @@ function renderSide() {
       <p class="muted small">${(modeSel === "solo" ? [...new Set(soloPlayers(state.roster, soloSel, p.unacc).map(m => m.inst))] : insts).map(i => `${INST[i].name}: ${arrange(p, modeSel, i, soloSel).role}`).join("<br>")}</p>
       <p class="muted small">${esc(p.character)} · ${p.bpm} bpm · ${p.bpb}/4 · public-domain melody, arrangement generated by the game</p>
       <div class="kv"><span>Reputation</span><span>${state.rep.toFixed(0)}</span></div><div class="kv"><span>Concerts · best rating</span><span>${state.concerts} · ${state.best.toFixed(0)}</span></div>
-      <p class="muted small">Elgar's Cello Concerto, Vivaldi and Saint-Saëns arrive with the next library expansion.</p>`;
+      <p class="muted small">Elgar's Cello Concerto and Saint-Saëns arrive with the next library expansion.</p>`;
   } else if (tab === "practice") {
     if (!m) { s.innerHTML = `<p>Select a musician.</p>`; return; }
     s.innerHTML = `<div class="eyebrow">Practising</div><h2>${esc(fullName(m))}</h2><p class="muted">${INST[m.inst].title} · energy ${m.energy.toFixed(0)} / ${T.maxE}</p>

@@ -173,6 +173,42 @@ namespace OrchestraProject
 
             pieces.Add(new PieceDefinition
             {
+                Id = "spring",
+                Title = "The Four Seasons: Spring (opening)",
+                Composer = "Antonio Vivaldi (1725)",
+                Difficulty = Difficulty.Intermediate,
+                Character = "Bright, sunny ritornello with echoes",
+                Bpm = 100, BeatsPerBar = 4, PickupBeats = 0.5f, PhraseBars = 3,
+                Featured = InstrumentType.Violin,
+                Melody = NoteParser.Parse(
+                    "E5:0.5 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 |" +
+                    "G#5:0.5 A5:0.5 B5:0.5 A5:0.5 G#5:0.5 F#5:0.5 E5:0.5 E5:0.5 |" +
+                    "G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 | G#5:0.5 G#5:0.5 G#5:0.5 F#5:0.25 E5:0.25 B5:1.5 B5:0.25 A5:0.25 |" +
+                    "G#5:0.5 A5:0.5 B5:0.5 A5:0.5 G#5:0.5 F#5:0.5 E5:1 | E5:3.5"),
+                Chords = NoteParser.ParseChords(
+                    "E:0.5 | E:4 | E:4 | E:2 B7:2 | E:4 | E:4 | E:2 B7:1 E:1 | E:3.5"),
+                Rights = "Public domain (Vivaldi, d. 1741). Opening ritornello, transcribed for the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
+                Id = "zombiemarch",
+                Title = "Midnight Zombie March",
+                Composer = "Orchestra Project original (2026)",
+                Difficulty = Difficulty.Intermediate,
+                Character = "Spooky, stomping march in D minor",
+                Bpm = 126, BeatsPerBar = 4, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Cello,
+                Melody = NoteParser.Parse(
+                    "D5:0.5 D5:0.5 F5:0.5 D5:0.5 A5:1 G#5:1 | A5:0.5 G5:0.5 F5:0.5 E5:0.5 D5:2 | D5:0.5 D5:0.5 F5:0.5 D5:0.5 Bb5:1 A5:1 | G5:0.5 F5:0.5 E5:0.5 C#5:0.5 A4:2 |" +
+                    "D5:0.5 E5:0.5 F5:0.5 G5:0.5 A5:0.5 Bb5:0.5 A5:1 | G5:0.5 A5:0.5 Bb5:0.5 A5:0.5 G5:1 F5:1 | E5:0.5 F5:0.5 G5:0.5 E5:0.5 C#5:1 E5:1 | D5:1 A4:1 D5:2"),
+                Chords = NoteParser.ParseChords(
+                    "Dm:4 | Dm:2 A7:2 | Bb:4 | A7:4 | Dm:4 | Gm:4 | A7:4 | Dm:4"),
+                Rights = "Original composition for Orchestra Project; owned by the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
                 Id = "bachprelude",
                 Title = "Cello Suite No. 1: Prelude (opening)",
                 Composer = "Johann Sebastian Bach (c. 1720)",
