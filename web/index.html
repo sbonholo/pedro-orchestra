@@ -297,15 +297,36 @@ const parseChords = s => s.split(/[\s|]+/).filter(Boolean).map(t => { const [c, 
 const PIECES = [
   { id: "twinkle", title: "Twinkle, Twinkle, Little Star", composer: "Traditional (French melody, 18th c.)", diff: 1, character: "Gentle and simple", bpm: 88, bpb: 4, pickup: 0, phrase: 2,
     melody: parseNotes("C5:1 C5:1 G5:1 G5:1 | A5:1 A5:1 G5:2 | F5:1 F5:1 E5:1 E5:1 | D5:1 D5:1 C5:2 | G5:1 G5:1 F5:1 F5:1 | E5:1 E5:1 D5:2 | G5:1 G5:1 F5:1 F5:1 | E5:1 E5:1 D5:2 | C5:1 C5:1 G5:1 G5:1 | A5:1 A5:1 G5:2 | F5:1 F5:1 E5:1 E5:1 | D5:1 D5:1 C5:4"),
-    chords: parseChords("C:4 | F:2 C:2 | F:2 C:2 | G:2 C:2 | C:2 G7:2 | C:2 G:2 | C:2 G7:2 | C:2 G:2 | C:4 | F:2 C:2 | F:2 C:2 | G:2 C:4") },
+    chords: parseChords("C:4 | F:2 C:2 | F:2 C:2 | G:2 C:2 | C:2 G7:2 | C:2 G:2 | C:2 G7:2 | C:2 G:2 | C:4 | F:2 C:2 | F:2 C:2 | G:2 C:4"), featured: "violin" },
   { id: "mary", title: "Mary Had a Little Lamb", composer: "Traditional (19th c. American)", diff: 1, character: "Light and cheerful", bpm: 100, bpb: 4, pickup: 0, phrase: 4,
     melody: parseNotes("E5:1 D5:1 C5:1 D5:1 | E5:1 E5:1 E5:2 | D5:1 D5:1 D5:2 | E5:1 G5:1 G5:2 | E5:1 D5:1 C5:1 D5:1 | E5:1 E5:1 E5:1 E5:1 | D5:1 D5:1 E5:1 D5:1 | C5:4"),
-    chords: parseChords("C:4 | C:4 | G:4 | C:4 | C:4 | C:4 | G7:4 | C:4") },
+    chords: parseChords("C:4 | C:4 | G:4 | C:4 | C:4 | C:4 | G7:4 | C:4"), featured: "violin" },
   { id: "birthday", title: "Happy Birthday", composer: "Mildred J. Hill & Patty Hill (melody, 1893)", diff: 1, character: "Warm and celebratory, in 3/4", bpm: 96, bpb: 3, pickup: 1, phrase: 2,
     melody: parseNotes("G4:0.75 G4:0.25 | A4:1 G4:1 C5:1 | B4:2 G4:0.75 G4:0.25 | A4:1 G4:1 D5:1 | C5:2 G4:0.75 G4:0.25 | G5:1 E5:1 C5:1 | B4:1 A4:1 F5:0.75 F5:0.25 | E5:1 C5:1 D5:1 | C5:3"),
-    chords: parseChords("C:1 | C:3 | G:3 | G7:3 | C:3 | C:3 | F:3 | C:2 G7:1 | C:3") },
+    chords: parseChords("C:1 | C:3 | G:3 | G7:3 | C:3 | C:3 | F:3 | C:2 G7:1 | C:3"), featured: "violin" },
+  // Repertoire with a featured soloist (Solo mode). Written around C5; each instrument plays in its own octave. Same data as MusicLibrary.cs.
+  { id: "ode", title: "Ode to Joy (Symphony No. 9)", composer: "Ludwig van Beethoven (1824)", diff: 1, character: "Bright and confident", bpm: 112, bpb: 4, pickup: 0, phrase: 4, featured: "violin",
+    melody: parseNotes("E5:1 E5:1 F5:1 G5:1 | G5:1 F5:1 E5:1 D5:1 | C5:1 C5:1 D5:1 E5:1 | E5:1.5 D5:0.5 D5:2 | E5:1 E5:1 F5:1 G5:1 | G5:1 F5:1 E5:1 D5:1 | C5:1 C5:1 D5:1 E5:1 | D5:1.5 C5:0.5 C5:2"),
+    chords: parseChords("C:4 | G7:4 | C:4 | C:2 G:2 | C:4 | G7:4 | C:4 | G7:2 C:2") },
+  { id: "minuet", title: "Minuet in G", composer: "Christian Petzold (c. 1725, long attributed to J. S. Bach)", diff: 2, character: "Graceful court dance in 3/4", bpm: 116, bpb: 3, pickup: 0, phrase: 4, featured: "violin",
+    melody: parseNotes("D5:1 G4:0.5 A4:0.5 B4:0.5 C5:0.5 | D5:1 G4:1 G4:1 | E5:1 C5:0.5 D5:0.5 E5:0.5 F#5:0.5 | G5:1 G4:1 G4:1 | C5:1 D5:0.5 C5:0.5 B4:0.5 A4:0.5 | B4:1 C5:0.5 B4:0.5 A4:0.5 G4:0.5 | F#4:1 G4:0.5 A4:0.5 B4:0.5 G4:0.5 | A4:3 | D5:1 G4:0.5 A4:0.5 B4:0.5 C5:0.5 | D5:1 G4:1 G4:1 | E5:1 C5:0.5 D5:0.5 E5:0.5 F#5:0.5 | G5:1 G4:1 G4:1 | C5:1 D5:0.5 C5:0.5 B4:0.5 A4:0.5 | B4:1 C5:0.5 B4:0.5 A4:0.5 G4:0.5 | A4:1 B4:0.5 A4:0.5 G4:0.5 F#4:0.5 | G4:3"),
+    chords: parseChords("G:3 | G:3 | C:3 | G:3 | C:3 | G:3 | D:3 | D:3 | G:3 | G:3 | C:3 | G:3 | C:3 | G:3 | D7:3 | G:3") },
+  { id: "lullaby", title: "Lullaby (Wiegenlied, Op. 49 No. 4)", composer: "Johannes Brahms (1868)", diff: 1, character: "Tender lullaby in 3/4", bpm: 72, bpb: 3, pickup: 0, phrase: 2, featured: "viola",
+    melody: parseNotes("E5:0.75 E5:0.25 G5:2 | E5:0.75 E5:0.25 G5:2 | E5:0.5 G5:0.5 C6:1 B5:0.75 A5:0.25 | A5:1 G5:1 D5:0.5 E5:0.5 | F5:1 D5:1 D5:0.5 E5:0.5 | F5:2 D5:0.5 F5:0.5 | B5:0.5 A5:0.5 G5:1 B5:1 | C6:2 C5:0.5 C5:0.5 | C6:2 A5:0.5 F5:0.5 | G5:2 E5:0.5 C5:0.5 | F5:1 G5:1 A5:1 | G5:2 C5:0.5 C5:0.5 | C6:2 A5:0.5 F5:0.5 | G5:2 E5:0.5 C5:0.5 | F5:1 E5:1 D5:1 | C5:3"),
+    chords: parseChords("C:3 | C:3 | C:3 | G7:3 | G7:3 | G7:3 | G7:3 | C:3 | F:3 | C:3 | F:3 | C:3 | F:3 | C:3 | G7:3 | C:3") },
+  { id: "goinghome", title: "Largo, “Going Home” (New World Symphony)", composer: "Antonín Dvořák (1893)", diff: 1, character: "Slow, singing and nostalgic", bpm: 58, bpb: 4, pickup: 0, phrase: 2, featured: "bass",
+    melody: parseNotes("E5:1.5 G5:0.5 G5:2 | E5:1.5 D5:0.5 C5:2 | D5:1 E5:1 G5:1 E5:1 | D5:4 | E5:1.5 G5:0.5 G5:2 | E5:1.5 D5:0.5 C5:2 | D5:1 E5:1 D5:1 C5:1 | C5:4"),
+    chords: parseChords("C:4 | C:4 | G:4 | G:4 | C:4 | C:4 | G7:4 | C:4") },
+  { id: "greensleeves", title: "Greensleeves", composer: "Traditional English (16th c.)", diff: 2, character: "Wistful folk song in A minor", bpm: 100, bpb: 3, pickup: 1, phrase: 2, featured: "cello",
+    melody: parseNotes("A4:1 | C5:2 D5:1 | E5:1.5 F5:0.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:0.5 B4:1 | C5:2 A4:1 | A4:1.5 G#4:0.5 A4:1 | B4:2 G#4:1 | E4:2 A4:1 | C5:2 D5:1 | E5:1.5 F5:0.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:0.5 B4:1 | C5:1.5 B4:0.5 A4:1 | G#4:1.5 F#4:0.5 G#4:1 | A4:2"),
+    chords: parseChords("Am:1 | Am:3 | C:3 | G:3 | Em:3 | Am:3 | Am:3 | E:3 | E:2 Am:1 | Am:3 | C:3 | G:3 | Em:3 | Am:3 | E:3 | Am:2") },
+  { id: "bachprelude", title: "Cello Suite No. 1: Prelude (opening)", composer: "Johann Sebastian Bach (c. 1720)", diff: 3, character: "Flowing unaccompanied arpeggios", bpm: 66, bpb: 4, pickup: 0, phrase: 2, featured: "cello", unacc: true,
+    melody: parseNotes([["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"], ["G5", "B5", "A5", "B5", "G5", "B5", "G5"], ["D5", "B5", "A5", "B5", "D5", "B5", "D5"], ["E5", "C6", "B5", "C6", "E5", "C6", "E5"], ["F#5", "C6", "B5", "C6", "F#5", "C6", "F#5"]]
+      .map(f => ("G4:0.25 " + f.map(n => n + ":0.25").join(" ") + " ").repeat(2)).join("| ") + "| G4:4"),
+    chords: parseChords("G:4 | C:4 | D7:4 | G:4 | G:4 | C:4 | D7:4 | G:4") },
 ];
 const pieceById = id => PIECES.find(p => p.id === id);
+const DIFF = ["", "Beginner", "Intermediate", "Advanced", "Virtuoso"];
 const totalBeats = p => p.melody.reduce((a, n) => a + n.beats, 0);
 function chordTones(sym) {
   const root = sym.length > 1 && (sym[1] === "#" || sym[1] === "b") ? sym.slice(0, 2) : sym[0];
@@ -316,12 +337,12 @@ function chordTones(sym) {
 function chordAt(p, beat) { let t = 0; for (const c of p.chords) { if (beat < t + c.beats - 1e-4) return c.sym; t += c.beats; } return p.chords.at(-1).sym; }
 const fit = (m, d) => { while (m < d.lo) m += 12; while (m > d.hi) m -= 12; return m; };
 const nearest = (pc, near, lo, hi) => { let b = -1; for (let m = lo; m <= hi; m++) if (m % 12 === pc && (b < 0 || Math.abs(m - near) < Math.abs(b - near))) b = m; return b < 0 ? lo : b; };
-function arrange(p, mode, inst) {
+function arrangeBase(p, mode, inst, role = inst) {
   const d = INST[inst];
   const doubling = role => ({ role, notes: p.melody.map(n => n.midi < 0 ? n : { midi: fit(n.midi + 12 * d.oct, d), beats: n.beats }) });
   if (mode === "same") return doubling("Melody (octave doubling)");
-  if (inst === "violin") return doubling("Melody");
-  if (inst === "viola") {
+  if (role === "violin") return doubling("Melody");
+  if (role === "viola") {
     let t = 0, prev = d.center; const notes = [];
     for (const n of p.melody) {
       if (n.midi < 0) { notes.push(n); t += n.beats; continue; }
@@ -335,7 +356,7 @@ function arrange(p, mode, inst) {
     }
     return { role: "Harmony", notes };
   }
-  if (inst === "cello") {
+  if (role === "cello") {
     const notes = []; let prev = 52, idx = 0;
     for (const c of p.chords) { let left = c.beats; while (left > 1e-3) { const b = Math.min(2, left); const tn = chordTones(c.sym);
       const m = nearest(tn[idx % 2 === 0 ? 1 : Math.min(2, tn.length - 1)], prev, 45, 60); notes.push({ midi: m, beats: b }); prev = m; idx++; left -= b; } }
@@ -346,6 +367,19 @@ function arrange(p, mode, inst) {
     if (c.beats >= 4) { notes.push({ midi: root, beats: c.beats / 2 }); const f5 = nearest(tn[2], root, 28, 43); notes.push({ midi: f5, beats: c.beats / 2 }); prev = f5; }
     else { notes.push({ midi: root, beats: c.beats }); prev = root; } }
   return { role: "Bass line", notes };
+}
+
+// Solo: the soloist plays the melody in their own octave; the others play the separate-parts accompaniment
+// (violin takes the harmony line) at lower volume. Same rules as Arranger.cs.
+const ACC_GAIN = 0.55;
+function arrange(p, mode, inst, solo = "violin") {
+  if (mode === "solo" && inst === solo) return { ...arrangeBase(p, "same", inst), role: "Solo", gain: 1 };
+  if (mode === "solo") { const part = arrangeBase(p, "parts", inst, inst === "violin" ? "viola" : inst); return { ...part, role: (inst === "violin" ? "Harmony" : part.role) + " (accompaniment)", gain: ACC_GAIN }; }
+  return { ...arrangeBase(p, mode, inst), gain: 1 };
+}
+function soloPlayers(roster, solo, unacc) {
+  const lead = roster.filter(m => m.inst === solo).sort((a, b) => overall(b) - overall(a))[0];
+  return lead ? [lead, ...(unacc ? [] : roster.filter(m => m.inst !== solo))] : [];
 }
 
 /* ---------- skills → played notes (PerformanceRenderer port) ---------- */
@@ -390,7 +424,7 @@ function evaluate(parts, p, mode, ctx, ts) {
   if (n > 1) { const b = {}; for (const pr of parts) for (const nt of pr.notes) { const k = Math.round((nt.start - nt.te) * 1000); (b[k] ??= []).push(nt.te); }
     let sum = 0, c = 0; for (const l of Object.values(b)) { if (l.length < 2) continue; const mean = l.reduce((a, v) => a + v, 0) / l.length; sum += Math.sqrt(l.reduce((a, v) => a + (v - mean) ** 2, 0) / l.length) * 1000; c++; }
     E = c ? 100 * Math.exp(-(sum / c) / 30) : 70; }
-  let o = .22 * R + .2 * I + .2 * A + .2 * E + .18 * Art + (mode === "parts" ? 2 : 0);
+  let o = .22 * R + .2 * I + .2 * A + .2 * E + .18 * Art + (mode !== "same" ? 2 : 0);
   o *= .8 + .2 * clamp((ts - .7) / .3, 0, 1); o = clamp(o, 0, 100);
   const stars = o >= 88 ? 5 : o >= 75 ? 4 : o >= 60 ? 3 : o >= 45 ? 2 : 1;
   const cats = { rhythm: R, intonation: I, "note accuracy": A, "ensemble coordination": E, "musical expression": Art };
@@ -689,7 +723,7 @@ function buildConductor() {
 }
 const BEAT_PATTERNS = { 2: [[0, -.22, 0], [.02, .1, 0]], 3: [[0, -.22, 0], [.22, -.12, .02], [.04, .1, 0]], 4: [[0, -.22, 0], [-.18, -.12, .02], [.22, -.12, .02], [.04, .1, 0]] };
 function animateConductor(now, time) {
-  const c = conductor; if (!c) return; const playing = perf && perf.ctx !== "audition";
+  const c = conductor; if (!c) return; const playing = perf && perf.ctx !== "audition" && perf.players.length > 1;   // a lone soloist plays without a conductor
   c.root.visible = !auditionView;
   let right, left, nod = 0;
   if (playing) {
@@ -845,17 +879,18 @@ async function perform(pieceId, mode, ctx, players, opts = {}) {
   if (actx.state !== "running") await actx.resume();
   stopPerformance(true);
   const p = pieceById(pieceId), parts = {};
-  for (const m of players) parts[m.inst] ??= arrange(p, mode, m.inst);
+  if (mode === "solo") { players = soloPlayers(players, soloSel, p.unacc); if (!players.length) return toast(`Nobody in the orchestra plays the ${INST[soloSel].name.toLowerCase()}. Hire one in Auditions.`); if (ctx !== "audition") select(players[0].id); }
+  for (const m of players) parts[m.inst] ??= arrange(p, mode, m.inst, soloSel);
   const ts = tempoScale(players, parts, p), bpm = p.bpm * ts, prep = opts.prep ?? prog(pieceId).prep;
   const sect = {}; players.forEach(m => sect[m.inst] = (sect[m.inst] || 0) + 1);
-  const rendered = players.map(m => { const rp = renderPart(m, parts[m.inst], p, prep, ctx, bpm); rp.sectionGain = 1 / Math.sqrt(sect[m.inst]) * (players.length > 1 ? .85 : 1.1); return rp; });
+  const rendered = players.map(m => { const rp = renderPart(m, parts[m.inst], p, prep, ctx, bpm); rp.sectionGain = 1 / Math.sqrt(sect[m.inst]) * (players.length > 1 ? .85 : 1.1) * parts[m.inst].gain; return rp; });
   const t0 = actx.currentTime + 0.35;
   rendered.forEach(rp => { const v = ctx === "audition" ? auditionView : views.get(rp.m.id); const chain = musicianChain(rp.m, rp, v ? v.pan : 0);
     for (const n of rp.notes) scheduleNote(chain, INST[rp.m.inst].set, n, t0 + n.start);
     if (v) { v.notes = rp.notes; v.startT = t0; v.idx = 0; v.strokeIdx = -1; } });
   const length = Math.max(...rendered.map(r => r.length));
-  perf = { p, mode, ctx, t0, end: t0 + length + 1.2, players, rendered, ts, onDone: opts.onDone };
-  perf.status = ({ concert: "Concert", audition: "Audition", rehearsal: "Rehearsing", preview: "Playing" })[ctx] + `: <b>${p.title}</b> · ${mode === "parts" ? "separate parts" : "same melody"}${ts < .99 ? ` · tempo ${Math.round(ts * 100)}%` : ""}`;
+  perf = { p, mode, solo: soloSel, ctx, t0, end: t0 + length + 1.2, players, rendered, ts, onDone: opts.onDone };
+  perf.status = ({ concert: "Concert", audition: "Audition", rehearsal: "Rehearsing", preview: "Playing" })[ctx] + `: <b>${p.title}</b> · ${mode === "parts" ? "separate parts" : mode === "solo" ? INST[soloSel].name.toLowerCase() + " solo" : "same melody"}${ts < .99 ? ` · tempo ${Math.round(ts * 100)}%` : ""}`;
   renderUI();
 }
 function stopPerformance(silent) {
@@ -883,7 +918,7 @@ function finishPerformance() {
 const $ = s => document.querySelector(s);
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-let tab = "musician", rosterOpen = true, hidden = false, focusSkill = 0, pieceSel = "twinkle", modeSel = "parts", expanded = null, toastTimer = 0;
+let tab = "musician", rosterOpen = true, hidden = false, focusSkill = 0, pieceSel = "twinkle", modeSel = "parts", soloSel = "cello", expanded = null, toastTimer = 0;
 const skillColor = v => v >= 80 ? "#f0c463" : v >= 65 ? "#8fcf9a" : v >= 50 ? "#7fb3e0" : v >= 35 ? "#a5a2c4" : "#a88a86";
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.opacity = 0, 3200 + msg.split("\n").length * 600); }
 const isNarrow = () => matchMedia("(max-width: 760px)").matches;
@@ -958,8 +993,11 @@ function renderSide() {
     const p = pieceById(pieceSel); const insts = [...new Set(state.roster.map(x => x.inst))];
     const canConcert = state.lastConcert !== state.day && state.roster.every(x => x.energy >= T.eConcert);
     const why = state.lastConcert === state.day ? "The hall is booked once per day. Advance to the next day." : canConcert ? "" : "Some musicians need more energy (25). Rest first.";
-    s.innerHTML = `<div class="eyebrow">Music library</div>` + PIECES.map(x => { const pr = prog(x.id); return `<button class="card ${x.id === pieceSel ? "on" : ""}" data-piece="${x.id}"><span class="t">${esc(x.title)}</span><span class="s">${esc(x.composer)} · Beginner · prepared ${Math.round(pr.prep * 100)}%${pr.best ? ` · best concert ${pr.best.toFixed(0)}` : ""}</span></button>`; }).join("")
-      + `<div class="eyebrow">Arrangement</div><div class="row"><button class="btn ${modeSel === "same" ? "on" : ""}" data-mode="same">Same Melody</button><button class="btn ${modeSel === "parts" ? "on" : ""}" data-mode="parts">Separate Parts</button></div>
+    s.innerHTML = `<div class="eyebrow">Music library</div>` + PIECES.map(x => { const pr = prog(x.id); return `<button class="card ${x.id === pieceSel ? "on" : ""}" data-piece="${x.id}"><span class="t">${esc(x.title)}</span><span class="s">${esc(x.composer)} · ${DIFF[x.diff]} · ${x.unacc ? "solo" : "featured"} ${INST[x.featured].name.toLowerCase()} · prepared ${Math.round(pr.prep * 100)}%${pr.best ? ` · best concert ${pr.best.toFixed(0)}` : ""}</span></button>`; }).join("")
+      + `<div class="eyebrow">Arrangement</div><div class="row"><button class="btn ${modeSel === "same" ? "on" : ""}" data-mode="same">Same Melody</button><button class="btn ${modeSel === "parts" ? "on" : ""}" data-mode="parts">Separate Parts</button><button class="btn ${modeSel === "solo" ? "on" : ""}" data-mode="solo">Solo</button></div>
+      ${modeSel === "solo" ? (() => { const who = soloPlayers(state.roster, soloSel, p.unacc)[0];
+        return `<div class="row">${INST_KEYS.filter(k => state.roster.some(m => m.inst === k)).map(k => `<button class="btn ${soloSel === k ? "on" : ""}" data-solo="${k}">${INST[k].name}</button>`).join("")}</div>
+        <p class="muted small">${who ? `Soloist: <b>${esc(fullName(who))}</b>${p.unacc ? " (unaccompanied)" : ", accompanied softly by the others"}` : "Nobody plays this instrument yet. Hire one in Auditions."}</p>`; })() : ""}
       <div class="eyebrow">Concert</div>
       <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)}</button>
       <p class="small ${canConcert ? "muted" : ""}" style="${canConcert ? "" : "color:var(--bad)"}">${canConcert ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians." : why}</p>
@@ -967,10 +1005,10 @@ function renderSide() {
       <div class="row"><button class="btn" id="a-listen" ${perf ? "disabled" : ""}>Listen</button><button class="btn" id="a-rehearse" ${perf ? "disabled" : ""}>Rehearse</button><button class="btn" id="a-quick" ${perf ? "disabled" : ""}>Quick rehearsal</button></div>
       <p class="muted small">Listen: no training, no energy. Rehearse (with playback) and Quick rehearsal (instant) build preparation for this piece and cost ${T.eRehearse} energy.</p>
       <div class="eyebrow">About this piece</div>
-      <p class="muted small">${insts.map(i => `${INST[i].name}: ${arrange(p, modeSel, i).role}`).join("<br>")}</p>
+      <p class="muted small">${(modeSel === "solo" ? [...new Set(soloPlayers(state.roster, soloSel, p.unacc).map(m => m.inst))] : insts).map(i => `${INST[i].name}: ${arrange(p, modeSel, i, soloSel).role}`).join("<br>")}</p>
       <p class="muted small">${esc(p.character)} · ${p.bpm} bpm · ${p.bpb}/4 · public-domain melody, arrangement generated by the game</p>
       <div class="kv"><span>Reputation</span><span>${state.rep.toFixed(0)}</span></div><div class="kv"><span>Concerts · best rating</span><span>${state.concerts} · ${state.best.toFixed(0)}</span></div>
-      <p class="muted small">Bach, Vivaldi, Saint-Saëns and Elgar arrive with the library expansion.</p>`;
+      <p class="muted small">Elgar's Cello Concerto, Vivaldi and Saint-Saëns arrive with the next library expansion.</p>`;
   } else if (tab === "practice") {
     if (!m) { s.innerHTML = `<p>Select a musician.</p>`; return; }
     s.innerHTML = `<div class="eyebrow">Practising</div><h2>${esc(fullName(m))}</h2><p class="muted">${INST[m.inst].title} · energy ${m.energy.toFixed(0)} / ${T.maxE}</p>
@@ -1020,7 +1058,7 @@ function modal(html) { const bg = el(`<div class="modal-bg"><div class="modal">$
 function showResult(pf, r, gains) {
   const kind = { concert: "Concert review", audition: "Audition", rehearsal: "Rehearsal report", preview: "Performance" }[pf.ctx];
   const cat = (n, v) => `<div class="skill" style="padding:2px 0"><span>${n}</span>${bar(v, skillColor(v))}<span class="v">${v.toFixed(0)}</span></div>`;
-  const bg = modal(`<div class="eyebrow">${kind}</div><h2>${esc(pf.p.title)} <span class="muted" style="font-size:16px">(${pf.mode === "parts" ? "separate parts" : "same melody"})</span></h2>
+  const bg = modal(`<div class="eyebrow">${kind}</div><h2>${esc(pf.p.title)} <span class="muted" style="font-size:16px">(${pf.mode === "parts" ? "separate parts" : pf.mode === "solo" ? INST[pf.solo].name.toLowerCase() + " solo" : "same melody"})</span></h2>
     <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" style="margin-left:12px">${r.overall.toFixed(0)}</span><span class="muted">/ 100</span></div>
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
@@ -1142,7 +1180,8 @@ document.addEventListener("click", e => {
   else if (d.qp) { const r = practice(selected(), +d.qp); toast(summary(r)); save(); renderUI(); }
   else if (d.go) { if (!state && !load()) newGame(); enterGame(d.go); }
   else if (d.skill) { focusSkill = +d.skill; toast(SKILLS[focusSkill][0] + ": " + SKILLS[focusSkill][2]); renderUI(); }
-  else if (d.piece) { pieceSel = d.piece; renderUI(); }
+  else if (d.piece) { pieceSel = d.piece; soloSel = pieceById(d.piece).featured; renderUI(); }
+  else if (d.solo) { soloSel = d.solo; renderUI(); }
   else if (d.mode) { modeSel = d.mode; renderUI(); }
   else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }
   else if (d.hear) { const c = [...state.auditions, ...state.invites].find(x => x.id === d.hear); hearAudition(c); }

@@ -18,6 +18,7 @@ namespace OrchestraProject
         public string Status { get; private set; }
         public float Progress { get; private set; }
         public PerformanceContext Context { get; private set; }
+        public int PlayerCount { get; private set; }
 
         // Timing of the piece being played (for the conductor): dsp time of beat 0, seconds per beat, metre.
         public bool HasTiming { get; private set; }
@@ -35,10 +36,10 @@ namespace OrchestraProject
         public void Init(StageManager stageManager) { stage = stageManager; }
 
         public void Perform(PieceDefinition piece, ArrangementMode mode, List<MusicianData> players, PerformanceContext ctx,
-            float preparation, Action<PerformanceResult> onFinished)
+            float preparation, Action<PerformanceResult> onFinished, InstrumentType soloist = InstrumentType.Violin)
         {
             if (IsBusy) Stop();
-            running = StartCoroutine(Run(piece, mode, players, ctx, preparation, onFinished));
+            running = StartCoroutine(Run(piece, mode, players, ctx, preparation, onFinished, soloist));
         }
 
         public void Stop()
@@ -61,16 +62,17 @@ namespace OrchestraProject
         }
 
         IEnumerator Run(PieceDefinition piece, ArrangementMode mode, List<MusicianData> players, PerformanceContext ctx,
-            float prep, Action<PerformanceResult> onFinished)
+            float prep, Action<PerformanceResult> onFinished, InstrumentType soloist)
         {
             IsBusy = true;
             Context = ctx;
+            PlayerCount = players.Count;
             Progress = 0f;
             Status = "Preparing " + piece.Title + "…";
 
             var instruments = new List<InstrumentType>();
             foreach (var m in players) instruments.Add(m.instrument);
-            var arrangement = Arranger.Arrange(piece, mode, instruments);
+            var arrangement = Arranger.Arrange(piece, mode, instruments, soloist);
             float tempoScale = PerformanceRenderer.EnsembleTempoScale(players, arrangement);
             float bpm = piece.Bpm * tempoScale;
 
@@ -82,7 +84,7 @@ namespace OrchestraProject
             foreach (var m in players)
             {
                 var rp = PerformanceRenderer.Render(m, arrangement.Parts[m.instrument], piece, prep, ctx, bpm, ++seedCounter * 7919 + m.appearanceSeed);
-                rp.SectionGain = 1f / Mathf.Sqrt(sectionCount[m.instrument]) * (players.Count > 1 ? 0.85f : 1.1f);
+                rp.SectionGain = 1f / Mathf.Sqrt(sectionCount[m.instrument]) * (players.Count > 1 ? 0.85f : 1.1f) * arrangement.Parts[m.instrument].Gain;
                 parts.Add(rp);
             }
 
@@ -137,7 +139,7 @@ namespace OrchestraProject
             BeatZeroDsp = dspStart + StringSynth.LeadInSec; MusicEndDsp = BeatZeroDsp + length;
             SecondsPerBeat = 60f / bpm; BeatsPerBar = piece.BeatsPerBar; PickupBeats = piece.PickupBeats; HasTiming = true;
             Status = (ctx == PerformanceContext.Concert ? "Concert: " : ctx == PerformanceContext.Audition ? "Audition: " : ctx == PerformanceContext.Rehearsal ? "Rehearsing: " : "Playing: ")
-                     + piece.Title + (mode == ArrangementMode.SeparateParts ? " (separate parts)" : " (same melody)")
+                     + piece.Title + (mode == ArrangementMode.SeparateParts ? " (separate parts)" : mode == ArrangementMode.Solo ? " (" + InstrumentCatalog.Get(soloist).DisplayName.ToLowerInvariant() + " solo)" : " (same melody)")
                      + (tempoScale < 0.99f ? " — tempo " + Mathf.RoundToInt(tempoScale * 100) + "%" : "");
             while (AudioSettings.dspTime < end)
             {

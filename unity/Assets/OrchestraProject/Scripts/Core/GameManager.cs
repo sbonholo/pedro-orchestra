@@ -21,6 +21,8 @@ namespace OrchestraProject
         public bool InGame { get { return State != null; } }
 
         public string SelectedId { get; private set; }
+        /// <summary>Soloist instrument for Solo mode (chosen in the Music tab).</summary>
+        public InstrumentType Soloist = InstrumentType.Cello;
         public MusicianData Selected { get { return State != null ? State.FindMusician(SelectedId) : null; } }
 
         public event Action StateChanged;
@@ -174,12 +176,14 @@ namespace OrchestraProject
             var piece = MusicLibrary.Get(pieceId);
             if (piece == null) { Notify("Unknown piece."); return; }
             var players = State.roster.FindAll(m => m.Instrument.Implemented);
-            if (players.Count == 0) { Notify("Nobody to play."); return; }
+            if (mode == ArrangementMode.Solo) players = Arranger.SoloPlayers(players, Soloist, piece.Unaccompanied);
+            if (mode == ArrangementMode.Solo && players.Count > 0) Select(players[0].id);   // close-up camera follows the soloist
+            if (players.Count == 0) { Notify(mode == ArrangementMode.Solo ? "Nobody in the orchestra plays the " + InstrumentCatalog.Get(Soloist).DisplayName.ToLowerInvariant() + "." : "Nobody to play."); return; }
             if (ctx == PerformanceContext.Rehearsal && players.TrueForAll(m => m.energy < TrainingSystem.MinEnergyToWork))
             { Notify("Everyone is too tired to rehearse. Advance to the next day."); return; }
 
             float prep = State.Progress(pieceId).preparation;
-            Performance.Perform(piece, mode, players, ctx, prep, result => OnPerformanceDone(result, players));
+            Performance.Perform(piece, mode, players, ctx, prep, result => OnPerformanceDone(result, players), Soloist);
             if (StateChanged != null) StateChanged();
         }
 

@@ -57,7 +57,7 @@ If anything goes red, open **Window → General → Console**, copy the first re
 - **Select a musician:** click or tap them on stage, or pick them in the Roster.
 - **Musician tab:** all 11 skills. Tap a skill to choose a focus, then **Quick Practice**, or set it as the musician's **daily plan**.
 - **Practice tab:** the rhythm mini-game (count-in, then tap with the click: Space or the pad; up to 2× a quick practice) and one quick-practice button per skill.
-- **Music & Concerts:** pick a piece and **Same Melody** or **Separate Parts**. **Perform Concert** (1–5 stars, applause, raises reputation); **Listen** (no effect), **Rehearse** or **Quick rehearsal** build preparation.
+- **Music & Concerts:** 9 pieces (Twinkle, Mary, Happy Birthday, Ode to Joy, Minuet in G, Brahms Lullaby, Dvořák “Going Home”, Greensleeves, Bach Cello Suite No. 1 Prelude). Pick **Same Melody**, **Separate Parts** or **Solo** (choose the solo instrument; the best player of it takes the melody, the others accompany softly; the Bach Prelude is unaccompanied). **Perform Concert** (1–5 stars, applause, raises reputation); **Listen** (no effect), **Rehearse** or **Quick rehearsal** build preparation.
 - **Conductor and audience:** the conductor beats time (2/4, 3/4, 4/4) with the music being played. The hall fills as reputation grows (10 % at 0, full at 75) and the audience applauds after each concert.
 - **Auditions:** hear applicants play, compare their skills against your section leader, hire them. **Invitations** go to stronger players; whether they accept depends on your reputation.
 - **Energy and days:** each musician has up to 1,000 energy; practice (20), rehearsal (15) and concerts (25) use it. **Next Day** restores 600. In **Director** play style (Settings) musicians also train their daily plan whenever a day passes.
@@ -91,7 +91,7 @@ If anything goes red, open **Window → General → Console**, copy the first re
 | Instrument sound | **VSCO 2 Community Edition** (CC0, free to use commercially). Multi-sampled strings get mapped per note and per dynamic, and the skill effects (timing, pitch, vibrato) are applied on top. |
 | Musicians | Rigged human models (e.g. Reallusion Character Creator, paid; or MakeHuman, whose exported models can be used freely) plus Unity **Animation Rigging** Two-Bone IK, driven by the same note data the mannequins already use. |
 | Instruments, hall | Purchased or CC-BY models (Sketchfab / Asset Store) with correct credits, or commissioned models. The scale already matches real instruments. |
-| Repertoire | Public-domain scores (Bach, Vivaldi, Saint-Saëns, Danse Macabre) are fine to arrange. **Elgar's Cello Concerto and Shostakovich are still in copyright in many countries**, so they need a licence. Every recording needs its own licence. |
+| Repertoire | Public-domain works (Bach, Vivaldi, Saint-Saëns incl. Danse Macabre, **Elgar**: died 1934, so his Cello Concerto (1919) is public domain in the US, UK and EU; a few countries with life + 80/100 terms, e.g. Mexico, differ) are fine to arrange, but transcribe from an old public-domain score, not a modern edition. **Shostakovich** is still in copyright and needs a licence. Every recording needs its own licence. |
 
 ## 7a. Adding or replacing recordings
 `python3 Tools~/build_samples.py <folder of single-note WAVs> Assets/OrchestraProject/Resources/OrchestraSamples/<Instrument> <prefix> [--vibrato]` measures each note's real pitch, loops it and writes the files the game loads.
@@ -120,7 +120,7 @@ Assets/OrchestraProject/
   Scripts/UI/                     UIFactory (theme, helpers), UIManager, Screens/* (menu, HUD, tabs, rhythm, results, settings)
 ```
 
-- **Add a piece:** add one entry in `MusicLibrary.cs`, with the melody as `"C5:1 D5:0.5 ..."` and chords as `"C:4 G7:2 ..."`. Both arrangements are generated automatically.
+- **Add a piece:** add one entry in `MusicLibrary.cs`, with the melody as `"C5:1 D5:0.5 ..."` and chords as `"C:4 G7:2 ..."`, plus `Featured` (default soloist) and `Unaccompanied` for solo works. Same Melody, Separate Parts and Solo are generated automatically. Add the same entry to `PIECES` in `web/index.html`.
 - **Add an instrument:** add one entry in `InstrumentCatalog`. Winds, brass and timpani are already listed as "planned" and also need a synth voice and a model.
 - **Add a rhythm exercise:** add one entry in `RhythmExercise.All`.
 

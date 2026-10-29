@@ -38,7 +38,7 @@ namespace OrchestraProject
             float time = Time.time;
             Vector3 right, left;
             float nod = 0f;
-            if (perf.IsBusy && perf.HasTiming)
+            if (perf.IsBusy && perf.HasTiming && perf.PlayerCount > 1)   // a lone soloist plays without a conductor
             {
                 double now = AudioSettings.dspTime;
                 int bpb = perf.BeatsPerBar;

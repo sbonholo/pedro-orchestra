@@ -8,7 +8,8 @@ namespace OrchestraProject
     public enum ArrangementMode
     {
         SameMelody,     // everyone plays the tune, each in their own octave
-        SeparateParts   // melody, harmony, lower voice and bass line
+        SeparateParts,  // melody, harmony, lower voice and bass line
+        Solo            // one soloist plays the melody; the others accompany softly (or nobody, if unaccompanied)
     }
 
     /// <summary>A written note. midi &lt; 0 is a rest. Duration is in beats.</summary>
@@ -42,6 +43,8 @@ namespace OrchestraProject
         public List<Note> Melody;       // written around C5 for the violin
         public List<ChordSegment> Chords;
         public string Rights;           // copyright / licence note
+        public InstrumentType Featured = InstrumentType.Violin;   // default soloist in Solo mode
+        public bool Unaccompanied;      // solo pieces written for one player alone (e.g. Bach cello suite)
 
         public float TotalBeats
         {
@@ -53,6 +56,7 @@ namespace OrchestraProject
     {
         public InstrumentType Instrument;
         public string Role;
+        public float Gain = 1f;         // accompaniment in Solo mode plays softer
         public List<Note> Notes = new List<Note>();
     }
 

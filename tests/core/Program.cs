@@ -116,6 +116,19 @@ static class Program
         RecruitmentSystem.Refresh(st, rng);
         Check(st.auditionPool.Count == 3 && st.invitePool.Count == 2, "pools filled");
 
+        // Solo mode: soloist plays the melody; others accompany softly; unaccompanied pieces have one player
+        {
+            var ss = OrchestraState.NewGame(5);
+            var bach = MusicLibrary.Get("bachprelude");
+            var sp = Arranger.SoloPlayers(ss.roster, InstrumentType.Cello, bach.Unaccompanied);
+            Check(sp.Count == 1 && sp[0].instrument == InstrumentType.Cello, "Bach prelude: cello alone");
+            var a = Arranger.Arrange(bach, ArrangementMode.Solo, sp.Select(m => m.instrument), InstrumentType.Cello);
+            Check(a.Parts.Count == 1 && a.Parts[InstrumentType.Cello].Notes[0].midi == 43, "Bach prelude starts on the cello's low G (G2)");
+            var gh = MusicLibrary.Get("goinghome");
+            var sp2 = Arranger.SoloPlayers(ss.roster, InstrumentType.DoubleBass, gh.Unaccompanied);
+            var a2 = Arranger.Arrange(gh, ArrangementMode.Solo, sp2.Select(m => m.instrument), InstrumentType.DoubleBass);
+            Check(sp2.Count == 4 && a2.Parts[InstrumentType.DoubleBass].Gain == 1f && a2.Parts[InstrumentType.Violin].Gain < 1f, "bass solo with soft quartet accompaniment");
+        }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);

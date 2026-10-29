@@ -19,10 +19,10 @@ namespace OrchestraProject
             {
                 var piece = p;
                 var prog = s.Progress(p.Id);
-                var b = UIFactory.Button(root, "", () => { pieceId = piece.Id; ui.Hud.Refresh(); }, 20, 86);
+                var b = UIFactory.Button(root, "", () => { pieceId = piece.Id; gm.Soloist = piece.Featured; ui.Hud.Refresh(); }, 20, 86);
                 var t = b.GetComponentInChildren<Text>();
                 t.alignment = TextAnchor.MiddleLeft;
-                t.text = "<b>" + p.Title + "</b>\n<size=16>" + p.Composer + "  ·  " + p.Difficulty + "  ·  prepared " + (prog.preparation * 100f).ToString("0") + "%" +
+                t.text = "<b>" + p.Title + "</b>\n<size=16>" + p.Composer + "  ·  " + p.Difficulty + "  ·  " + (p.Unaccompanied ? "solo " : "featured ") + InstrumentCatalog.Get(p.Featured).DisplayName.ToLowerInvariant() + "  ·  prepared " + (prog.preparation * 100f).ToString("0") + "%" +
                          (prog.bestConcertRating > 0 ? "  ·  best concert " + prog.bestConcertRating.ToString("0") : "") + "</size>";
                 UIFactory.SetSelected(b, p.Id == pieceId);
             }
@@ -32,7 +32,25 @@ namespace OrchestraProject
             var same = UIFactory.Button(row, "Same Melody", () => { mode = ArrangementMode.SameMelody; ui.Hud.Refresh(); }, 20, 60);
             var sep = UIFactory.Button(row, "Separate Parts", () => { mode = ArrangementMode.SeparateParts; ui.Hud.Refresh(); }, 20, 60);
             UIFactory.SetSelected(same, mode == ArrangementMode.SameMelody);
+            var solo = UIFactory.Button(row, "Solo", () => { mode = ArrangementMode.Solo; ui.Hud.Refresh(); }, 20, 60);
             UIFactory.SetSelected(sep, mode == ArrangementMode.SeparateParts);
+            UIFactory.SetSelected(solo, mode == ArrangementMode.Solo);
+            if (mode == ArrangementMode.Solo)
+            {
+                // Soloist: any instrument the orchestra has. The best player of that instrument plays the solo.
+                var soloRow = UIFactory.Row(root, 56);
+                foreach (InstrumentType it in new[] { InstrumentType.Violin, InstrumentType.Viola, InstrumentType.Cello, InstrumentType.DoubleBass })
+                {
+                    var inst = it;
+                    if (!s.roster.Exists(m => m.instrument == inst)) continue;
+                    var sb2 = UIFactory.Button(soloRow, InstrumentCatalog.Get(inst).DisplayName, () => { gm.Soloist = inst; ui.Hud.Refresh(); }, 18, 56);
+                    UIFactory.SetSelected(sb2, gm.Soloist == inst);
+                }
+                var who = Arranger.SoloPlayers(s.roster, gm.Soloist, sel.Unaccompanied);
+                var wl = UIFactory.Label(root, who.Count == 0 ? "Nobody plays this instrument yet. Hire one in Auditions."
+                    : "Soloist: <b>" + who[0].FullName + "</b>" + (sel.Unaccompanied ? " (unaccompanied)" : ", accompanied softly by the others"), 17, TextAnchor.UpperLeft, UITheme.TextDim);
+                UIFactory.Size(wl, 30);
+            }
 
             // Main action first, so it is visible without scrolling.
             UIFactory.Header(root, "Concert");
@@ -57,7 +75,7 @@ namespace OrchestraProject
             UIFactory.Header(root, "About this piece");
             var instruments = new System.Collections.Generic.List<InstrumentType>();
             foreach (var m in s.roster) if (!instruments.Contains(m.instrument)) instruments.Add(m.instrument);
-            var arr = Arranger.Arrange(sel, mode, instruments);
+            var arr = Arranger.Arrange(sel, mode, instruments, gm.Soloist);
             var sb = new System.Text.StringBuilder();
             foreach (var kv in arr.Parts) sb.Append(InstrumentCatalog.Get(kv.Key).DisplayName).Append(": ").Append(kv.Value.Role).Append("\n");
             var roles = UIFactory.Label(root, sb.ToString().TrimEnd(), 18, TextAnchor.UpperLeft, UITheme.TextDim);
@@ -66,7 +84,7 @@ namespace OrchestraProject
             UIFactory.Size(info, 52);
             var rep = UIFactory.Label(root, "Reputation " + s.reputation.ToString("0") + "  ·  concerts " + s.concertsPerformed + "  ·  best rating " + s.bestConcertRating.ToString("0"), 17, TextAnchor.UpperLeft, UITheme.Text);
             UIFactory.Size(rep, 30);
-            var more = UIFactory.Label(root, "More pieces (Bach, Vivaldi, Saint-Saëns, Elgar…) arrive with the library expansion stage.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
+            var more = UIFactory.Label(root, "Elgar's Cello Concerto, Vivaldi and Saint-Saëns arrive with the next library expansion.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
             UIFactory.Size(more, 44);
         }
     }

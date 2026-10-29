@@ -46,7 +46,7 @@ namespace OrchestraProject
             r.Ensemble = parts.Count > 1 ? EnsembleScore(parts) : r.Rhythm;
 
             float overall = 0.22f * r.Rhythm + 0.2f * r.Intonation + 0.2f * r.Accuracy + 0.2f * r.Ensemble + 0.18f * r.Artistry;
-            if (mode == ArrangementMode.SeparateParts) overall += 2f;          // richer texture, audiences notice
+            if (mode != ArrangementMode.SameMelody) overall += 2f;          // richer texture, audiences notice
             overall *= 0.8f + 0.2f * Math.Max(0f, Math.Min(1f, (tempoScale - 0.7f) / 0.3f)); // too slow = less exciting
             r.Overall = Math.Max(0f, Math.Min(100f, overall));
 
