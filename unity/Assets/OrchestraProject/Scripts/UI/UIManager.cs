@@ -20,6 +20,7 @@ namespace OrchestraProject
         public RhythmGameScreen RhythmScreen { get; private set; }
         public ResultScreen Results { get; private set; }
         public Toast Toast { get; private set; }
+        public TutorialScreen Tutorial { get; private set; }
 
         public void Build(GameManager gm)
         {
@@ -62,6 +63,8 @@ namespace OrchestraProject
             Menu.Build(this, gm);
             Settings = UIFactory.Stretch(UIFactory.Rect("Settings", Root)).gameObject.AddComponent<SettingsScreen>();
             Settings.Build(this, gm);
+            Tutorial = UIFactory.Stretch(UIFactory.Rect("Tutorial", Root)).gameObject.AddComponent<TutorialScreen>();
+            Tutorial.Build();
             Toast = UIFactory.Rect("Toast", Root).gameObject.AddComponent<Toast>();
             Toast.Build();
 

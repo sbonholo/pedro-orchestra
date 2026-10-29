@@ -34,6 +34,7 @@ namespace OrchestraProject
                 else gm.Notify("No saved game found.");
             }, 24, h, UITheme.AccentDim);
             newGameButton = UIFactory.Button(col, "New Game", NewGame, 24, h);
+            UIFactory.Button(col, "How to Play", () => ui.Tutorial.Show(), 21, h);
             UIFactory.Button(col, "Orchestra Management", () => Enter(HudTab.Musician), 21, h);
             UIFactory.Button(col, "Music Library", () => Enter(HudTab.Music), 21, h);
             UIFactory.Button(col, "Practice", () => Enter(HudTab.Practice), 21, h);
@@ -65,6 +66,7 @@ namespace OrchestraProject
             }
             gm.NewGame();
             ui.ShowGame(HudTab.Musician);
+            if (!TutorialScreen.Seen) ui.Tutorial.Show();
         }
 
         void Enter(HudTab tab)

@@ -99,6 +99,11 @@ p { margin: 0; line-height: 1.5; }
 .stars { display: flex; gap: 8px; align-items: center; }
 .star { width: 22px; height: 22px; transform: rotate(45deg); border-radius: 4px; background: #3a3238; }
 .star.on { background: var(--gold); }
+.tut-step { display: grid; gap: 6px; }
+.tut-step ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; line-height: 1.45; }
+.tut-dots { display: flex; gap: 6px; justify-content: center; }
+.tut-dots i { width: 8px; height: 8px; border-radius: 50%; background: #3a3238; }
+.tut-dots i.on { background: var(--gold); }
 .score { font-family: var(--display); font-size: 44px; font-weight: 700; line-height: 1; }
 #loading { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: var(--ink); color: var(--muted); font-family: var(--display); font-size: 22px; letter-spacing: .08em; }
 @media (max-width: 1180px) { #brand { display: none; } }
@@ -121,6 +126,7 @@ p { margin: 0; line-height: 1.5; }
     <p class="tag">Build a world-class orchestra, one musician at a time.</p>
     <button class="btn primary" id="m-continue">Continue</button>
     <button class="btn" id="m-new">New Game</button>
+    <button class="btn" id="m-help">How to Play</button>
     <button class="btn" data-go="musician">Orchestra Management</button>
     <button class="btn" data-go="music">Music Library</button>
     <button class="btn" data-go="practice">Practice</button>
@@ -140,6 +146,7 @@ p { margin: 0; line-height: 1.5; }
   <div class="spacer"></div>
   <button class="btn" id="b-day">Next Day</button>
   <button class="btn" id="b-week">+7 Days</button>
+  <button class="btn" id="b-help">How to Play</button>
   <button class="btn" id="b-menu">Menu</button>
 </div>
 
@@ -870,6 +877,31 @@ function showResult(pf, r, gains) {
     <button class="btn primary" data-close>Continue</button>`);
   bg.querySelector("[data-close]").onclick = () => { bg.remove(); renderUI(); };
 }
+const TUTORIAL = [
+  ["Welcome, Music Director", ["Four musicians are on stage: violin, viola, cello and double bass.", "They start around 31–36 out of 100: experienced amateurs.", "Your job: train them into a world-class orchestra. Use headphones."]],
+  ["1 · Meet your musicians", ["Tap <b>Roster</b>, or tap a musician on stage.", "The <b>Musician</b> tab shows 11 skills (0–100), an overall level from Novice to Master, and energy."]],
+  ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
+  ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
+  ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "<b>Next Day</b> restores energy. <b>+7 Days</b> skips a week."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "You get 1–5 stars. Good concerts raise <b>reputation</b>, which attracts better musicians."]],
+  ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
+  ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~60 days, Professional after ~140, World-Class after ~275."]],
+];
+function openTutorial(start = 0) {
+  let i = start;
+  const bg = modal(`<div class="eyebrow">How to play</div><div class="tut-step" id="tut-body"></div><div class="tut-dots" id="tut-dots"></div>
+    <div class="row"><button class="btn" id="tut-prev">Back</button><button class="btn primary" id="tut-next">Next</button></div><button class="btn" id="tut-close">Close tutorial</button>`);
+  const draw = () => { const [h, items] = TUTORIAL[i];
+    bg.querySelector("#tut-body").innerHTML = `<h2>${h}</h2><ul>${items.map(x => `<li>${x}</li>`).join("")}</ul>`;
+    bg.querySelector("#tut-dots").innerHTML = TUTORIAL.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("");
+    bg.querySelector("#tut-prev").disabled = i === 0; bg.querySelector("#tut-next").textContent = i === TUTORIAL.length - 1 ? "Start playing" : "Next"; };
+  bg.querySelector("#tut-prev").onclick = () => { i = Math.max(0, i - 1); draw(); };
+  bg.querySelector("#tut-next").onclick = () => { if (i === TUTORIAL.length - 1) return bg.remove(); i++; draw(); };
+  bg.querySelector("#tut-close").onclick = () => bg.remove();
+  try { localStorage.setItem("orchestra-tutorial-seen", "1"); } catch (e) { }
+  draw();
+}
+const tutorialSeen = () => { try { return !!localStorage.getItem("orchestra-tutorial-seen"); } catch (e) { return false; } };
 let rhythm = null;
 function openRhythm(m, exIndex = 0) {
   const bg = modal(`<div class="eyebrow">Rhythm practice</div><h2 id="r-title"></h2><p class="muted small" id="r-who"></p>
@@ -988,7 +1020,9 @@ $("#b-stop").onclick = () => stopPerformance(); $("#b-hide").onclick = () => { h
 $("#b-show").onclick = () => { hidden = false; $("#topbar").hidden = false; $("#bottombar").hidden = false; $("#b-show").hidden = true; renderUI(); };
 $("#m-continue").onclick = () => { if (state || load()) enterGame("musician"); else toast("No saved game found."); };
 let confirmNew = false;
-$("#m-new").onclick = () => { if (hasSave() && !confirmNew) { confirmNew = true; $("#m-new").textContent = "Tap again to overwrite the saved game"; return; } confirmNew = false; $("#m-new").textContent = "New Game"; newGame(); selectedId = null; enterGame("musician"); toast("Welcome, Music Director. Your four string players are waiting on stage."); };
+$("#m-new").onclick = () => { if (hasSave() && !confirmNew) { confirmNew = true; $("#m-new").textContent = "Tap again to overwrite the saved game"; return; } confirmNew = false; $("#m-new").textContent = "New Game"; newGame(); selectedId = null; enterGame("musician"); if (!tutorialSeen()) openTutorial(); else toast("Welcome, Music Director. Your four string players are waiting on stage."); };
+$("#m-help").onclick = () => openTutorial();
+$("#b-help").onclick = () => openTutorial();
 document.addEventListener("keydown", e => {
   if (e.code === "Space" && rhythm?.phase === "play") { e.preventDefault(); tapRhythm(e.timeStamp); return; }
   if (e.target.closest?.("input,textarea")) return;

@@ -53,6 +53,7 @@ namespace OrchestraProject
             var spacer = UIFactory.Rect("Spacer", topBar); UIFactory.Size(spacer, -1, 0, 1);
             Nav("Next Day", () => gm.AdvanceDays(1), phone ? 130 : 150);
             Nav("+7 Days", () => gm.AdvanceDays(7), phone ? 120 : 140);
+            Nav("?", () => ui.Tutorial.Show(), 64);
             Nav("Menu", () => ui.ShowMenu(), phone ? 100 : 120);
 
             // ---- Roster (left) ----
