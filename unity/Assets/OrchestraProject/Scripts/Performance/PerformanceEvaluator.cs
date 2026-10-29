@@ -18,6 +18,7 @@ namespace OrchestraProject
         public float ConductingBonus;
         public List<JudgeVerdict> Judges;     // concerts only
         public int CoinsEarned;
+        public int TicketsSold, TicketCoins;
     }
 
     /// <summary>

@@ -847,6 +847,8 @@ function animateConductor(now, time) {
 /* ---------- audience: the hall fills as reputation grows; applause after concerts ---------- */
 let audience = null;
 const audienceFill = rep => clamp(.1 + rep * .012, .1, 1);
+// Tickets: every listener pays 5 coins; the hall has 1,166 seats (same as Economy.cs)
+const TICKET_PRICE = 5, HALL_SEATS = 1166, audienceCount = rep => Math.round(HALL_SEATS * audienceFill(rep));
 function buildAudience() {
   const r = rngFrom(99), order = audienceSeats.map((p, i) => [r(), p]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
   const body = new THREE.InstancedMesh(GEO.cap, new THREE.MeshStandardMaterial({ roughness: .85 }), order.length), head = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: .6 }), order.length);
@@ -1021,7 +1023,7 @@ function finishPerformance() {
   const res = evaluate(pf.rendered, pf.p, pf.mode, pf.ctx, pf.ts, pf.cond ? conductScore(pf.cond) : -1); let gains = null;
   const pr = prog(pf.p.id);
   if (pf.ctx === "rehearsal") gains = rehearse(pf.players, pr);
-  if (pf.ctx === "concert") { state.lastConcert = state.day; const log = [];
+  if (pf.ctx === "concert") { state.lastConcert = state.day; const log = []; res.tickets = audienceCount(state.rep); res.ticketCoins = res.tickets * TICKET_PRICE; state.coins += res.ticketCoins;
     for (const m of pf.players) { const f = T.base * m.talent * (.6 + res.overall / 100); gain(m, S.confidence, f * 1.2, log); gain(m, S.musicality, f * .3, log); gain(m, S.expression, f * .3, log); m.energy = Math.max(0, m.energy - T.eConcert); m.concerts++; }
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
@@ -1198,7 +1200,8 @@ function showResult(pf, r, gains) {
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
     ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of ${r.judges.length} approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
-      <p style="color:var(--gold)"><b>+${r.coins} coins.</b> ${r.coins === ECO.yes ? "The judges approved." : `3 of 5 judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
+      <p style="color:var(--gold)"><b>Tickets: ${r.tickets.toLocaleString("en")} listeners × ${TICKET_PRICE} = +${r.ticketCoins.toLocaleString("en")} coins.</b></p>
+      <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${r.coins === ECO.yes ? "The judges approved." : `3 of 5 judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
     <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
     ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
     <button class="btn primary" data-close>Continue</button>`);
@@ -1212,7 +1215,7 @@ const TUTORIAL = [
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 2,000 energy. <b>Next Day</b> restores 1,200. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Every listener also pays <b>5 coins</b> for a ticket, so a fuller hall earns more. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
   ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];

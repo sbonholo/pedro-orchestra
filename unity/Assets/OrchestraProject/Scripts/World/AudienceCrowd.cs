@@ -17,7 +17,7 @@ namespace OrchestraProject
         AudioSource source;
         int shown = -1;
 
-        public static float Fill(float reputation) { return Mathf.Clamp(0.1f + reputation * 0.012f, 0.1f, 1f); }
+        public static float Fill(float reputation) { return Economy.AudienceFill(reputation); }
 
         public void Build(List<Vector3> seatFloors)
         {

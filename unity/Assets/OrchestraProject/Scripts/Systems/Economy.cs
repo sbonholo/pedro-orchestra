@@ -35,6 +35,13 @@ namespace OrchestraProject
         public const int JudgeCount = 5, JudgesNeeded = 3;   // a majority of the five judges
         public const float MasterclassGain = 3f;
 
+        // ---- Tickets: every audience member pays 5 coins to watch a concert ----
+        public const int TicketPrice = 5;
+        public const int HallSeats = 1166;   // 22 stall rows x 43 + 5 balcony rows x 44
+        /// <summary>Share of the hall that is full: 10 % at reputation 0, full at 75.</summary>
+        public static float AudienceFill(float reputation) { return Math.Max(0.1f, Math.Min(1f, 0.1f + reputation * 0.012f)); }
+        public static int Audience(float reputation) { return (int)Math.Round(HallSeats * AudienceFill(reputation)); }
+
         public static int MasterclassCost(float skill) { return 10 + (int)Math.Round(skill * 0.5f); }
 
         // ---- Instruments ----

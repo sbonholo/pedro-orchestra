@@ -67,6 +67,8 @@ namespace OrchestraProject
                         18, TextAnchor.UpperLeft, j.Approves ? UITheme.Good : UITheme.Bad);
                     UIFactory.Size(jl, 28);
                 }
+                var tk = UIFactory.Label(body, "<b>Tickets: " + r.TicketsSold.ToString("N0") + " listeners × " + Economy.TicketPrice + " = +" + r.TicketCoins.ToString("N0") + " coins</b>", 20, TextAnchor.UpperLeft, UITheme.Accent);
+                UIFactory.Size(tk, 32);
                 var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (r.CoinsEarned == Economy.CoinsApproved ? "  The judges approved." : "  " + Economy.JudgesNeeded + " of " + Economy.JudgeCount + " judges must approve for " + Economy.CoinsApproved + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
                 UIFactory.Size(cl, 32);
             }

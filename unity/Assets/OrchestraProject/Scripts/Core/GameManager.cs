@@ -207,6 +207,9 @@ namespace OrchestraProject
                     break;
                 case PerformanceContext.Concert:
                     State.lastConcertDay = State.day;
+                    result.TicketsSold = Economy.Audience(State.reputation);          // the audience that came pays at the door
+                    result.TicketCoins = result.TicketsSold * Economy.TicketPrice;
+                    State.coins += result.TicketCoins;
                     gains = new TrainingResult { Success = true, Message = "Concert experience:" };
                     TrainingSystem.ApplyConcertExperience(players, result.Overall / 100f, gains);
                     float cap = Mathf.Clamp01(1f - State.reputation / (20f + 20f * (int)result.Piece.Difficulty));

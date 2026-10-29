@@ -174,6 +174,8 @@ static class Program
             Check(up == 3, "practice raises 3 skills (focus + 2 related), not all: " + up);
             Check(pm.energy == TrainingSystem.MaxEnergy - TrainingSystem.EnergyPerPractice && TrainingSystem.MaxEnergy == 2000f, "energy max 2,000");
         }
+        // Tickets: 5 coins per listener; hall fills with reputation
+        Check(Economy.Audience(0f) == 117 && Economy.Audience(75f) == 1166 && Economy.Audience(5f) * Economy.TicketPrice == 935, "tickets: 117 listeners at reputation 0, full hall 1,166 at 75, 5 coins each");
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);
