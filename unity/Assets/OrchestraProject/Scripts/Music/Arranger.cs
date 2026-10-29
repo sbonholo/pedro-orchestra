@@ -8,14 +8,12 @@ namespace OrchestraProject
     /// SameMelody: every instrument plays the tune in its own octave (octave doubling).
     /// SeparateParts: violin melody, viola harmony (3rds/6ths below), cello moving inner voice,
     /// double bass on chord roots. Each part is a genuinely different line.
-    /// Solo: the soloist plays the melody in their own octave; the others play the separate-parts
-    /// accompaniment (violin takes the harmony line) at lower volume. Unaccompanied pieces: soloist only.
+    /// Solo: one musician alone (the best player of the chosen instrument) plays the melody in their own octave.
     /// </summary>
     public static class Arranger
     {
-        public const float AccompanimentGain = 0.55f;
 
-        /// <summary>Who plays in Solo mode: the best player of the solo instrument, plus one player per other part.</summary>
+        /// <summary>Who plays in Solo mode: only the best player of the solo instrument.</summary>
         public static List<MusicianData> SoloPlayers(List<MusicianData> roster, InstrumentType soloist, bool unaccompanied)
         {
             MusicianData lead = null;
@@ -23,7 +21,6 @@ namespace OrchestraProject
             var list = new List<MusicianData>();
             if (lead == null) return list;
             list.Add(lead);
-            if (!unaccompanied) foreach (var m in roster) if (m.instrument != soloist) list.Add(m);
             return list;
         }
 
@@ -37,8 +34,7 @@ namespace OrchestraProject
                 Part part;
                 if (mode == ArrangementMode.SameMelody) part = Doubling(piece, def);
                 else if (mode == ArrangementMode.Solo && t == soloist) { part = Doubling(piece, def); part.Role = "Solo"; }
-                else if (mode == ArrangementMode.Solo && piece.Unaccompanied) continue;
-                else if (mode == ArrangementMode.Solo && t == InstrumentType.Violin) { part = Harmony(piece, def); part.Role = "Harmony (accompaniment)"; part.Gain = AccompanimentGain; }
+                else if (mode == ArrangementMode.Solo) continue;   // a solo is one player alone
                 else
                 {
                     switch (t)
@@ -49,7 +45,6 @@ namespace OrchestraProject
                         case InstrumentType.DoubleBass: part = BassLine(piece, def); break;
                         default: part = Doubling(piece, def); break;
                     }
-                    if (mode == ArrangementMode.Solo) { part.Role += " (accompaniment)"; part.Gain = AccompanimentGain; }
                 }
                 arr.Parts[t] = part;
             }

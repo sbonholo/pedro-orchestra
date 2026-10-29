@@ -391,17 +391,14 @@ function arrangeBase(p, mode, inst, role = inst) {
   return { role: "Bass line", notes };
 }
 
-// Solo: the soloist plays the melody in their own octave; the others play the separate-parts accompaniment
-// (violin takes the harmony line) at lower volume. Same rules as Arranger.cs.
-const ACC_GAIN = 0.55;
+// Solo: one musician alone (the best player of the chosen instrument) plays the melody in their own octave. Same rules as Arranger.cs.
 function arrange(p, mode, inst, solo = "violin") {
-  if (mode === "solo" && inst === solo) return { ...arrangeBase(p, "same", inst), role: "Solo", gain: 1 };
-  if (mode === "solo") { const part = arrangeBase(p, "parts", inst, inst === "violin" ? "viola" : inst); return { ...part, role: (inst === "violin" ? "Harmony" : part.role) + " (accompaniment)", gain: ACC_GAIN }; }
+  if (mode === "solo") return { ...arrangeBase(p, "same", inst), role: "Solo", gain: 1 };
   return { ...arrangeBase(p, mode, inst), gain: 1 };
 }
 function soloPlayers(roster, solo, unacc) {
   const lead = roster.filter(m => m.inst === solo).sort((a, b) => overall(b) - overall(a))[0];
-  return lead ? [lead, ...(unacc ? [] : roster.filter(m => m.inst !== solo))] : [];
+  return lead ? [lead] : [];
 }
 
 /* ---------- skills → played notes (PerformanceRenderer port) ---------- */
@@ -1121,7 +1118,7 @@ function renderSide() {
       + `<div class="eyebrow">Arrangement</div><div class="row"><button class="btn ${modeSel === "same" ? "on" : ""}" data-mode="same">Same Melody</button><button class="btn ${modeSel === "parts" ? "on" : ""}" data-mode="parts">Separate Parts</button><button class="btn ${modeSel === "solo" ? "on" : ""}" data-mode="solo">Solo</button></div>
       ${modeSel === "solo" ? (() => { const who = soloPlayers(state.roster, soloSel, p.unacc)[0];
         return `<div class="row">${INST_KEYS.filter(k => state.roster.some(m => m.inst === k)).map(k => `<button class="btn ${soloSel === k ? "on" : ""}" data-solo="${k}">${INST[k].name}</button>`).join("")}</div>
-        <p class="muted small">${who ? `Soloist: <b>${esc(fullName(who))}</b>${p.unacc ? " (unaccompanied)" : ", accompanied softly by the others"}` : "Nobody plays this instrument yet. Hire one in Auditions."}</p>`; })() : ""}
+        <p class="muted small">${who ? `Soloist: <b>${esc(fullName(who))}</b> plays alone` : "Nobody plays this instrument yet. Hire one in Auditions."}</p>`; })() : ""}
       <div class="eyebrow">Conductor</div><div class="row"><button class="btn ${!state.conduct ? "on" : ""}" data-cond="auto">Automatic</button><button class="btn ${state.conduct ? "on" : ""}" data-cond="you">You conduct (tap the beat)</button></div>
       <div class="eyebrow">Concert</div>
       <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)}</button>

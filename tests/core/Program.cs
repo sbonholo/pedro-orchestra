@@ -116,7 +116,7 @@ static class Program
         RecruitmentSystem.Refresh(st, rng);
         Check(st.auditionPool.Count == 3 && st.invitePool.Count == 2, "pools filled");
 
-        // Solo mode: soloist plays the melody; others accompany softly; unaccompanied pieces have one player
+        // Solo mode: only one musician plays
         {
             var ss = OrchestraState.NewGame(5);
             var bach = MusicLibrary.Get("bachprelude");
@@ -127,7 +127,7 @@ static class Program
             var gh = MusicLibrary.Get("goinghome");
             var sp2 = Arranger.SoloPlayers(ss.roster, InstrumentType.DoubleBass, gh.Unaccompanied);
             var a2 = Arranger.Arrange(gh, ArrangementMode.Solo, sp2.Select(m => m.instrument), InstrumentType.DoubleBass);
-            Check(sp2.Count == 4 && a2.Parts[InstrumentType.DoubleBass].Gain == 1f && a2.Parts[InstrumentType.Violin].Gain < 1f, "bass solo with soft quartet accompaniment");
+            Check(sp2.Count == 1 && a2.Parts.Count == 1 && a2.Parts.ContainsKey(InstrumentType.DoubleBass), "bass solo: the bassist plays alone");
         }
         // You conduct: perfect beating +6, no beating -6
         {

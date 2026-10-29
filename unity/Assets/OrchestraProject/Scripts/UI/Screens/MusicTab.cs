@@ -48,7 +48,7 @@ namespace OrchestraProject
                 }
                 var who = Arranger.SoloPlayers(s.roster, gm.Soloist, sel.Unaccompanied);
                 var wl = UIFactory.Label(root, who.Count == 0 ? "Nobody plays this instrument yet. Hire one in Auditions."
-                    : "Soloist: <b>" + who[0].FullName + "</b>" + (sel.Unaccompanied ? " (unaccompanied)" : ", accompanied softly by the others"), 17, TextAnchor.UpperLeft, UITheme.TextDim);
+                    : "Soloist: <b>" + who[0].FullName + "</b>" + " plays alone", 17, TextAnchor.UpperLeft, UITheme.TextDim);
                 UIFactory.Size(wl, 30);
             }
 
