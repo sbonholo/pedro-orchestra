@@ -60,14 +60,14 @@ namespace OrchestraProject
             if (r.Judges != null)
             {
                 int yes = 0; foreach (var j in r.Judges) if (j.Approves) yes++;
-                UIFactory.Header(body, "The judges  (" + yes + " of 3 approve)");
+                UIFactory.Header(body, "The judges  (" + yes + " of " + Economy.JudgeCount + " approve)");
                 foreach (var j in r.Judges)
                 {
                     var jl = UIFactory.Label(body, "<b>" + j.Name + "</b>  <size=15>(listens for " + j.Focus + ")</size>   " + j.Score.ToString("0.0") + " / 10   " + (j.Approves ? "YES  " : "NO  ") + j.Comment,
                         18, TextAnchor.UpperLeft, j.Approves ? UITheme.Good : UITheme.Bad);
                     UIFactory.Size(jl, 28);
                 }
-                var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (r.CoinsEarned == Economy.CoinsApproved ? "  The judges approved." : "  Two judges must approve for " + Economy.CoinsApproved + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
+                var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (r.CoinsEarned == Economy.CoinsApproved ? "  The judges approved." : "  " + Economy.JudgesNeeded + " of " + Economy.JudgeCount + " judges must approve for " + Economy.CoinsApproved + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
                 UIFactory.Size(cl, 32);
             }
 

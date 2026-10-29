@@ -144,6 +144,7 @@ static class Program
             var good = new PerformanceResult { Overall = 80, Rhythm = 80, Intonation = 80, Ensemble = 80, Artistry = 80 };
             var bad = new PerformanceResult { Overall = 35, Rhythm = 35, Intonation = 35, Ensemble = 35, Artistry = 35 };
             Check(Economy.ConcertCoins(Economy.Judge(good, new Random(1))) == 30 && Economy.ConcertCoins(Economy.Judge(bad, new Random(1))) == 5, "judges: good concert 30 coins, bad concert 5");
+            Check(Economy.Judge(good, new Random(2)).Count == 5, "five judges score each concert");
             float before = v.Get(SkillType.Intonation); int cost = Economy.MasterclassCost(before);
             Economy.Masterclass(es, v, SkillType.Intonation);
             Check(Math.Abs(v.Get(SkillType.Intonation) - before - 3f) < 0.01f && es.coins == Economy.StartingCoins - cost, "masterclass: +3 for " + cost + " coins");

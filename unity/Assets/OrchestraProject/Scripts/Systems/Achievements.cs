@@ -19,7 +19,7 @@ namespace OrchestraProject
         public static readonly List<Achievement> All = new List<Achievement>
         {
             A("first_concert", "Opening Night", "Perform your first concert.", 20, s => s.concertsPerformed >= 1),
-            A("approved", "Judges' Approval", "Win the approval of two judges.", 30, s => s.judgeApprovals >= 1),
+            A("approved", "Judges' Approval", "Win the approval of the judges (3 of 5).", 30, s => s.judgeApprovals >= 1),
             A("three_stars", "A Fine Evening", "Earn 3 stars in a concert.", 40, s => s.bestStars >= 3),
             A("hire", "New Talent", "Hire or invite a new musician.", 30, s => s.musiciansHired >= 1),
             A("instrument", "A Finer Instrument", "Buy an instrument in the Shop.", 30, s => s.ownedInstruments.Count >= 1),

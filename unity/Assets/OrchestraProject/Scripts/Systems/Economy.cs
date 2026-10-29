@@ -23,7 +23,7 @@ namespace OrchestraProject
     /// <summary>
     /// Coins, judges, masterclasses and the instrument shop. Same rules and numbers as the "economy"
     /// section of the web preview.
-    ///   Concert: 3 judges score it; if at least 2 approve (score >= 5.5 / 10) you earn 30 coins, otherwise 5.
+    ///   Concert: 5 judges score it; if at least 3 approve (score >= 5.5 / 10) you earn 30 coins, otherwise 5.
     ///   Masterclass: +3 to one skill of one musician; costs 10 + half the current skill value.
     ///   Instruments: better instruments add Tone (+20 x quality), Expression (+8 x q) and Intonation (+4 x q).
     /// </summary>
@@ -32,6 +32,7 @@ namespace OrchestraProject
         public const int StartingCoins = 50;
         public const int CoinsApproved = 30, CoinsRejected = 5;
         public const float JudgePassMark = 5.5f;
+        public const int JudgeCount = 5, JudgesNeeded = 3;   // a majority of the five judges
         public const float MasterclassGain = 3f;
 
         public static int MasterclassCost(float skill) { return 10 + (int)Math.Round(skill * 0.5f); }
@@ -115,15 +116,15 @@ namespace OrchestraProject
         }
 
         // ---- Judges ----
-        static readonly string[] JudgeNames = { "Prof. Ilse Varga", "Marcus Bell", "Sofia Ricci" };
-        static readonly string[] JudgeFocus = { "intonation", "rhythm and ensemble", "artistry" };
-        static readonly float[] JudgeBias = { -0.4f, 0f, 0.4f };   // strict, fair, generous
+        static readonly string[] JudgeNames = { "Prof. Ilse Varga", "Dr. Kenji Mori", "Marcus Bell", "Amara Okoye", "Sofia Ricci" };
+        static readonly string[] JudgeFocus = { "intonation", "note accuracy", "rhythm and ensemble", "the overall impression", "artistry" };
+        static readonly float[] JudgeBias = { -0.4f, -0.2f, 0f, 0.2f, 0.4f };   // from strict to generous
 
         public static List<JudgeVerdict> Judge(PerformanceResult r, Random rng)
         {
-            float[] focus = { r.Intonation, (r.Rhythm + r.Ensemble) * 0.5f, r.Artistry };
+            float[] focus = { r.Intonation, r.Accuracy, (r.Rhythm + r.Ensemble) * 0.5f, r.Overall, r.Artistry };
             var list = new List<JudgeVerdict>();
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < JudgeCount; i++)
             {
                 float score = (r.Overall + (focus[i] - r.Overall) * 0.5f) / 10f + JudgeBias[i] + ((float)rng.NextDouble() - 0.5f) * 0.6f;
                 score = (float)Math.Round(Math.Max(1f, Math.Min(10f, score)), 1);
@@ -139,7 +140,7 @@ namespace OrchestraProject
         public static int ConcertCoins(List<JudgeVerdict> judges)
         {
             int yes = 0; foreach (var j in judges) if (j.Approves) yes++;
-            return yes >= 2 ? CoinsApproved : CoinsRejected;
+            return yes >= JudgesNeeded ? CoinsApproved : CoinsRejected;
         }
     }
 }

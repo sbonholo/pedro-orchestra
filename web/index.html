@@ -495,18 +495,18 @@ function masterclass(m, i) {
   if (state.coins < cost) return `Not enough coins: this masterclass costs ${cost}.`;
   state.coins -= cost; m.skills[i] = Math.min(100, v + ECO.gain); return `Masterclass: ${m.first}'s ${SKILLS[i][0]} ${v.toFixed(1)} → ${m.skills[i].toFixed(1)}.`;
 }
-const JUDGES = [["Prof. Ilse Varga", "intonation", -.4], ["Marcus Bell", "rhythm and ensemble", 0], ["Sofia Ricci", "artistry", .4]];   // strict, fair, generous
+const JUDGES = [["Prof. Ilse Varga", "intonation", -.4], ["Dr. Kenji Mori", "note accuracy", -.2], ["Marcus Bell", "rhythm and ensemble", 0], ["Amara Okoye", "the overall impression", .2], ["Sofia Ricci", "artistry", .4]];   // five judges, strict to generous; 3 must approve
 function judge(r) {
-  const focus = [r.I, (r.R + r.E) / 2, r.Art];
+  const focus = [r.I, r.A, (r.R + r.E) / 2, r.overall, r.Art];
   return JUDGES.map(([name, f, bias], i) => { const score = Math.round(clamp((r.overall + (focus[i] - r.overall) * .5) / 10 + bias + (Math.random() - .5) * .6, 1, 10) * 10) / 10;
     return { name, focus: f, score, ok: score >= ECO.pass, comment: score >= 8.5 ? "Outstanding." : score >= ECO.pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
 }
-const concertCoins = js => js.filter(j => j.ok).length >= 2 ? ECO.yes : ECO.no;
+const concertCoins = js => js.filter(j => j.ok).length >= 3 ? ECO.yes : ECO.no;
 // Career goals with coin rewards (same list, order and rewards as Achievements.cs). Each pays once.
 const avgLevel = st => st.roster.reduce((a, m) => a + overall(m), 0) / Math.max(1, st.roster.length);
 const ACHIEVEMENTS = [
   ["first_concert", "Opening Night", "Perform your first concert.", 20, st => st.concerts >= 1],
-  ["approved", "Judges' Approval", "Win the approval of two judges.", 30, st => st.judgeApprovals >= 1],
+  ["approved", "Judges' Approval", "Win the approval of the judges (3 of 5).", 30, st => st.judgeApprovals >= 1],
   ["three_stars", "A Fine Evening", "Earn 3 stars in a concert.", 40, st => st.bestStars >= 3],
   ["hire", "New Talent", "Hire or invite a new musician.", 30, st => st.hired >= 1],
   ["instrument", "A Finer Instrument", "Buy an instrument in the Shop.", 30, st => st.owned.length >= 1],
@@ -1200,8 +1200,8 @@ function showResult(pf, r, gains) {
     <div class="stars">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= r.stars ? "on" : ""}"></span>`).join("")}<span class="score" id="score-count" style="margin-left:12px">0</span><span class="muted">/ 100</span></div>
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
-    ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of 3 approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
-      <p style="color:var(--gold)"><b>+${r.coins} coins.</b> ${r.coins === ECO.yes ? "The judges approved." : `Two judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
+    ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of ${r.judges.length} approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
+      <p style="color:var(--gold)"><b>+${r.coins} coins.</b> ${r.coins === ECO.yes ? "The judges approved." : `3 of 5 judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
     <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
     ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
     <button class="btn primary" data-close>Continue</button>`);
@@ -1215,7 +1215,7 @@ const TUTORIAL = [
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 1,000 energy. <b>Next Day</b> restores 600. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Three <b>judges</b> score every concert: if two approve you earn <b>30 coins</b>, otherwise 5. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>30 coins</b>, otherwise 5. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
   ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];
