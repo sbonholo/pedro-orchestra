@@ -53,7 +53,6 @@ namespace OrchestraProject
     {
         public const float BaseGain = 1.4f;
         public const float SecondaryShare = 0.35f;
-        public const float AllSkillsShare = 0.15f;   // every practice also improves every other skill a little
         public const float EnergyPerPractice = 20f;
         public const float EnergyPerRehearsal = 15f;
         public const float EnergyPerConcert = 25f;
@@ -94,7 +93,6 @@ namespace OrchestraProject
             Apply(m, focus, factor, r);
             var related = new List<SkillType>(Skills.Related(focus));
             foreach (var rel in related) Apply(m, rel, factor * SecondaryShare, r);
-            foreach (var other in Skills.All) if (other != focus && !related.Contains(other)) Apply(m, other, factor * AllSkillsShare, r);
 
             m.energy = Math.Max(0f, m.energy - EnergyPerPractice);
             m.practiceSessions++;

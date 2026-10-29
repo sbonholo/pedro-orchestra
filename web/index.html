@@ -260,7 +260,7 @@ function createMusician(inst, mean, strength, second) {
 const fullName = m => m.first + " " + m.last;
 
 /* ---------- training & recruitment (same formulas as Unity) ---------- */
-const T = { base: 1.4, sec: 0.35, all: 0.15, ePractice: 20, eRehearse: 15, eConcert: 25, maxE: 2000, recover: 1200, minE: 10, directorSessions: 2 };
+const T = { base: 1.4, sec: 0.35, ePractice: 20, eRehearse: 15, eConcert: 25, maxE: 2000, recover: 1200, minE: 10, directorSessions: 2 };
 const headroom = v => Math.max(0.01, Math.pow(Math.max(0, 1 - v / 100), 1.1));
 const energyFactor = e => e < 25 ? 0.45 : 0.65 + 0.35 * e / T.maxE;
 function gain(m, i, f, log) { const b = m.skills[i]; m.skills[i] = clamp(b + f * headroom(b), 0, 100); log.push([m.id, i, b, m.skills[i]]); }
@@ -268,7 +268,6 @@ function practice(m, focus, quality = 1) {
   if (m.energy < T.minE) return { ok: false, msg: m.first + " is too tired to practise. Advance to the next day." };
   const log = [], f = T.base * m.talent * energyFactor(m.energy) * quality * (0.85 + rnd() * 0.3);
   gain(m, focus, f, log); for (const r of SKILLS[focus][4]) gain(m, r, f * T.sec, log);
-  for (let i = 0; i < 11; i++) if (i !== focus && !SKILLS[focus][4].includes(i)) gain(m, i, f * T.all, log);   // every practice improves every skill a little
   m.energy = Math.max(0, m.energy - T.ePractice); m.sessions++;
   return { ok: true, msg: m.first + " practised " + SKILLS[focus][0] + ".", log };
 }
@@ -1218,7 +1217,7 @@ const TUTORIAL = [
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 2,000 energy. <b>Next Day</b> restores 1,200. <b>+7 Days</b> skips a week."]],
   ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
-  ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~25 days, Professional after ~50, World-Class after ~100."]],
+  ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];
 function openTutorial(start = 0) {
   let i = start;

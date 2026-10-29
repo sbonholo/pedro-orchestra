@@ -166,13 +166,12 @@ static class Program
             for (int i = 0; i < 4000; i++) { RecruitmentSystem.Refresh(rs, rr); foreach (var c in rs.auditionPool.Concat(rs.invitePool)) { total++; if (c.rareTalent) { rare++; if (c.Overall < 80f) rare -= 1000; } } }
             Check(rare >= total * 0.006 && rare <= total * 0.014, "rare talents: " + rare + " of " + total + " (~1 %), all world-class");
         }
-        // Every practice improves every skill (the focus most)
+        // Practice improves the chosen skill and its 2 related skills only
         {
             var ps = OrchestraState.NewGame(3); var pm = ps.roster[0]; var before = (float[])pm.skills.Clone();
             TrainingSystem.Practice(pm, SkillType.Technique, 1f, new Random(4));
-            bool all = true; for (int i = 0; i < before.Length; i++) if (!(pm.skills[i] > before[i])) all = false;
-            float dFocus = pm.Get(SkillType.Technique) - before[(int)SkillType.Technique];
-            Check(all && dFocus > (pm.skills[(int)SkillType.Confidence] - before[(int)SkillType.Confidence]), "practice raises all 11 skills, focus the most (+" + dFocus.ToString("0.00") + ")");
+            int up = 0; for (int i = 0; i < before.Length; i++) if (pm.skills[i] > before[i]) up++;
+            Check(up == 3, "practice raises 3 skills (focus + 2 related), not all: " + up);
             Check(pm.energy == TrainingSystem.MaxEnergy - TrainingSystem.EnergyPerPractice && TrainingSystem.MaxEnergy == 2000f, "energy max 2,000");
         }
         // Next step card: listen -> rehearse until 60% -> concert -> rest

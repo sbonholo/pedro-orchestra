@@ -133,7 +133,7 @@ Assets/OrchestraProject/
 - Synthesizer output: no invalid values, no clipping.
 - Rhythm scoring: perfect taps score 100%, no taps score 0%, and early, late and extra taps are penalised correctly.
 - Ratings: the starting quartet gets about 2★ on an unrehearsed concert; world-class players get 5★.
-- Pacing simulation with daily practice and rehearsal (energy 2,000 per musician, +1,200 per day; every practice raises all skills a little): Advanced around day 25, Professional around day 50, World-Class around day 100.
+- Pacing simulation with daily practice and rehearsal (energy 2,000 per musician, +1,200 per day): Advanced around day 35, Professional around day 80, World-Class around day 155.
 
 ### Not yet verified (needs your first Play)
 - The visual placement of hands, bow and instruments is computed from real measurements but has not been seen on screen yet. Tune the values in `MusicianView.Build`.
