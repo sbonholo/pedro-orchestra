@@ -248,7 +248,7 @@ const overall = m => { let s = 0, w = 0; SKILLS.forEach((k, i) => { s += m.skill
 function createMusician(inst, mean, strength, second) {
   const female = rnd() < 0.5;
   const m = { id: Math.random().toString(36).slice(2, 10), female, first: pick(female ? NAMES.f : NAMES.m), last: pick(NAMES.last), country: pick(NAMES.country),
-    inst, skills: new Array(11).fill(0), talent: 0.8 + rnd() * 0.5, energy: 1000, focus: -1, sessions: 0, concerts: 0, seed: Math.floor(rnd() * 1e9) };
+    inst, skills: new Array(11).fill(0), talent: 0.8 + rnd() * 0.5, energy: 2000, focus: -1, sessions: 0, concerts: 0, seed: Math.floor(rnd() * 1e9) };
   strength ??= Math.floor(rnd() * 11); second ??= Math.floor(rnd() * 11);
   let weak = Math.floor(rnd() * 11); if (weak === strength) weak = (weak + 3) % 11;
   for (let i = 0; i < 11; i++) { let v = mean + gauss() * 4.5; if (i === strength) v += 9; if (i === second) v += 5; if (i === weak) v -= 8; m.skills[i] = clamp(v, 0, 100); }
@@ -260,7 +260,7 @@ function createMusician(inst, mean, strength, second) {
 const fullName = m => m.first + " " + m.last;
 
 /* ---------- training & recruitment (same formulas as Unity) ---------- */
-const T = { base: 1.4, sec: 0.35, ePractice: 20, eRehearse: 15, eConcert: 25, maxE: 1000, recover: 600, minE: 10, directorSessions: 2 };
+const T = { base: 1.4, sec: 0.35, all: 0.15, ePractice: 20, eRehearse: 15, eConcert: 25, maxE: 2000, recover: 1200, minE: 10, directorSessions: 2 };
 const headroom = v => Math.max(0.01, Math.pow(Math.max(0, 1 - v / 100), 1.1));
 const energyFactor = e => e < 25 ? 0.45 : 0.65 + 0.35 * e / T.maxE;
 function gain(m, i, f, log) { const b = m.skills[i]; m.skills[i] = clamp(b + f * headroom(b), 0, 100); log.push([m.id, i, b, m.skills[i]]); }
@@ -268,6 +268,7 @@ function practice(m, focus, quality = 1) {
   if (m.energy < T.minE) return { ok: false, msg: m.first + " is too tired to practise. Advance to the next day." };
   const log = [], f = T.base * m.talent * energyFactor(m.energy) * quality * (0.85 + rnd() * 0.3);
   gain(m, focus, f, log); for (const r of SKILLS[focus][4]) gain(m, r, f * T.sec, log);
+  for (let i = 0; i < 11; i++) if (i !== focus && !SKILLS[focus][4].includes(i)) gain(m, i, f * T.all, log);   // every practice improves every skill a little
   m.energy = Math.max(0, m.energy - T.ePractice); m.sessions++;
   return { ok: true, msg: m.first + " practised " + SKILLS[focus][0] + ".", log };
 }
@@ -466,7 +467,7 @@ const EXERCISES = [
 ];
 
 /* ---------- economy: coins, judges, masterclasses, instruments (same rules as Economy.cs) ---------- */
-const ECO = { start: 50, yes: 30, no: 5, pass: 5.5, gain: 3 };
+const ECO = { start: 500, yes: 60, no: 10, pass: 5.5, gain: 3 };
 const masterclassCost = v => 10 + Math.round(v * 0.5);
 const SHOP = (() => {
   const list = [];
@@ -537,12 +538,12 @@ let state = null, selectedId = null;
 function newGame() {
   state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
     roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
-    auditions: [], invites: [], energy1000: true, coins: ECO.start, owned: [], achievements: [], concertPieces: [], judgeApprovals: 0, bestStars: 0, hired: 0, bestConducting: 0, soloApproved: false };
+    auditions: [], invites: [], energy1000: true, energy2000: true, coins: ECO.start, owned: [], achievements: [], concertPieces: [], judgeApprovals: 0, bestStars: 0, hired: 0, bestConducting: 0, soloApproved: false };
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
 function save() { checkAchievements(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
-function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } state = s; return true; } } catch (e) { } return false; }
+function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } if (!s.energy2000) { for (const m of s.roster) m.energy = T.maxE; s.coins += 450; s.energy2000 = true; } state = s; return true; } } catch (e) { } return false; }
 const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
 const selected = () => state?.roster.find(m => m.id === selectedId) || null;
 
@@ -1214,10 +1215,10 @@ const TUTORIAL = [
   ["1 · Meet your musicians", ["Tap <b>Roster</b>, or tap a musician on stage.", "The <b>Musician</b> tab shows 11 skills (0–100), an overall level from Novice to Master, and energy."]],
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
-  ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 1,000 energy. <b>Next Day</b> restores 600. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>30 coins</b>, otherwise 5. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 2,000 energy. <b>Next Day</b> restores 1,200. <b>+7 Days</b> skips a week."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (3,000–5,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
-  ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
+  ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~25 days, Professional after ~50, World-Class after ~100."]],
 ];
 function openTutorial(start = 0) {
   let i = start;

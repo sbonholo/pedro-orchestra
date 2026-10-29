@@ -23,14 +23,14 @@ namespace OrchestraProject
     /// <summary>
     /// Coins, judges, masterclasses and the instrument shop. Same rules and numbers as the "economy"
     /// section of the web preview.
-    ///   Concert: 5 judges score it; if at least 3 approve (score >= 5.5 / 10) you earn 30 coins, otherwise 5.
+    ///   Concert: 5 judges score it; if at least 3 approve (score >= 5.5 / 10) you earn 60 coins, otherwise 10.
     ///   Masterclass: +3 to one skill of one musician; costs 10 + half the current skill value.
     ///   Instruments: better instruments add Tone (+20 x quality), Expression (+8 x q) and Intonation (+4 x q).
     /// </summary>
     public static class Economy
     {
-        public const int StartingCoins = 50;
-        public const int CoinsApproved = 30, CoinsRejected = 5;
+        public const int StartingCoins = 500;
+        public const int CoinsApproved = 60, CoinsRejected = 10;
         public const float JudgePassMark = 5.5f;
         public const int JudgeCount = 5, JudgesNeeded = 3;   // a majority of the five judges
         public const float MasterclassGain = 3f;

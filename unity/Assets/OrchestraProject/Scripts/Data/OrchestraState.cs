@@ -22,7 +22,7 @@ namespace OrchestraProject
     [Serializable]
     public class OrchestraState
     {
-        public const int CurrentVersion = 3;   // 2: energy scale 0–1000, 3: coins
+        public const int CurrentVersion = 4;   // 2: energy scale 0–1000, 3: coins, 4: energy 0–2000
         public const int MaxRosterSize = 40;
 
         public int saveVersion = CurrentVersion;
@@ -84,6 +84,7 @@ namespace OrchestraProject
                 saveVersion = 2;
             }
             if (saveVersion < 3) { coins = Economy.StartingCoins; saveVersion = 3; }
+            if (saveVersion < 4) { foreach (var m in roster) m.energy = TrainingSystem.MaxEnergy; coins += 450; saveVersion = 4; }   // more energy and coins
             if (ownedInstruments == null) ownedInstruments = new List<string>();
             if (achievements == null) achievements = new List<string>();
             if (concertPieces == null) concertPieces = new List<string>();

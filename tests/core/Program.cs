@@ -143,7 +143,7 @@ static class Program
             Check(es.coins == Economy.StartingCoins, "new game starts with " + Economy.StartingCoins + " coins");
             var good = new PerformanceResult { Overall = 80, Rhythm = 80, Intonation = 80, Ensemble = 80, Artistry = 80 };
             var bad = new PerformanceResult { Overall = 35, Rhythm = 35, Intonation = 35, Ensemble = 35, Artistry = 35 };
-            Check(Economy.ConcertCoins(Economy.Judge(good, new Random(1))) == 30 && Economy.ConcertCoins(Economy.Judge(bad, new Random(1))) == 5, "judges: good concert 30 coins, bad concert 5");
+            Check(Economy.ConcertCoins(Economy.Judge(good, new Random(1))) == Economy.CoinsApproved && Economy.ConcertCoins(Economy.Judge(bad, new Random(1))) == Economy.CoinsRejected, "judges: good concert " + Economy.CoinsApproved + " coins, bad concert " + Economy.CoinsRejected);
             Check(Economy.Judge(good, new Random(2)).Count == 5, "five judges score each concert");
             float before = v.Get(SkillType.Intonation); int cost = Economy.MasterclassCost(before);
             Economy.Masterclass(es, v, SkillType.Intonation);
@@ -165,6 +165,15 @@ static class Program
             var rs = OrchestraState.NewGame(12); var rr = new Random(77); int rare = 0, total = 0;
             for (int i = 0; i < 4000; i++) { RecruitmentSystem.Refresh(rs, rr); foreach (var c in rs.auditionPool.Concat(rs.invitePool)) { total++; if (c.rareTalent) { rare++; if (c.Overall < 80f) rare -= 1000; } } }
             Check(rare >= total * 0.006 && rare <= total * 0.014, "rare talents: " + rare + " of " + total + " (~1 %), all world-class");
+        }
+        // Every practice improves every skill (the focus most)
+        {
+            var ps = OrchestraState.NewGame(3); var pm = ps.roster[0]; var before = (float[])pm.skills.Clone();
+            TrainingSystem.Practice(pm, SkillType.Technique, 1f, new Random(4));
+            bool all = true; for (int i = 0; i < before.Length; i++) if (!(pm.skills[i] > before[i])) all = false;
+            float dFocus = pm.Get(SkillType.Technique) - before[(int)SkillType.Technique];
+            Check(all && dFocus > (pm.skills[(int)SkillType.Confidence] - before[(int)SkillType.Confidence]), "practice raises all 11 skills, focus the most (+" + dFocus.ToString("0.00") + ")");
+            Check(pm.energy == TrainingSystem.MaxEnergy - TrainingSystem.EnergyPerPractice && TrainingSystem.MaxEnergy == 2000f, "energy max 2,000");
         }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
