@@ -54,7 +54,7 @@ namespace OrchestraProject
             switch (Mode)
             {
                 case CameraMode.Stage:
-                    Pose(stage + new Vector3(0.0f, 1.55f, 0.1f), stage + new Vector3(0, 0.8f, 3.2f), 55f); break;
+                    Pose(stage + new Vector3(0.35f, 2.35f, -0.45f), stage + new Vector3(0, 0.8f, 3.2f), 55f); break;   // over the conductor's shoulder
                 case CameraMode.Audience:
                     Pose(new Vector3(-2.5f, 2.6f + 1.4f, -14f), stage + new Vector3(0, 1.0f, 3f), 38f); break;
                 case CameraMode.Orchestra:

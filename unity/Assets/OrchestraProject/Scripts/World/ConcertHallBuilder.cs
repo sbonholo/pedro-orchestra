@@ -22,6 +22,7 @@ namespace OrchestraProject
         public static readonly Vector3 ConductorPoint = new Vector3(0f, StageHeight, 0.9f);
 
         public bool MobileQuality;
+        readonly System.Collections.Generic.List<Vector3> seatFloors = new System.Collections.Generic.List<Vector3>();
 
         public void Build()
         {
@@ -148,7 +149,7 @@ namespace OrchestraProject
                     for (int s = 0; s < blockSeats[blk]; s++)
                     {
                         float x = blockStart[blk] + s * seatW;
-                        AddSeat(b, new Vector3(x, y, z));
+                        AddSeat(b, new Vector3(x, y, z)); seatFloors.Add(new Vector3(x, y, z));
                     }
             }
 
@@ -162,9 +163,13 @@ namespace OrchestraProject
                 b.Cylinder(MaterialLibrary.Plaster, new Vector3(x, by * 0.5f, bz + 0.6f), 0.5f, by);
             for (int r = 0; r < 5; r++)
                 for (int s = 0; s < 44; s++)
-                    AddSeat(b, new Vector3(-12.2f + s * seatW, by + r * 0.35f, bz - 1.0f - r * 1.0f));
+                {
+                    var seat = new Vector3(-12.2f + s * seatW, by + r * 0.35f, bz - 1.0f - r * 1.0f);
+                    AddSeat(b, seat); seatFloors.Add(seat);
+                }
 
             b.Build("Audience Seating", transform, castShadows: !MobileQuality);
+            new GameObject("Audience").AddComponent<AudienceCrowd>().Build(seatFloors);
         }
 
         static void AddSeat(BatchBuilder b, Vector3 floor)

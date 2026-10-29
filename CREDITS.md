@@ -5,3 +5,4 @@
   - Licence: CC0 1.0 (public domain dedication). Free for commercial use; no attribution required, credit given with thanks.
   - Articulations used: Solo Violin "Arco Vib" (f), Viola Section "susvib" (v2), Cello Section "susvib" (v3), Solo Contrabass "SusVib" (v3).
   - The files were converted to mono 48 kHz, trimmed, re-tuned to measured pitch, looped and level-matched by `Tools~/build_samples.py`.
+- **Applause after concerts:** generated in code (filtered noise bursts). No recording is used.

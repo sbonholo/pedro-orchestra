@@ -39,6 +39,7 @@ namespace OrchestraProject
             var systems = new GameObject("Systems");
             var performance = systems.AddComponent<PerformanceController>();
             var rhythm = systems.AddComponent<RhythmMiniGame>();
+            new GameObject("Conductor").AddComponent<ConductorView>().Build(performance);
             var gm = systems.AddComponent<GameManager>();
             gm.Init(stage, performance, camController, rhythm);
 

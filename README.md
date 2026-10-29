@@ -21,7 +21,7 @@ cd tests/unity-compile && ./fetch_refs.sh && dotnet build unity_inputsystem.cspr
 
 ## Status
 - **Done (Stages 1–2):** hall, 4 musicians, 11 skills, training and progression, 3 pieces × 2 arrangements, real recorded strings, rhythm mini-game, auditions and invitations, concerts with ratings, saving, cameras, PC and touch UI.
-- **Simplified play:** 3 tabs (Orchestra, Concerts, Recruit), a one-button "Next step" card, one camera button.
+- **New:** a conductor who beats time with the music; an audience that fills the hall as reputation grows and applauds after concerts (louder for more stars); an optional one-button "Next step" hint; 1,000 energy per musician.
 - **Placeholder:** musicians are detailed procedural figures (faces, tailcoats/dresses, hands); instruments and hall are still built from simple shapes. Rigged human models come in Stage 3.
 - **Blocked:** solo cello (Karoryfer x Bigcat) and solo viola (University of Iowa MIS) need these hosts allowed in the cloud environment's network settings, then a **new** session: `karoryfer.com`, `www.karoryfer.com`, `shop.karoryfer.com` (download page), `theremin.music.uiowa.edu`, `sfzinstruments.github.io` (licence check). The cello's licence also needs checking: one catalogue lists CC0, others say attribution is required.
 - **Next:** Stage 3 plan in `STAGE3.md`.

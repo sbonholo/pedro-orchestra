@@ -51,14 +51,18 @@ If anything goes red, open **Window → General → Console**, copy the first re
 
 ## 4. How to play
 
-- **Next step card (bottom left):** always suggests the best move (Listen, Rehearse, Perform Concert, See applicant, Next Day). Tapping its button is enough to play.
-- **Top bar:** **Orchestra**, **Concerts**, **Recruit**, then **Next Day**, **+7 Days**, **?** (tutorial) and **Menu**.
-- **Orchestra tab:** tap a player chip (or a musician on stage), tap a skill, then **Quick Practice**. The **Rhythm game** (count-in, then tap with the click: Space or the pad) gives up to 2× a quick practice. **Daily plan** sets what that player trains each new day.
-- **Concerts tab:** pick a piece and **Same Melody** or **Separate Parts**. **Perform Concert** (1–5 stars, raises reputation); **Listen** (no effect), **Rehearse** (with playback) or **Quick rehearsal** build the piece's preparation.
-- **Recruit tab:** hear applicants, compare them with your player, hire. **Invitations** go to stronger players; acceptance depends on reputation.
+- **Main menu:** New Game / Continue / How to Play / Orchestra Management / Music Library / Practice / Auditions / Concerts / Settings.
+- **Top bar:** Roster, Musician, Music & Concerts, Practice, Auditions, **Next Day**, **+7 Days**, How to Play (?), Menu.
+- **Next step card** (bottom left, under the roster): an optional hint that suggests a good move (Listen, Rehearse, Perform Concert, See applicant, Next Day) with one button.
+- **Select a musician:** click or tap them on stage, or pick them in the Roster.
+- **Musician tab:** all 11 skills. Tap a skill to choose a focus, then **Quick Practice**, or set it as the musician's **daily plan**.
+- **Practice tab:** the rhythm mini-game (count-in, then tap with the click: Space or the pad; up to 2× a quick practice) and one quick-practice button per skill.
+- **Music & Concerts:** pick a piece and **Same Melody** or **Separate Parts**. **Perform Concert** (1–5 stars, applause, raises reputation); **Listen** (no effect), **Rehearse** or **Quick rehearsal** build preparation.
+- **Conductor and audience:** the conductor beats time (2/4, 3/4, 4/4) with the music being played. The hall fills as reputation grows (10 % at 0, full at 75) and the audience applauds after each concert.
+- **Auditions:** hear applicants play, compare their skills against your section leader, hire them. **Invitations** go to stronger players; whether they accept depends on your reputation.
 - **Energy and days:** each musician has up to 1,000 energy; practice (20), rehearsal (15) and concerts (25) use it. **Next Day** restores 600. In **Director** play style (Settings) musicians also train their daily plan whenever a day passes.
-- **Camera button:** cycles Orchestra → Stage → Audience → Close-up → Free (keys 1–5 also work). Free camera: drag, WASD / QE, Shift, scroll; on touch drag, pinch, two-finger pan.
-- **Hide UI** to watch with only the stage on screen. During a concert the side panel steps aside; tap any tab to bring it back.
+- **Cameras:** Stage (over the conductor's shoulder), Audience, Orchestra, Close-up, Free (keys 1–5). Free camera: drag, WASD / QE, Shift, scroll; on touch drag, pinch, two-finger pan.
+- **Hide UI** to watch with only the stage on screen. During a concert the side panels step aside; tap any tab to bring them back.
 - Progress is saved automatically after every action.
 
 ## 5. Build for Windows

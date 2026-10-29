@@ -19,6 +19,14 @@ namespace OrchestraProject
         public float Progress { get; private set; }
         public PerformanceContext Context { get; private set; }
 
+        // Timing of the piece being played (for the conductor): dsp time of beat 0, seconds per beat, metre.
+        public bool HasTiming { get; private set; }
+        public double BeatZeroDsp { get; private set; }
+        public double MusicEndDsp { get; private set; }
+        public float SecondsPerBeat { get; private set; }
+        public int BeatsPerBar { get; private set; }
+        public float PickupBeats { get; private set; }
+
         StageManager stage;
         readonly List<MusicianView> activeViews = new List<MusicianView>();
         Coroutine running;
@@ -41,6 +49,7 @@ namespace OrchestraProject
             activeViews.Clear();
             stage.HideAuditionCandidate();
             IsBusy = false;
+            HasTiming = false;
             Status = null;
         }
 
@@ -125,6 +134,8 @@ namespace OrchestraProject
             }
 
             double end = dspStart + StringSynth.LeadInSec + length + 0.6;
+            BeatZeroDsp = dspStart + StringSynth.LeadInSec; MusicEndDsp = BeatZeroDsp + length;
+            SecondsPerBeat = 60f / bpm; BeatsPerBar = piece.BeatsPerBar; PickupBeats = piece.PickupBeats; HasTiming = true;
             Status = (ctx == PerformanceContext.Concert ? "Concert: " : ctx == PerformanceContext.Audition ? "Audition: " : ctx == PerformanceContext.Rehearsal ? "Rehearsing: " : "Playing: ")
                      + piece.Title + (mode == ArrangementMode.SeparateParts ? " (separate parts)" : " (same melody)")
                      + (tempoScale < 0.99f ? " — tempo " + Mathf.RoundToInt(tempoScale * 100) + "%" : "");
@@ -136,6 +147,7 @@ namespace OrchestraProject
 
             foreach (var v in activeViews) { v.EndPerformance(); ReleaseClip(v); }
             activeViews.Clear();
+            HasTiming = false;
             if (ctx == PerformanceContext.Audition) stage.HideAuditionCandidate();
 
             var result = PerformanceEvaluator.Evaluate(parts, piece, mode, ctx, tempoScale);
