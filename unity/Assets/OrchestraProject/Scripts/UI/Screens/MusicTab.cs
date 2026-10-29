@@ -52,6 +52,14 @@ namespace OrchestraProject
                 UIFactory.Size(wl, 30);
             }
 
+            // Conductor: the automatic conductor, or you tap the beat (steady beating adds up to +6 points, none costs 6).
+            UIFactory.Header(root, "Conductor");
+            var crow = UIFactory.Row(root, 56);
+            var cAuto = UIFactory.Button(crow, "Automatic", () => { s.playerConducts = false; gm.Save(); ui.Hud.Refresh(); }, 19, 56);
+            var cYou = UIFactory.Button(crow, "You conduct (tap the beat)", () => { s.playerConducts = true; gm.Save(); ui.Hud.Refresh(); }, 19, 56);
+            UIFactory.SetSelected(cAuto, !s.playerConducts);
+            UIFactory.SetSelected(cYou, s.playerConducts);
+
             // Main action first, so it is visible without scrolling.
             UIFactory.Header(root, "Concert");
             bool busy = gm.Performance.IsBusy;

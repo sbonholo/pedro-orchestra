@@ -45,6 +45,8 @@ namespace OrchestraProject
                 var pat = bpb == 2 ? Pattern2 : bpb == 3 ? Pattern3 : Pattern4;
                 bpb = pat.Length;
                 float bt = (float)((now - perf.BeatZeroDsp) / perf.SecondsPerBeat);
+                if (perf.PlayerConducting)   // "You conduct": the baton strikes each beat when the player taps
+                    bt = perf.ConductTaps == 0 ? -1f : perf.ConductTaps - 1 + Mathf.Min(0.999f, (float)((now - perf.LastConductTapDsp) / perf.SecondsPerBeat));
                 var b0 = new Vector3(0.12f, 1.45f, 0.38f);
                 if (bt < 0f) { right = b0 + new Vector3(0.02f, 0.14f, 0); left = new Vector3(-0.16f, 1.55f, 0.35f); }   // preparation
                 else
@@ -54,7 +56,7 @@ namespace OrchestraProject
                     int k = (((i + bpb - Mathf.RoundToInt(perf.PickupBeats)) % bpb) + bpb) % bpb;
                     Vector3 off = Vector3.Lerp(pat[k], pat[(k + 1) % bpb], fr * fr * (3f - 2f * fr));
                     off.y += 0.09f * Mathf.Sin(Mathf.PI * Mathf.Min(1f, fr * 1.6f));        // rebound after each beat
-                    if (now > perf.MusicEndDsp - 0.2) off *= Mathf.Max(0f, (float)((perf.MusicEndDsp - now) / 0.2));   // cut-off
+                    if (!perf.PlayerConducting && now > perf.MusicEndDsp - 0.2) off *= Mathf.Max(0f, (float)((perf.MusicEndDsp - now) / 0.2));   // cut-off
                     right = b0 + off;
                     left = new Vector3(-0.12f - off.x * 0.5f, 1.36f + off.y * 0.5f, 0.34f);
                     nod = Mathf.Sin(fr * Mathf.PI) * 3f;

@@ -20,6 +20,8 @@ namespace OrchestraProject
         NextStep step;
         string shownStep;
         const float CoachHeight = 220f;
+        RectTransform conductPad;
+        Text conductText;
         Text tabTitle, statusText;
         RectTransform progressFill;
         Button stopButton, showUiButton;
@@ -118,6 +120,14 @@ namespace OrchestraProject
             var pb = (RectTransform)progressFill.parent;
             pb.GetComponent<LayoutElement>().ignoreLayout = true;
             UIFactory.Anchor(pb, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -6), Vector2.zero);
+
+            // ---- "You conduct" pad (bottom centre, only while you conduct) ----
+            conductPad = UIFactory.Panel(transform, "Conduct Pad", new Color(0.86f, 0.69f, 0.42f, 0.22f)).rectTransform;
+            UIFactory.Anchor(conductPad, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-260, 104), new Vector2(260, 254));
+            conductText = UIFactory.Label(conductPad, "", 26, TextAnchor.MiddleCenter, UITheme.Text, FontStyle.Bold);
+            UIFactory.Stretch(conductText.rectTransform);
+            conductPad.gameObject.AddComponent<TapPad>().OnTap = () => gm.Performance.ConductTap();
+            conductPad.gameObject.SetActive(false);
 
             showUiButton = UIFactory.Button(transform, "Show UI", () => SetHidden(false), 20, 64);
             var sr = (RectTransform)showUiButton.transform;
@@ -260,7 +270,21 @@ namespace OrchestraProject
             }
             if (uiHidden && InputHelper.KeyDown(GameKey.Escape)) SetHidden(false);
             UpdateCoach();
+            UpdateConductPad();
             UpdateFreeArea();
+        }
+
+        // ---- "You conduct" pad ----
+        void UpdateConductPad()
+        {
+            var perf = gm.Performance;
+            bool on = perf.IsBusy && perf.PlayerConducting && !uiHidden;
+            conductPad.gameObject.SetActive(on);
+            if (!on) return;
+            if (InputHelper.KeyDown(GameKey.Space)) perf.ConductTap();
+            string fb = perf.ConductTaps == 0 ? "" : perf.LastConductFeedback.Grade == TapGrade.Extra ? "\n<size=18>extra beat</size>"
+                : "\n<size=18>" + perf.LastConductFeedback.Grade + " " + perf.LastConductFeedback.OffsetMs.ToString("+0;-0") + " ms</size>";
+            conductText.text = (perf.HasTiming && AudioSettings.dspTime < perf.BeatZeroDsp ? "GET READY…" : "TAP THE BEAT") + "\n<size=16>(or press Space)</size>" + fb;
         }
 
         // ---- Next step card ----

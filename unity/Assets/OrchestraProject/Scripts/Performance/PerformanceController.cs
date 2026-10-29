@@ -20,6 +20,21 @@ namespace OrchestraProject
         public PerformanceContext Context { get; private set; }
         public int PlayerCount { get; private set; }
 
+        // "You conduct" mode: the player's taps are scored against the beats and drive the conductor's baton.
+        public bool PlayerConducting { get; private set; }
+        public int ConductTaps { get; private set; }
+        public double LastConductTapDsp { get; private set; }
+        public TapFeedback LastConductFeedback { get; private set; }
+        RhythmScorer conductScorer;
+
+        public void ConductTap()
+        {
+            if (!PlayerConducting || conductScorer == null) return;
+            double now = AudioSettings.dspTime;
+            LastConductFeedback = conductScorer.RegisterTap(now);
+            LastConductTapDsp = now; ConductTaps++;
+        }
+
         // Timing of the piece being played (for the conductor): dsp time of beat 0, seconds per beat, metre.
         public bool HasTiming { get; private set; }
         public double BeatZeroDsp { get; private set; }
@@ -36,9 +51,11 @@ namespace OrchestraProject
         public void Init(StageManager stageManager) { stage = stageManager; }
 
         public void Perform(PieceDefinition piece, ArrangementMode mode, List<MusicianData> players, PerformanceContext ctx,
-            float preparation, Action<PerformanceResult> onFinished, InstrumentType soloist = InstrumentType.Violin)
+            float preparation, Action<PerformanceResult> onFinished, InstrumentType soloist = InstrumentType.Violin, bool playerConducts = false)
         {
             if (IsBusy) Stop();
+            PlayerConducting = playerConducts && ctx != PerformanceContext.Audition && players.Count > 1;
+            conductScorer = null; ConductTaps = 0;
             running = StartCoroutine(Run(piece, mode, players, ctx, preparation, onFinished, soloist));
         }
 
@@ -51,6 +68,7 @@ namespace OrchestraProject
             stage.HideAuditionCandidate();
             IsBusy = false;
             HasTiming = false;
+            PlayerConducting = false; conductScorer = null;
             Status = null;
         }
 
@@ -138,6 +156,12 @@ namespace OrchestraProject
             double end = dspStart + StringSynth.LeadInSec + length + 0.6;
             BeatZeroDsp = dspStart + StringSynth.LeadInSec; MusicEndDsp = BeatZeroDsp + length;
             SecondsPerBeat = 60f / bpm; BeatsPerBar = piece.BeatsPerBar; PickupBeats = piece.PickupBeats; HasTiming = true;
+            if (PlayerConducting)
+            {
+                var beats = new List<double>();
+                for (double b = BeatZeroDsp; b < MusicEndDsp - 0.05; b += SecondsPerBeat) beats.Add(b);
+                conductScorer = new RhythmScorer(beats);
+            }
             Status = (ctx == PerformanceContext.Concert ? "Concert: " : ctx == PerformanceContext.Audition ? "Audition: " : ctx == PerformanceContext.Rehearsal ? "Rehearsing: " : "Playing: ")
                      + piece.Title + (mode == ArrangementMode.SeparateParts ? " (separate parts)" : mode == ArrangementMode.Solo ? " (" + InstrumentCatalog.Get(soloist).DisplayName.ToLowerInvariant() + " solo)" : " (same melody)")
                      + (tempoScale < 0.99f ? " — tempo " + Mathf.RoundToInt(tempoScale * 100) + "%" : "");
@@ -153,6 +177,8 @@ namespace OrchestraProject
             if (ctx == PerformanceContext.Audition) stage.HideAuditionCandidate();
 
             var result = PerformanceEvaluator.Evaluate(parts, piece, mode, ctx, tempoScale);
+            if (conductScorer != null) PerformanceEvaluator.ApplyConducting(result, conductScorer.Score);
+            conductScorer = null; PlayerConducting = false;
             IsBusy = false;
             Status = null;
             running = null;

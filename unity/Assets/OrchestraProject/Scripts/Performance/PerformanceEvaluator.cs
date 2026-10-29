@@ -14,6 +14,8 @@ namespace OrchestraProject
         public int Stars;
         public string Review;
         public List<string> MusicianNotes = new List<string>();
+        public float ConductingScore = -1f;   // 0–1 when the player conducted, otherwise -1
+        public float ConductingBonus;
     }
 
     /// <summary>
@@ -53,6 +55,21 @@ namespace OrchestraProject
             r.Stars = r.Overall >= 88 ? 5 : r.Overall >= 75 ? 4 : r.Overall >= 60 ? 3 : r.Overall >= 45 ? 2 : 1;
             r.Review = ReviewText(r);
             return r;
+        }
+
+        /// <summary>
+        /// "You conduct" mode: steady beating keeps the orchestra together (+6 at 100 %), a lost or absent beat
+        /// costs up to −6. Same rule as applyConducting() in the web preview.
+        /// </summary>
+        public static void ApplyConducting(PerformanceResult r, float score01)
+        {
+            score01 = Math.Max(0f, Math.Min(1f, score01));
+            r.ConductingScore = score01;
+            r.ConductingBonus = 12f * score01 - 6f;
+            r.Overall = Math.Max(0f, Math.Min(100f, r.Overall + r.ConductingBonus));
+            r.Stars = r.Overall >= 88 ? 5 : r.Overall >= 75 ? 4 : r.Overall >= 60 ? 3 : r.Overall >= 45 ? 2 : 1;
+            r.Review = ReviewText(r);
+            r.MusicianNotes.Insert(0, "Your conducting: " + (score01 * 100f).ToString("0") + "% on the beat (" + (r.ConductingBonus >= 0 ? "+" : "") + r.ConductingBonus.ToString("0.0") + " points)");
         }
 
         /// <summary>How tightly musicians start shared beats together (std-dev of onsets in ms).</summary>

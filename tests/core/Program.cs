@@ -129,6 +129,12 @@ static class Program
             var a2 = Arranger.Arrange(gh, ArrangementMode.Solo, sp2.Select(m => m.instrument), InstrumentType.DoubleBass);
             Check(sp2.Count == 4 && a2.Parts[InstrumentType.DoubleBass].Gain == 1f && a2.Parts[InstrumentType.Violin].Gain < 1f, "bass solo with soft quartet accompaniment");
         }
+        // You conduct: perfect beating +6, no beating -6
+        {
+            var r1 = new PerformanceResult { Overall = 50f }; PerformanceEvaluator.ApplyConducting(r1, 1f);
+            var r0 = new PerformanceResult { Overall = 50f }; PerformanceEvaluator.ApplyConducting(r0, 0f);
+            Check(Math.Abs(r1.Overall - 56f) < 0.01f && Math.Abs(r0.Overall - 44f) < 0.01f && r1.MusicianNotes.Count == 1, "conducting bonus: +6 perfect, -6 none");
+        }
         // Next step card: listen -> rehearse until 60% -> concert -> rest
         {
             var ns = OrchestraState.NewGame(99); var tw = MusicLibrary.Get("twinkle"); var rr = new Random(3);

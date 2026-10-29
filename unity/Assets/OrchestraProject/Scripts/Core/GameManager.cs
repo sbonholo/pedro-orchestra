@@ -183,7 +183,7 @@ namespace OrchestraProject
             { Notify("Everyone is too tired to rehearse. Advance to the next day."); return; }
 
             float prep = State.Progress(pieceId).preparation;
-            Performance.Perform(piece, mode, players, ctx, prep, result => OnPerformanceDone(result, players), Soloist);
+            Performance.Perform(piece, mode, players, ctx, prep, result => OnPerformanceDone(result, players), Soloist, State.playerConducts);
             if (StateChanged != null) StateChanged();
         }
 
