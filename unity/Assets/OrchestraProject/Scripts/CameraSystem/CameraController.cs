@@ -19,6 +19,10 @@ namespace OrchestraProject
         public event Action<MusicianView> MusicianTapped;
         public Func<Transform> CloseUpTarget;   // provided by GameManager (selected musician)
 
+        /// <summary>Screen fraction (0..1) not covered by HUD panels. Preset cameras centre the stage in it.</summary>
+        [NonSerialized] public float FreeLeft = 0f, FreeRight = 1f;
+        float viewShift, viewZoom = 1f;
+
         Camera cam;
         Vector3 targetPos;
         Quaternion targetRot;
@@ -95,6 +99,7 @@ namespace OrchestraProject
 
             if (Mode == CameraMode.CloseUp) ComputePreset();       // follow the musician
             if (Mode == CameraMode.MenuOrbit) OrbitPose(dt);
+            FrameFreeArea(1f - Mathf.Exp(-dt * 4.5f));
             if (Mode == CameraMode.Free)
             {
                 transform.rotation = Quaternion.Euler(pitch, yaw, 0);
@@ -105,6 +110,20 @@ namespace OrchestraProject
             transform.position = Vector3.Lerp(transform.position, targetPos, k);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, k);
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFov, k);
+        }
+
+        // Same rule as the web preview: shift the image (lens shift) and widen it a little so no player hides behind a panel.
+        void FrameFreeArea(float k)
+        {
+            float l = 0f, r = 1f;
+            if (Mode != CameraMode.Free && Mode != CameraMode.MenuOrbit && FreeRight - FreeLeft >= 0.4f) { l = FreeLeft; r = FreeRight; }
+            viewShift = Mathf.Lerp(viewShift, (l + r) * 0.5f - 0.5f, k);
+            viewZoom = Mathf.Lerp(viewZoom, Mathf.Clamp((r - l) / 0.62f, 0.7f, 1f), k);
+            if (Mathf.Abs(viewShift) < 0.001f && viewZoom > 0.999f) { cam.ResetProjectionMatrix(); return; }
+            var p = Matrix4x4.Perspective(cam.fieldOfView, cam.aspect, cam.nearClipPlane, cam.farClipPlane);
+            p.m00 *= viewZoom; p.m11 *= viewZoom;
+            p.m02 = -2f * viewShift;
+            cam.projectionMatrix = p;
         }
 
         void HandleKeys()

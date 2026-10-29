@@ -22,4 +22,5 @@ cd tests/unity-compile && ./fetch_refs.sh && dotnet build unity_inputsystem.cspr
 ## Status
 - **Done (Stages 1–2):** hall, 4 musicians, 11 skills, training and progression, 3 pieces × 2 arrangements, real recorded strings, rhythm mini-game, auditions and invitations, concerts with ratings, saving, cameras, PC and touch UI.
 - **Placeholder:** 3D musicians, instruments and hall are built from simple shapes.
-- **Blocked:** solo cello (Karoryfer x Bigcat, CC0) and solo viola (University of Iowa MIS) need `karoryfer.com` and `theremin.music.uiowa.edu` allowed in the cloud session's network settings.
+- **Blocked:** solo cello (Karoryfer x Bigcat) and solo viola (University of Iowa MIS) need these hosts allowed in the cloud environment's network settings, then a **new** session: `karoryfer.com`, `www.karoryfer.com`, `shop.karoryfer.com` (download page), `theremin.music.uiowa.edu`, `sfzinstruments.github.io` (licence check). The cello's licence also needs checking: one catalogue lists CC0, others say attribution is required.
+- **Next:** Stage 3 plan in `STAGE3.md`.

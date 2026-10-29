@@ -17,6 +17,7 @@ namespace OrchestraProject
         public bool IsBusy { get; private set; }
         public string Status { get; private set; }
         public float Progress { get; private set; }
+        public PerformanceContext Context { get; private set; }
 
         StageManager stage;
         readonly List<MusicianView> activeViews = new List<MusicianView>();
@@ -54,6 +55,7 @@ namespace OrchestraProject
             float prep, Action<PerformanceResult> onFinished)
         {
             IsBusy = true;
+            Context = ctx;
             Progress = 0f;
             Status = "Preparing " + piece.Title + "…";
 

@@ -23,6 +23,9 @@ namespace OrchestraProject
         HudTab currentTab = HudTab.None;
         bool rosterOpen;
         bool uiHidden;
+        bool concertOnStage, peekDuringConcert;   // panels step aside during a concert; any tab brings them back
+
+        bool PanelsAside { get { return concertOnStage && !peekDuringConcert; } }
 
         public readonly MusicianTab MusicianTab = new MusicianTab();
         public readonly MusicTab MusicTab = new MusicTab();
@@ -134,6 +137,13 @@ namespace OrchestraProject
 
         void Toggle(HudTab tab)
         {
+            if (PanelsAside)
+            {
+                peekDuringConcert = true;
+                if (tab == HudTab.Roster) rosterOpen = true; else currentTab = tab;
+                Refresh();
+                return;
+            }
             if (tab == HudTab.Roster)
             {
                 rosterOpen = !rosterOpen;
@@ -165,8 +175,8 @@ namespace OrchestraProject
         public void Refresh()
         {
             if (!gameObject.activeInHierarchy || gm.State == null) return;
-            rosterPanel.gameObject.SetActive(rosterOpen && !uiHidden);
-            rightPanel.gameObject.SetActive(currentTab != HudTab.None && !uiHidden);
+            rosterPanel.gameObject.SetActive(rosterOpen && !uiHidden && !PanelsAside);
+            rightPanel.gameObject.SetActive(currentTab != HudTab.None && !uiHidden && !PanelsAside);
             foreach (var kv in navButtons)
                 UIFactory.SetSelected(kv.Value, kv.Key == HudTab.Roster ? rosterOpen : kv.Key == currentTab);
             UpdateCamButtons();
@@ -216,6 +226,8 @@ namespace OrchestraProject
         {
             if (gm == null || gm.State == null) return;
             var perf = gm.Performance;
+            bool concert = perf.IsBusy && perf.Context == PerformanceContext.Concert;
+            if (concert != concertOnStage) { concertOnStage = concert; peekDuringConcert = false; Refresh(); }
             stopButton.gameObject.SetActive(perf.IsBusy);
             ((RectTransform)progressFill.parent).gameObject.SetActive(perf.IsBusy);
             if (perf.IsBusy)
@@ -231,6 +243,24 @@ namespace OrchestraProject
                 statusText.text = "Day " + s.day + "   ·   Reputation " + s.reputation.ToString("0") + "   ·   Orchestra level " + avg.ToString("0") + " (" + SkillLevels.TierName(avg) + ")";
             }
             if (uiHidden && InputHelper.KeyDown(GameKey.Escape)) SetHidden(false);
+            UpdateFreeArea();
+        }
+
+        static readonly Vector3[] corners = new Vector3[4];
+
+        /// <summary>Tells the camera which part of the screen the side panels leave free, so the stage stays centred in it.</summary>
+        void UpdateFreeArea()
+        {
+            float l = 0f, r = Screen.width;
+            if (rosterPanel.gameObject.activeInHierarchy) { rosterPanel.GetWorldCorners(corners); l = corners[2].x; }
+            if (rightPanel.gameObject.activeInHierarchy) { rightPanel.GetWorldCorners(corners); r = corners[0].x; }
+            gm.Cam.FreeLeft = l / Screen.width;
+            gm.Cam.FreeRight = r / Screen.width;
+        }
+
+        void OnDisable()
+        {
+            if (gm != null && gm.Cam != null) { gm.Cam.FreeLeft = 0f; gm.Cam.FreeRight = 1f; }
         }
     }
 }

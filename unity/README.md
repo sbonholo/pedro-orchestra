@@ -34,10 +34,20 @@ A 3D orchestra management and simulation game for Unity 6 (URP). Targets: Window
 2. Close Unity. Copy the folder `Assets/OrchestraProject` from this package into your new project's `Assets` folder.
    Result: `YourProject/Assets/OrchestraProject/Scripts/...`
 3. Reopen the project and wait for the progress bar to finish compiling.
-4. In the top menu, click **Orchestra Project → Create Game Scene**. This creates `Assets/OrchestraProject/Scenes/Orchestra.unity` and adds it to the build.
+4. A window asks **"Create the game scene now?"**. Click **Create Game Scene**. (If it doesn't appear: top menu **Orchestra Project → Create Game Scene**.) This creates `Assets/OrchestraProject/Scenes/Orchestra.unity` and adds it to the build.
 5. Press **▶ Play**.
 
 If anything goes red, open **Window → General → Console**, copy the first red error and send it to me.
+
+### First-run troubleshooting
+| You see | Do this |
+|---|---|
+| No "Orchestra Project" menu at the top | Scripts haven't compiled. Open the Console and send me the first red error. |
+| Everything pink/magenta | The project isn't URP. Run **Orchestra Project → Check Setup**. It tells you what to fix. |
+| Play shows an empty scene, not the concert hall | The wrong scene is open. Run **Orchestra Project → Check Setup** → **Open**, then Play again. |
+| No sound | Click once inside the Game view. Check that the Game view's **Mute Audio** toggle is off. |
+| "Input System" warning dialog on first open | Click **Yes** (Unity restarts). The game supports both input systems. |
+| Odd game state while testing | **Orchestra Project → Delete Save (start fresh)**. |
 
 ## 4. How to play
 
@@ -57,7 +67,7 @@ If anything goes red, open **Window → General → Console**, copy the first re
 - **Cameras:** Stage, Audience, Orchestra, Close-up, Free (keys 1–5). Free camera:
   - PC: drag with the mouse, WASD / QE to move, Shift to go faster, scroll to zoom.
   - Touch: drag, pinch, two-finger pan.
-- **Hide UI** to watch a performance with only the stage on screen.
+- **Hide UI** to watch a performance with only the stage on screen. During a concert the side panels step aside on their own; tap any tab to bring them back.
 - Progress is saved automatically after every action.
 
 ## 5. Build for Windows

@@ -223,6 +223,21 @@ namespace UnityEditor
         public static void RevealInFinder(string p) { }
     }
 }
+namespace UnityEditor
+{
+    public sealed class InitializeOnLoadAttribute : Attribute { }
+    public static class EditorApplication
+    {
+        public delegate void CallbackFunction();
+        public static CallbackFunction delayCall;
+        public static bool isPlayingOrWillChangePlaymode => false;
+    }
+    public static class SessionState
+    {
+        public static bool GetBool(string key, bool defaultValue) => defaultValue;
+        public static void SetBool(string key, bool value) { }
+    }
+}
 namespace UnityEditor.SceneManagement
 {
     public enum NewSceneSetup { EmptyScene, DefaultGameObjects }
@@ -232,5 +247,6 @@ namespace UnityEditor.SceneManagement
         public static bool SaveCurrentModifiedScenesIfUserWantsTo() => true;
         public static UnityEngine.SceneManagement.Scene NewScene(NewSceneSetup s, NewSceneMode m) => default;
         public static bool SaveScene(UnityEngine.SceneManagement.Scene s, string path) => true;
+        public static UnityEngine.SceneManagement.Scene OpenScene(string path) => default;
     }
 }

@@ -24,9 +24,6 @@ namespace OrchestraProject
                          (prog.bestConcertRating > 0 ? "  ·  best concert " + prog.bestConcertRating.ToString("0") : "") + "</size>";
                 UIFactory.SetSelected(b, p.Id == pieceId);
             }
-            var more = UIFactory.Label(root, "More pieces (Bach, Vivaldi, Saint-Saëns, Elgar…) arrive with the library expansion stage.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
-            UIFactory.Size(more, 44);
-
             var sel = MusicLibrary.Get(pieceId);
             UIFactory.Header(root, "Arrangement");
             var row = UIFactory.Row(root, 60);
@@ -35,6 +32,27 @@ namespace OrchestraProject
             UIFactory.SetSelected(same, mode == ArrangementMode.SameMelody);
             UIFactory.SetSelected(sep, mode == ArrangementMode.SeparateParts);
 
+            // Main action first, so it is visible without scrolling.
+            UIFactory.Header(root, "Concert");
+            bool busy = gm.Performance.IsBusy;
+            string reason;
+            bool can = gm.CanPerformConcert(out reason);
+            var concert = UIFactory.Button(root, "Perform Concert: " + sel.Title, () => gm.PerformConcert(pieceId, mode), 21, 70, UITheme.AccentDim);
+            concert.interactable = can && !busy;
+            var cl = UIFactory.Label(root, can ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians."
+                : reason, 17, TextAnchor.UpperLeft, can ? UITheme.TextDim : UITheme.Bad);
+            UIFactory.Size(cl, 50);
+
+            UIFactory.Header(root, "Rehearse");
+            var playRow = UIFactory.Row(root, 62);
+            var listen = UIFactory.Button(playRow, "Listen", () => gm.Listen(pieceId, mode), 20, 62);
+            var rehearse = UIFactory.Button(playRow, "Rehearse", () => gm.RehearseWithPlayback(pieceId, mode), 20, 62);
+            var quick = UIFactory.Button(playRow, "Quick rehearsal", () => gm.QuickRehearsal(pieceId), 20, 62);
+            listen.interactable = rehearse.interactable = quick.interactable = !busy;
+            var pl = UIFactory.Label(root, "Listen: no training, no energy. Rehearse (with playback) and Quick rehearsal (instant) build preparation for this piece and cost " + TrainingSystem.EnergyPerRehearsal + " energy.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
+            UIFactory.Size(pl, 44);
+
+            UIFactory.Header(root, "About this piece");
             var instruments = new System.Collections.Generic.List<InstrumentType>();
             foreach (var m in s.roster) if (!instruments.Contains(m.instrument)) instruments.Add(m.instrument);
             var arr = Arranger.Arrange(sel, mode, instruments);
@@ -44,24 +62,10 @@ namespace OrchestraProject
             UIFactory.Size(roles, 26 * arr.Parts.Count + 6);
             var info = UIFactory.Label(root, sel.Character + "  ·  " + sel.Bpm + " bpm  ·  " + sel.BeatsPerBar + "/4\n<size=15>" + sel.Rights + "</size>", 17, TextAnchor.UpperLeft, UITheme.TextDim);
             UIFactory.Size(info, 52);
-
-            UIFactory.Header(root, "Play");
-            bool busy = gm.Performance.IsBusy;
-            var listen = UIFactory.Button(root, "Listen  (no training, no energy)", () => gm.Listen(pieceId, mode), 20, 62);
-            var rehearse = UIFactory.Button(root, "Rehearse with playback  (−" + TrainingSystem.EnergyPerRehearsal + " energy)", () => gm.RehearseWithPlayback(pieceId, mode), 20, 62);
-            var quick = UIFactory.Button(root, "Quick rehearsal  (instant, −" + TrainingSystem.EnergyPerRehearsal + " energy)", () => gm.QuickRehearsal(pieceId), 20, 62);
-            listen.interactable = rehearse.interactable = quick.interactable = !busy;
-
-            UIFactory.Header(root, "Concert");
-            string reason;
-            bool can = gm.CanPerformConcert(out reason);
-            var concert = UIFactory.Button(root, "Perform Concert: " + sel.Title, () => gm.PerformConcert(pieceId, mode), 21, 70, UITheme.AccentDim);
-            concert.interactable = can && !busy;
-            var cl = UIFactory.Label(root, can ? "The audience is waiting. Rating depends on skills, rehearsal preparation, difficulty, accuracy and ensemble. Good concerts raise reputation, which attracts better musicians."
-                : reason, 17, TextAnchor.UpperLeft, can ? UITheme.TextDim : UITheme.Bad);
-            UIFactory.Size(cl, 70);
             var rep = UIFactory.Label(root, "Reputation " + s.reputation.ToString("0") + "  ·  concerts " + s.concertsPerformed + "  ·  best rating " + s.bestConcertRating.ToString("0"), 17, TextAnchor.UpperLeft, UITheme.Text);
             UIFactory.Size(rep, 30);
+            var more = UIFactory.Label(root, "More pieces (Bach, Vivaldi, Saint-Saëns, Elgar…) arrive with the library expansion stage.", 16, TextAnchor.UpperLeft, UITheme.TextDim);
+            UIFactory.Size(more, 44);
         }
     }
 }
