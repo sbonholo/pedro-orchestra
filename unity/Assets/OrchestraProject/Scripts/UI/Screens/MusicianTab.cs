@@ -39,8 +39,8 @@ namespace OrchestraProject
             UIFactory.Size(nl, -1, -1, 1);
 
             var energyRow = UIFactory.Row(root, 30);
-            var el = UIFactory.Label(energyRow, "Energy " + m.energy.ToString("0"), 18); UIFactory.Size(el, -1, 140);
-            UIFactory.Bar(energyRow, 14, m.energy >= 40 ? UITheme.Good : UITheme.Bad, m.energy / 100f);
+            var el = UIFactory.Label(energyRow, "Energy " + m.energy.ToString("0") + " / " + TrainingSystem.MaxEnergy.ToString("0"), 18); UIFactory.Size(el, -1, 140);
+            UIFactory.Bar(energyRow, 14, m.energy >= 0.4f * TrainingSystem.MaxEnergy ? UITheme.Good : UITheme.Bad, m.energy / TrainingSystem.MaxEnergy);
             string learn = m.talent > 1.15f ? "Fast learner" : m.talent < 0.92f ? "Slow, steady learner" : "Average learner";
             var tl = UIFactory.Label(energyRow, learn, 17, TextAnchor.MiddleRight, UITheme.TextDim); UIFactory.Size(tl, -1, 200);
 

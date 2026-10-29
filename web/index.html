@@ -225,7 +225,7 @@ const overall = m => { let s = 0, w = 0; SKILLS.forEach((k, i) => { s += m.skill
 function createMusician(inst, mean, strength, second) {
   const female = rnd() < 0.5;
   const m = { id: Math.random().toString(36).slice(2, 10), female, first: pick(female ? NAMES.f : NAMES.m), last: pick(NAMES.last), country: pick(NAMES.country),
-    inst, skills: new Array(11).fill(0), talent: 0.8 + rnd() * 0.5, energy: 100, focus: -1, sessions: 0, concerts: 0, seed: Math.floor(rnd() * 1e9) };
+    inst, skills: new Array(11).fill(0), talent: 0.8 + rnd() * 0.5, energy: 1000, focus: -1, sessions: 0, concerts: 0, seed: Math.floor(rnd() * 1e9) };
   strength ??= Math.floor(rnd() * 11); second ??= Math.floor(rnd() * 11);
   let weak = Math.floor(rnd() * 11); if (weak === strength) weak = (weak + 3) % 11;
   for (let i = 0; i < 11; i++) { let v = mean + gauss() * 4.5; if (i === strength) v += 9; if (i === second) v += 5; if (i === weak) v -= 8; m.skills[i] = clamp(v, 0, 100); }
@@ -237,9 +237,9 @@ function createMusician(inst, mean, strength, second) {
 const fullName = m => m.first + " " + m.last;
 
 /* ---------- training & recruitment (same formulas as Unity) ---------- */
-const T = { base: 1.4, sec: 0.35, ePractice: 20, eRehearse: 15, eConcert: 25, recover: 60, minE: 10, directorSessions: 2 };
+const T = { base: 1.4, sec: 0.35, ePractice: 20, eRehearse: 15, eConcert: 25, maxE: 1000, recover: 600, minE: 10, directorSessions: 2 };
 const headroom = v => Math.max(0.01, Math.pow(Math.max(0, 1 - v / 100), 1.1));
-const energyFactor = e => e < 25 ? 0.45 : 0.65 + 0.35 * e / 100;
+const energyFactor = e => e < 25 ? 0.45 : 0.65 + 0.35 * e / T.maxE;
 function gain(m, i, f, log) { const b = m.skills[i]; m.skills[i] = clamp(b + f * headroom(b), 0, 100); log.push([m.id, i, b, m.skills[i]]); }
 function practice(m, focus, quality = 1) {
   if (m.energy < T.minE) return { ok: false, msg: m.first + " is too tired to practise. Advance to the next day." };
@@ -404,12 +404,12 @@ let state = null, selectedId = null;
 function newGame() {
   state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
     roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
-    auditions: [], invites: [] };
+    auditions: [], invites: [], energy1000: true };
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
-function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { state = s; return true; } } catch (e) { } return false; }
+function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } state = s; return true; } } catch (e) { } return false; }
 const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
 const selected = () => state?.roster.find(m => m.id === selectedId) || null;
 
@@ -866,7 +866,7 @@ function renderSide() {
       <div class="eyebrow">${INST[m.inst].title}</div><h2>${esc(fullName(m))}</h2>
       <p class="muted">${esc(m.country)} · age ${m.age} · ${m.years} years playing · ${m.talent > 1.15 ? "fast learner" : m.talent < .92 ? "slow, steady learner" : "average learner"}</p>
       <div class="kv"><span>Overall <span class="tier">${tierName(o)}</span></span><span>${o.toFixed(1)}${nt < 100 ? ` <span class="muted small">next level at ${nt}</span>` : ""}</span></div>
-      <div class="kv"><span>Energy</span><span>${m.energy.toFixed(0)} / 100</span></div>${bar(m.energy, m.energy >= 40 ? "var(--good)" : "var(--bad)")}
+      <div class="kv"><span>Energy</span><span>${m.energy.toFixed(0)} / ${T.maxE}</span></div>${bar(m.energy / T.maxE * 100, m.energy >= .4 * T.maxE ? "var(--good)" : "var(--bad)")}
       <h3>Skills</h3><p class="muted small">Tap a skill to choose a practice focus.</p>
       <div>${SKILLS.map((k, i) => `<button class="skill ${i === focusSkill ? "on" : ""}" data-skill="${i}"><span>${k[0]}</span>${bar(m.skills[i], skillColor(m.skills[i]))}<span class="v">${m.skills[i].toFixed(1)}</span></button>`).join("")}</div>
       <p class="muted small"><i>${SKILLS[focusSkill][2]}</i></p>
@@ -917,7 +917,7 @@ function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visi
 function advance(days) {
   if (perf) return toast("Wait until the performance ends.");
   let sessions = 0;
-  for (let d = 0; d < days; d++) { state.day++; for (const m of state.roster) m.energy = Math.min(100, m.energy + T.recover);
+  for (let d = 0; d < days; d++) { state.day++; for (const m of state.roster) m.energy = Math.min(T.maxE, m.energy + T.recover);
     if (state.style === "director") for (const m of state.roster) for (let i = 0; i < T.directorSessions; i++) if (practice(m, m.focus >= 0 ? m.focus : weakest(m)).ok) sessions++;
     for (const p of Object.values(state.pieces)) p.prep *= .985;
     if (state.day - state.poolDay >= 7) refreshPools(state); }
@@ -1052,9 +1052,9 @@ document.addEventListener("click", e => {
   else if (d.mode) { modeSel = d.mode; renderUI(); }
   else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }
   else if (d.hear) { const c = [...state.auditions, ...state.invites].find(x => x.id === d.hear); hearAudition(c); }
-  else if (d.hire) { const c = state.auditions.find(x => x.id === d.hire); if (state.roster.length >= 40) return toast("The stage is full (40 musicians)."); state.auditions = state.auditions.filter(x => x !== c); c.energy = 100; state.roster.push(c); save(); syncStage(); select(c.id); toast(`${fullName(c)} joins the orchestra as ${INST[c.inst].title}.`); }
+  else if (d.hire) { const c = state.auditions.find(x => x.id === d.hire); if (state.roster.length >= 40) return toast("The stage is full (40 musicians)."); state.auditions = state.auditions.filter(x => x !== c); c.energy = T.maxE; state.roster.push(c); save(); syncStage(); select(c.id); toast(`${fullName(c)} joins the orchestra as ${INST[c.inst].title}.`); }
   else if (d.invite) { const c = state.invites.find(x => x.id === d.invite); state.invites = state.invites.filter(x => x !== c);
-    if (rnd() < acceptChance(state, c)) { c.energy = 100; state.roster.push(c); syncStage(); select(c.id); toast(`${fullName(c)} accepted and joins as ${INST[c.inst].title}.`); }
+    if (rnd() < acceptChance(state, c)) { c.energy = T.maxE; state.roster.push(c); syncStage(); select(c.id); toast(`${fullName(c)} accepted and joins as ${INST[c.inst].title}.`); }
     else toast(`${fullName(c)} politely declined. Build reputation with concerts to attract stronger players.`); save(); renderUI(); }
 });
 function hearAudition(c) {

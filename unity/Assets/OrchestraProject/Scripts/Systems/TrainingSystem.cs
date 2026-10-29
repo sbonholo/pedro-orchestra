@@ -56,7 +56,8 @@ namespace OrchestraProject
         public const float EnergyPerPractice = 20f;
         public const float EnergyPerRehearsal = 15f;
         public const float EnergyPerConcert = 25f;
-        public const float DailyRecovery = 60f;
+        public const float MaxEnergy = 1000f;
+        public const float DailyRecovery = 600f;
         public const float MinEnergyToWork = 10f;
         public const int DirectorSessionsPerDay = 2;
 
@@ -70,7 +71,7 @@ namespace OrchestraProject
         static float EnergyFactor(float energy)
         {
             if (energy < 25f) return 0.45f;
-            return 0.65f + 0.35f * (energy / 100f);
+            return 0.65f + 0.35f * (energy / MaxEnergy);
         }
 
         /// <summary>
@@ -167,7 +168,7 @@ namespace OrchestraProject
         {
             state.day++;
             var sb = new StringBuilder("Day " + state.day + " begins.");
-            foreach (var m in state.roster) m.energy = Math.Min(100f, m.energy + DailyRecovery);
+            foreach (var m in state.roster) m.energy = Math.Min(MaxEnergy, m.energy + DailyRecovery);
 
             if (state.playStyle == (int)PlayStyle.Director)
             {

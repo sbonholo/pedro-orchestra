@@ -44,7 +44,7 @@ namespace OrchestraProject
                 talent = (float)(0.8 + rng.NextDouble() * 0.5),
                 appearanceSeed = rng.Next(),
                 trainingFocus = -1,
-                energy = 100f
+                energy = TrainingSystem.MaxEnergy
             };
 
             if (strength == null) strength = Skills.All[rng.Next(Skills.Count)];

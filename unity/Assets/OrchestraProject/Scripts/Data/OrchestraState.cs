@@ -22,7 +22,7 @@ namespace OrchestraProject
     [Serializable]
     public class OrchestraState
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;   // 2: energy scale 0–1000
         public const int MaxRosterSize = 40;
 
         public int saveVersion = CurrentVersion;
@@ -69,6 +69,11 @@ namespace OrchestraProject
             if (invitePool == null) invitePool = new List<MusicianData>();
             if (pieces == null) pieces = new List<PieceProgress>();
             if (journal == null) journal = new List<string>();
+            if (saveVersion < 2)
+            {
+                foreach (var m in roster) m.energy = TrainingSystem.MaxEnergy;   // old saves used 0–100
+                saveVersion = 2;
+            }
             foreach (var m in roster) m.Validate();
             foreach (var m in auditionPool) m.Validate();
             foreach (var m in invitePool) m.Validate();

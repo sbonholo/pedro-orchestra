@@ -20,7 +20,7 @@ namespace OrchestraProject
         public InstrumentType instrument;
         public float[] skills = new float[Skills.Count];
         public float talent = 1f;          // learning speed multiplier, ~0.8 – 1.3
-        public float energy = 100f;        // 0 – 100, spent by practice, restored each day
+        public float energy = TrainingSystem.MaxEnergy;   // 0 – MaxEnergy (1000), spent by practice, restored each day
         public int trainingFocus = -1;     // -1 = balanced (weakest skill), otherwise (int)SkillType
         public int practiceSessions;
         public int concertsPlayed;
@@ -74,7 +74,7 @@ namespace OrchestraProject
             }
             for (int i = 0; i < skills.Length; i++) skills[i] = Math.Max(0f, Math.Min(100f, skills[i]));
             if (talent <= 0f) talent = 1f;
-            energy = Math.Max(0f, Math.Min(100f, energy));
+            energy = Math.Max(0f, Math.Min(TrainingSystem.MaxEnergy, energy));
             if (trainingFocus < -1 || trainingFocus >= Skills.Count) trainingFocus = -1;
         }
     }

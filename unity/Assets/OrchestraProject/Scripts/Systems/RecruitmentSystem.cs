@@ -48,7 +48,7 @@ namespace OrchestraProject
             if (s.roster.Count >= OrchestraState.MaxRosterSize) return "The stage is full (" + OrchestraState.MaxRosterSize + " musicians).";
             s.auditionPool.Remove(candidate);
             s.invitePool.Remove(candidate);
-            candidate.energy = 100f;
+            candidate.energy = TrainingSystem.MaxEnergy;
             s.roster.Add(candidate);
             s.Log(candidate.FullName + " (" + candidate.Instrument.DisplayName + ") joined the orchestra.");
             return candidate.FullName + " joins the orchestra as " + candidate.Instrument.PlayerTitle + ".";
