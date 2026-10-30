@@ -15,9 +15,15 @@ namespace OrchestraProject
         {
             var s = gm.State;
             UIFactory.Header(root, "Music library");
-            foreach (var p in MusicLibrary.All)
+            // Easiest first, with a heading per level: Beginner, Intermediate, Advanced, Virtuoso.
+            var sorted = new System.Collections.Generic.List<PieceDefinition>(MusicLibrary.All);
+            for (int a = 1; a < sorted.Count; a++)   // stable insertion sort by difficulty
+                for (int b = a; b > 0 && sorted[b - 1].Difficulty > sorted[b].Difficulty; b--) { var tmp = sorted[b]; sorted[b] = sorted[b - 1]; sorted[b - 1] = tmp; }
+            Difficulty? shown = null;
+            foreach (var p in sorted)
             {
                 var piece = p;
+                if (shown != p.Difficulty) { shown = p.Difficulty; var hd = UIFactory.Label(root, "<b>" + p.Difficulty + "</b>", 22, TextAnchor.LowerLeft, UITheme.Accent); UIFactory.Size(hd, 40); }
                 var prog = s.Progress(p.Id);
                 var b = UIFactory.Button(root, "", () => { pieceId = piece.Id; gm.Soloist = piece.Featured; ui.Hud.Refresh(); }, 20, 86);
                 var t = b.GetComponentInChildren<Text>();
