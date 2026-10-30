@@ -92,6 +92,8 @@ p { margin: 0; line-height: 1.5; }
 .stars .star.on { animation: starPop .45s ease-out both; }
 .stars .star.on:nth-child(2) { animation-delay: .25s; } .stars .star.on:nth-child(3) { animation-delay: .5s; } .stars .star.on:nth-child(4) { animation-delay: .75s; } .stars .star.on:nth-child(5) { animation-delay: 1s; }
 input[type=range] { width: 100%; accent-color: var(--gold); }
+#save-mark { position: fixed; right: 16px; bottom: 64px; z-index: 30; font-size: 12px; color: #e8c886; background: rgba(20,16,12,.85); border: 1px solid rgba(232,200,134,.3); border-radius: 999px; padding: 5px 11px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+#save-mark.on { opacity: 1; }
 #toast { left: 50%; top: 84px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 12px 16px; white-space: pre-line; font-size: 13px;
   background: var(--card-solid); border: 1px solid var(--line); border-radius: 8px; transition: opacity .3s; pointer-events: none; z-index: 30; }
 .modal-bg { position: fixed; inset: 0; z-index: 20; background: rgba(5,4,6,.62); display: grid; place-items: center;
@@ -188,6 +190,7 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
 
 <button class="ui pad" id="conduct-pad" hidden style="left:50%;transform:translateX(-50%);bottom:calc(var(--bot, 76px) + 8px);width:min(420px, calc(100vw - 32px));height:120px;font-size:30px">TAP THE BEAT</button>
 <div class="ui" id="toast" style="opacity:0"></div>
+<div id="save-mark" aria-live="polite"></div>
 <div class="ui" id="achv"></div>
 <div id="modal-root"></div>
 
@@ -595,18 +598,29 @@ function newGame() {
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
 // Saves go to browser storage AND a private copy in the player's claude.ai account (db capability), so Continue
 // still works when browser storage is empty: another device, the app, a cleared or blocked browser.
-const cloud = { doc: null, json: null, timer: 0 };
+const cloud = { doc: null, json: null, pending: null, busy: false, fails: 0 };
 function save() { checkAchievements(); state.savedAt = Date.now(); const json = JSON.stringify(state); try { localStorage.setItem(SAVE_KEY, json); } catch (e) { /* storage unavailable: game still runs */ }
-  if (cloud.doc) { cloud.json = json; clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloud.doc.set({ json, at: state.savedAt }).catch(() => { }), 1500); } }
+  cloud.json = json; cloud.pending = { json, at: state.savedAt }; pushCloud(); if (cloud.checked && !cloud.doc) saveMark("Saved on this device only"); }
+// One write at a time; the newest state wins; a failed write is retried and reported once.
+async function pushCloud() {
+  if (!cloud.doc || cloud.busy || !cloud.pending) return; const w = cloud.pending; cloud.pending = null; cloud.busy = true;
+  try { await cloud.doc.set(w); cloud.fails = 0; saveMark("Saved to your account"); }
+  catch (e) { if (!cloud.pending) cloud.pending = w; if (++cloud.fails === 2) toast("Could not save to your account (" + (e?.code || "error") + "). Progress is kept on this device only."); }
+  finally { cloud.busy = false; if (cloud.pending) setTimeout(pushCloud, cloud.fails ? Math.min(30000, 2000 * cloud.fails) : 300); } }
+function saveMark(t) { const el = $("#save-mark"); if (!el) return; el.textContent = "✓ " + t; el.classList.add("on"); clearTimeout(saveMark.t); saveMark.t = setTimeout(() => el.classList.remove("on"), 1800); }
+addEventListener("pagehide", pushCloud); document.addEventListener("visibilitychange", () => { if (document.hidden) pushCloud(); });
 const savedJson = () => { try { return localStorage.getItem(SAVE_KEY) || cloud.json; } catch (e) { return cloud.json; } };
 async function connectCloudSave() {
+  setTimeout(() => cloud.checked = true, 12000);   // claude.use() answers within 10 s, or this view has no account saves
   try { if (!window.claude?.use) return; const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); const id = db && user && await user.id(); if (!id) return;
     const doc = db.collection("data/users/" + id).doc("save"), snap = await doc.get(); cloud.doc = doc;
     if (!snap.exists) { if (hasSave()) save(); return; }   // first visit with cloud saves: upload the browser save
+    if (cloud.pending) { pushCloud(); return; }   // already playing (saved before the account answered): this game is newer
     const d = snap.data(), local = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; } })();
     if (typeof d.json !== "string" || (local && (local.savedAt || 0) >= (d.at || 0))) return;
     cloud.json = d.json; try { localStorage.setItem(SAVE_KEY, d.json); } catch (e) { }
-    if ($("#menu").hidden === false) { state = null; load(); syncStage(); $("#m-continue").hidden = false; $("#m-continue").disabled = false; }   // still on the menu: Continue now resumes the cloud game
+    if (!$("#menu").hidden) { state = null; load(); syncStage(); }   // not in a game yet: Continue resumes the account save
+    $("#m-continue").hidden = $("#m-continue").disabled = false;   // still on the menu: Continue now resumes the cloud game
   } catch (e) { /* no cloud saves in this view: browser storage only */ }
 }
 function load() { try { const s = JSON.parse(savedJson()); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } if (!s.energy2000) { for (const m of s.roster) m.energy = T.maxE; s.coins += 450; s.energy2000 = true; } state = s; return true; } } catch (e) { } return false; }
@@ -1563,7 +1577,7 @@ function frame(now) {
 }
 buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (settings.quality !== "high") applySettings();
 // Show the starting orchestra on stage behind the menu (new players see the four musicians immediately)
-if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } }
+if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } cloud.pending = cloud.json = null; }   // a placeholder behind the menu, never saved
 syncStage();
 camera.position.copy(U(0, 5, -8)); camera.lookAt(camGoalLook);
 $("#m-continue").disabled = !hasSave(); $("#m-continue").hidden = !hasSave();   // no saved game yet: New Game is the only choice
