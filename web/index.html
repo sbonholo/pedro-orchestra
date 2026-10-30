@@ -1227,7 +1227,7 @@ function nextStep() {
   const canConcert = state.lastConcert !== state.day && state.roster.every(m => m.energy >= T.eConcert);
   const better = state.auditions.map(c => { const lead = state.roster.filter(x => x.inst === c.inst).sort((a, b) => overall(b) - overall(a))[0]; return { c, gain: lead ? overall(c) - overall(lead) : 99 }; })
     .filter(x => x.gain >= 3).sort((a, b) => b.gain - a.gain)[0];
-  if (!state.heard) return { text: `Hear how your quartet sounds today. Listen for wrong notes and players drifting apart.`, label: `Listen: ${p.title}`, act: "listen" };
+  if (!state.heard) return { text: `Hear how your ${state.roster.length === 4 ? "quartet" : "orchestra"} sounds today. Listen for wrong notes and players drifting apart.`, label: `Listen: ${p.title}`, act: "listen" };
   if (canConcert && pr.prep >= 0.6) return { text: `“${p.title}” is ${pct}% prepared. Time to play it for an audience.`, label: "Perform Concert", act: "concert" };
   if (canWork && pr.prep < 0.6) return { text: `Rehearse “${p.title}” together. It is ${pct}% prepared; aim for 60% before the concert.`, label: "Rehearse", act: "rehearse" };
   if (better && state.lastConcert === state.day) return { text: `${fullName(better.c)}, a ${INST[better.c.inst].title.toLowerCase()} ${better.gain >= 99 ? "for a new section" : `${better.gain.toFixed(0)} points stronger than yours`}, has applied.`, label: "See applicant", act: "recruit" };

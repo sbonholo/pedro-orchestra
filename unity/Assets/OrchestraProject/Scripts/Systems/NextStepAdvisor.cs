@@ -28,7 +28,7 @@ namespace OrchestraProject
             }
 
             if (!s.heardOrchestra)
-                return Step(NextStepAction.Listen, "Hear how your quartet sounds today. Listen for wrong notes and players drifting apart.", "Listen: " + piece.Title);
+                return Step(NextStepAction.Listen, "Hear how your " + (s.roster.Count == 4 ? "quartet" : "orchestra") + " sounds today. Listen for wrong notes and players drifting apart.", "Listen: " + piece.Title);
             if (canConcert && pr.preparation >= ConcertReadyPreparation)
                 return Step(NextStepAction.Concert, "“" + piece.Title + "” is " + pct + "% prepared. Time to play it for an audience.", "Perform Concert");
             if (canWork && pr.preparation < ConcertReadyPreparation)
