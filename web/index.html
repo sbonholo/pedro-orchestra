@@ -593,9 +593,24 @@ function newGame() {
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
-function save() { checkAchievements(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: game still runs */ } }
-function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } if (!s.energy2000) { for (const m of s.roster) m.energy = T.maxE; s.coins += 450; s.energy2000 = true; } state = s; return true; } } catch (e) { } return false; }
-const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } };
+// Saves go to browser storage AND a private copy in the player's claude.ai account (db capability), so Continue
+// still works when browser storage is empty: another device, the app, a cleared or blocked browser.
+const cloud = { doc: null, json: null, timer: 0 };
+function save() { checkAchievements(); state.savedAt = Date.now(); const json = JSON.stringify(state); try { localStorage.setItem(SAVE_KEY, json); } catch (e) { /* storage unavailable: game still runs */ }
+  if (cloud.doc) { cloud.json = json; clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloud.doc.set({ json, at: state.savedAt }).catch(() => { }), 1500); } }
+const savedJson = () => { try { return localStorage.getItem(SAVE_KEY) || cloud.json; } catch (e) { return cloud.json; } };
+async function connectCloudSave() {
+  try { if (!window.claude?.use) return; const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); const id = db && user && await user.id(); if (!id) return;
+    const doc = db.collection("data/users/" + id).doc("save"), snap = await doc.get(); cloud.doc = doc;
+    if (!snap.exists) { if (hasSave()) save(); return; }   // first visit with cloud saves: upload the browser save
+    const d = snap.data(), local = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; } })();
+    if (typeof d.json !== "string" || (local && (local.savedAt || 0) >= (d.at || 0))) return;
+    cloud.json = d.json; try { localStorage.setItem(SAVE_KEY, d.json); } catch (e) { }
+    if ($("#menu").hidden === false) { state = null; load(); syncStage(); $("#m-continue").hidden = false; $("#m-continue").disabled = false; }   // still on the menu: Continue now resumes the cloud game
+  } catch (e) { /* no cloud saves in this view: browser storage only */ }
+}
+function load() { try { const s = JSON.parse(savedJson()); if (s && s.roster && s.roster.length) { if (!s.energy1000) { for (const m of s.roster) m.energy = T.maxE; s.energy1000 = true; } if (s.coins === undefined) { s.coins = ECO.start; s.owned = []; } if (!s.energy2000) { for (const m of s.roster) m.energy = T.maxE; s.coins += 450; s.energy2000 = true; } state = s; return true; } } catch (e) { } return false; }
+const hasSave = () => !!savedJson();
 const selected = () => state?.roster.find(m => m.id === selectedId) || null;
 
 /* =====================================================================
@@ -1311,7 +1326,7 @@ function enterGame(t) {
   $("#menu").hidden = true; $("#topbar").hidden = false; $("#bottombar").hidden = false; tab = t; rosterOpen = !isNarrow() || t === "roster"; if (isNarrow() && t !== "roster") rosterOpen = false;
   syncStage(); if (!selectedId || !selected()) select(state.roster[0].id); setCam("orchestra"); renderUI(); initAudio();
 }
-function showMenu() { stopPerformance(true); $("#menu").hidden = false; $("#topbar").hidden = true; $("#bottombar").hidden = true; $("#roster").hidden = true; $("#side").hidden = true; setCam("menu"); camMode = "menu"; $("#m-continue").disabled = !hasSave() && !state; }
+function showMenu() { stopPerformance(true); $("#menu").hidden = false; $("#topbar").hidden = true; $("#bottombar").hidden = true; $("#roster").hidden = true; $("#side").hidden = true; setCam("menu"); camMode = "menu"; $("#m-continue").disabled = $("#m-continue").hidden = !hasSave() && !state; }
 
 /* ---------- modals ---------- */
 function modal(html) { const bg = el(`<div class="modal-bg"><div class="modal">${html}</div></div>`); $("#modal-root").appendChild(bg); return bg; }
@@ -1502,7 +1517,7 @@ $("#m-settings").onclick = () => {
   bg.querySelector("#s-vol").oninput = e => { settings.volume = e.target.value / 100 * .9; applySettings(); show(); };
   bg.querySelector("#s-app").oninput = e => { settings.applause = e.target.value / 100; applySettings(); show(); };
   bg.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { settings.quality = b.dataset.q; applySettings(); bg.querySelectorAll("[data-q]").forEach(x => x.classList.toggle("on", x === b)); });
-  let sure = false; bg.querySelector("#s-reset").onclick = e => { if (!sure) { sure = true; e.target.textContent = "Tap again to delete the saved game"; return; } try { localStorage.removeItem(SAVE_KEY); } catch (er) { } location.reload(); };
+  let sure = false; bg.querySelector("#s-reset").onclick = e => { if (!sure) { sure = true; e.target.textContent = "Tap again to delete the saved game"; return; } try { localStorage.removeItem(SAVE_KEY); } catch (er) { } Promise.resolve(cloud.doc?.delete()).catch(() => { }).finally(() => location.reload()); };
   bg.querySelector("[data-close]").onclick = () => bg.remove(); show();
 };
 $("#b-help").onclick = () => openTutorial();
@@ -1551,8 +1566,8 @@ buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (set
 if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } }
 syncStage();
 camera.position.copy(U(0, 5, -8)); camera.lookAt(camGoalLook);
-$("#m-continue").disabled = !hasSave();
-$("#loading").hidden = true;
+$("#m-continue").disabled = !hasSave(); $("#m-continue").hidden = !hasSave();   // no saved game yet: New Game is the only choice
+$("#loading").hidden = true; connectCloudSave();
 requestAnimationFrame(frame);
 window.__orchestra = { get state() { return state; }, get perf() { return perf; }, get actx() { return actx; }, tap: ts => conductTap(ts) };   // test hooks
 </script>
