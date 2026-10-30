@@ -32,7 +32,7 @@ namespace OrchestraProject
         public void Build(Transform root, GameManager gm, UIManager ui)
         {
             var s = gm.State;
-            var coins = UIFactory.Label(root, "<b>" + s.coins.ToString("N0") + " coins</b>   <size=16>Concerts earn " + Economy.CoinsApproved + " coins when the judges approve, " + Economy.CoinsRejected + " when they don't.</size>", 22, TextAnchor.UpperLeft, UITheme.Accent);
+            var coins = UIFactory.Label(root, "<b>" + s.coins.ToString("N0") + " coins</b>   <size=16>Concerts earn " + Economy.ApprovedCoins(s.level) + " coins when the judges approve, " + Economy.CoinsRejected + " when they don't.</size>", 22, TextAnchor.UpperLeft, UITheme.Accent);
             UIFactory.Size(coins, 60);
             var m = gm.Selected;
             if (m == null) { UIFactory.Label(root, "Select a musician (Roster or tap one on stage) to upgrade them.", 19); return; }

@@ -31,6 +31,8 @@ namespace OrchestraProject
             A("professional", "Professional Orchestra", "Reach orchestra level 65 (Professional).", 250, s => AverageLevel(s) >= 65f),
             A("five_stars", "World-Class Evening", "Earn 5 stars in a concert.", 300, s => s.bestStars >= 5),
             A("strad", "A Stradivarius", "Own a Stradivarius.", 500, s => s.ownedInstruments.Exists(id => id.StartsWith("strad_"))),
+            A("national", "National Stage", "Be promoted to the National Orchestra.", 400, s => s.level >= 4),
+            A("top", "Top of the World", "Become the World Symphony Orchestra.", 1000, s => s.level >= Economy.MaxLevel),
         };
 
         static Achievement A(string id, string title, string desc, int reward, Func<OrchestraState, bool> done)

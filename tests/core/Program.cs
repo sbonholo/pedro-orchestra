@@ -145,6 +145,9 @@ static class Program
             var bad = new PerformanceResult { Overall = 35, Rhythm = 35, Intonation = 35, Ensemble = 35, Artistry = 35 };
             Check(Economy.ConcertCoins(Economy.Judge(good, new Random(1))) == Economy.CoinsApproved && Economy.ConcertCoins(Economy.Judge(bad, new Random(1))) == Economy.CoinsRejected, "judges: good concert " + Economy.CoinsApproved + " coins, bad concert " + Economy.CoinsRejected);
             Check(Economy.Judge(good, new Random(2)).Count == 5, "five judges score each concert");
+            var mid = new PerformanceResult { Overall = 66, Rhythm = 66, Intonation = 66, Ensemble = 66, Artistry = 66, Accuracy = 66 };
+            Check(Economy.Approved(Economy.Judge(mid, new Random(3), 0)) && !Economy.Approved(Economy.Judge(mid, new Random(3), 6)) && Economy.ApprovedCoins(6) == 180,
+                "levels: a 66-point concert passes at Community level but not at the top (8.5 needed); top pays 180");
             float before = v.Get(SkillType.Intonation); int cost = Economy.MasterclassCost(before);
             Economy.Masterclass(es, v, SkillType.Intonation);
             Check(Math.Abs(v.Get(SkillType.Intonation) - before - 3f) < 0.01f && es.coins == Economy.StartingCoins - cost, "masterclass: +3 for " + cost + " coins");
@@ -158,7 +161,7 @@ static class Program
             gs.concertsPerformed = 1; var got = Achievements.Check(gs);
             var again = Achievements.Check(gs);
             Check(got.Count == 1 && got[0].Id == "first_concert" && gs.coins == c0 + 20 && again.Count == 0, "achievement Opening Night pays 20 coins once");
-            Check(Achievements.All.Count == 13, "13 career goals");
+            Check(Achievements.All.Count == 15, "15 career goals");
         }
         // Rare talents: about 1 % of applicants and invitations are world-class
         {

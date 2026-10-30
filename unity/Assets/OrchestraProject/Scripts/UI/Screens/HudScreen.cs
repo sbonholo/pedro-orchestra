@@ -273,7 +273,7 @@ namespace OrchestraProject
                 var s = gm.State;
                 float avg = 0f; foreach (var m in s.roster) avg += m.Overall;
                 avg = s.roster.Count > 0 ? avg / s.roster.Count : 0f;
-                statusText.text = "Day " + s.day + "   ·   <color=#" + UITheme.Hex(UITheme.Accent) + ">" + s.coins.ToString("N0") + " coins</color>   ·   Reputation " + s.reputation.ToString("0") + "   ·   Orchestra level " + avg.ToString("0") + " (" + SkillLevels.TierName(avg) + ")";
+                statusText.text = Economy.LevelName(s.level) + "   ·   Day " + s.day + "   ·   <color=#" + UITheme.Hex(UITheme.Accent) + ">" + s.coins.ToString("N0") + " coins</color>   ·   Reputation " + s.reputation.ToString("0") + "   ·   Orchestra level " + avg.ToString("0") + " (" + SkillLevels.TierName(avg) + ")";
             }
             if (uiHidden && InputHelper.KeyDown(GameKey.Escape)) SetHidden(false);
             UpdateCoach();

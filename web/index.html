@@ -297,7 +297,7 @@ const weakest = m => m.skills.indexOf(Math.min(...m.skills));
 const RARE_CHANCE = 0.01;
 function refreshPools(st) {
   st.auditions = []; st.invites = [];
-  const base = 26 + st.rep * 0.45;
+  const base = 26 + st.rep * 0.45 + 4 * (st.level || 0);   // better orchestras attract better players
   // Each applicant and invitation has a 1 % chance to be a rare, world-class talent (86–94), as in RecruitmentSystem.cs
   const cand = (inst, mean) => { const rare = rnd() < RARE_CHANCE, m = createMusician(inst, rare ? 86 + rnd() * 8 : mean); m.rare = rare; return m; };
   for (let i = 0; i < 3; i++) st.auditions.push(cand(pick(INST_KEYS), clamp(base + rnd() * 16 - 6, 18, 85)));
@@ -497,12 +497,17 @@ function masterclass(m, i) {
   state.coins -= cost; m.skills[i] = Math.min(100, v + ECO.gain); return `Masterclass: ${m.first}'s ${SKILLS[i][0]} ${v.toFixed(1)} → ${m.skills[i].toFixed(1)}.`;
 }
 const JUDGES = [["Prof. Ilse Varga", "intonation", -.4], ["Dr. Kenji Mori", "note accuracy", -.2], ["Marcus Bell", "rhythm and ensemble", 0], ["Amara Okoye", "the overall impression", .2], ["Sofia Ricci", "artistry", .4]];   // five judges, strict to generous; 3 must approve
-function judge(r) {
+function judge(r, level = 0) {
+  const pass = passMark(level);
   const focus = [r.I, r.A, (r.R + r.E) / 2, r.overall, r.Art];
   return JUDGES.map(([name, f, bias], i) => { const score = Math.round(clamp((r.overall + (focus[i] - r.overall) * .5) / 10 + bias + (Math.random() - .5) * .6, 1, 10) * 10) / 10;
-    return { name, focus: f, score, ok: score >= ECO.pass, comment: score >= 8.5 ? "Outstanding." : score >= ECO.pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
+    return { name, focus: f, score, ok: score >= pass, comment: score >= Math.max(8.5, pass + .5) ? "Outstanding." : score >= pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
 }
-const concertCoins = js => js.filter(j => j.ok).length >= 3 ? ECO.yes : ECO.no;
+// Career levels: each concert the judges approve promotes the orchestra (same as Economy.cs).
+const LEVELS = ["Community Orchestra", "Youth Symphony", "City Chamber Orchestra", "Regional Symphony", "National Orchestra", "Grand Philharmonic", "World Symphony Orchestra"];
+const lvlOf = l => clamp(l || 0, 0, LEVELS.length - 1), passMark = l => ECO.pass + .5 * lvlOf(l), approvedCoins = l => ECO.yes + 20 * lvlOf(l);
+const approved = js => js.filter(j => j.ok).length >= 3;
+const concertCoins = (js, l = 0) => approved(js) ? approvedCoins(l) : ECO.no;
 // Career goals with coin rewards (same list, order and rewards as Achievements.cs). Each pays once.
 const avgLevel = st => st.roster.reduce((a, m) => a + overall(m), 0) / Math.max(1, st.roster.length);
 const ACHIEVEMENTS = [
@@ -519,6 +524,8 @@ const ACHIEVEMENTS = [
   ["professional", "Professional Orchestra", "Reach orchestra level 65 (Professional).", 250, st => avgLevel(st) >= 65],
   ["five_stars", "World-Class Evening", "Earn 5 stars in a concert.", 300, st => st.bestStars >= 5],
   ["strad", "A Stradivarius", "Own a Stradivarius.", 500, st => st.owned.some(id => id.startsWith("strad_"))],
+  ["national", "National Stage", "Be promoted to the National Orchestra.", 400, st => (st.level || 0) >= 4],
+  ["top", "Top of the World", "Become the World Symphony Orchestra.", 1000, st => (st.level || 0) >= LEVELS.length - 1],
 ].map(([id, title, desc, reward, done]) => ({ id, title, desc, reward, done }));
 function checkAchievements() {
   if (!state) return; for (const k of ["achievements", "concertPieces"]) state[k] ??= []; for (const k of ["judgeApprovals", "bestStars", "hired", "bestConducting"]) state[k] ??= 0;
@@ -1035,8 +1042,11 @@ function finishPerformance() {
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
     gains = { ok: true, msg: `Concert experience. Reputation +${rg.toFixed(1)} (now ${state.rep.toFixed(0)}).`, log }; }
-  if (pf.ctx === "concert") { applause(res.stars); res.judges = judge(res); res.coins = concertCoins(res.judges); state.coins += res.coins; checkAchievements();
-    if (res.coins === ECO.yes) { state.judgeApprovals++; if (pf.mode === "solo") state.soloApproved = true; }
+  if (pf.ctx === "concert") { applause(res.stars); state.level ??= 0; res.levelBefore = res.levelAfter = state.level;
+    res.judges = judge(res, state.level); res.coins = concertCoins(res.judges, state.level); state.coins += res.coins;
+    if (approved(res.judges) && state.level < LEVELS.length - 1) res.levelAfter = ++state.level;   // the judges' approval is the audition for the next orchestra
+    checkAchievements();
+    if (approved(res.judges)) { state.judgeApprovals++; if (pf.mode === "solo") state.soloApproved = true; }
     state.bestStars = Math.max(state.bestStars, res.stars); if (pf.cond) state.bestConducting = Math.max(state.bestConducting, conductScore(pf.cond));
     if (!state.concertPieces.includes(pf.p.id)) state.concertPieces.push(pf.p.id); bowUntil = performance.now() / 1000 + BOW_SEC; }
   save(); updateAudience(); renderUI(); showResult(pf, res, gains); if (pf.onDone) pf.onDone(res);
@@ -1130,6 +1140,7 @@ function renderSide() {
         <p class="muted small">${who ? `Soloist: <b>${esc(fullName(who))}</b> plays alone` : "Nobody plays this instrument yet. Hire one in Auditions."}</p>`; })() : ""}
       <div class="eyebrow">Conductor</div><div class="row"><button class="btn ${!state.conduct ? "on" : ""}" data-cond="auto">Automatic</button><button class="btn ${state.conduct ? "on" : ""}" data-cond="you">You conduct (tap the beat)</button></div>
       <div class="eyebrow">Concert</div>
+      <p class="small" style="color:var(--gold)">Your orchestra: <b>${LEVELS[lvlOf(state.level)]}</b> (level ${lvlOf(state.level) + 1} of ${LEVELS.length})${lvlOf(state.level) < LEVELS.length - 1 ? `. Win the judges' approval (3 of 5 give ${passMark(state.level).toFixed(1)}+) to be promoted to the <b>${LEVELS[lvlOf(state.level) + 1]}</b>.` : ": the top of the world."}</p>
       <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)}</button>
       <p class="small ${canConcert ? "muted" : ""}" style="${canConcert ? "" : "color:var(--bad)"}">${canConcert ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians." : why}</p>
       <div class="eyebrow">Rehearse</div>
@@ -1154,7 +1165,7 @@ function renderSide() {
   } else if (tab === "shop") {
     const plain = { [S.intonation]: "plays in tune", [S.rhythm]: "plays notes on time", [S.accuracy]: "fewer wrong notes", [S.tone]: "more beautiful sound", [S.expression]: "vibrato and feeling", [S.musicality]: "shapes the phrases", [S.ensemble]: "stays together", [S.technique]: "cleaner playing", [S.speed]: "plays fast pieces", [S.sight]: "new pieces", [S.confidence]: "calm on stage" };
     const order = [S.intonation, S.rhythm, S.accuracy, S.tone, S.expression, S.musicality, S.ensemble, S.technique, S.speed, S.sight, S.confidence];
-    s.innerHTML = `<div class="eyebrow">Shop</div><h2>${state.coins.toLocaleString("en")} coins</h2><p class="muted small">Concerts earn ${ECO.yes} coins when the judges approve, ${ECO.no} when they don't.</p>`
+    s.innerHTML = `<div class="eyebrow">Shop</div><h2>${state.coins.toLocaleString("en")} coins</h2><p class="muted small">Concerts earn ${approvedCoins(state.level)} coins when the judges approve, ${ECO.no} when they don't.</p>`
       + (!m ? `<p>Select a musician to upgrade them.</p>` : `<h3>Masterclasses for ${esc(fullName(m))} <span class="muted small">(+${ECO.gain} per lesson)</span></h3>
       ${order.map(i => { const v = m.skills[i], c = masterclassCost(v); return `<button class="btn" data-mc="${i}" ${v >= 100 || state.coins < c ? "disabled" : ""} style="text-align:left">${SKILLS[i][0]} ${v.toFixed(0)} <span class="muted small">(${plain[i]})</span> — ${v >= 100 ? "maximum" : c + " coins"}</button>`; }).join("")}
       <h3>Instruments for ${esc(fullName(m))}</h3><p class="muted small">Playing: <b>${shopItem(m.instrumentModel)?.name || "own student " + INST[m.inst].name.toLowerCase()}</b>. Better instruments add up to +20 Tone, +8 Expression and +4 Intonation.</p>
@@ -1179,7 +1190,7 @@ function renderSide() {
 function updateStatus() {
   if (!state) return;
   if (perf) { $("#status").innerHTML = perf.status; $("#progress i").style.width = clamp((actx.currentTime - perf.t0) / (perf.end - perf.t0) * 100, 0, 100) + "%"; }
-  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `Day <b>${state.day}</b> · <b>${state.coins.toLocaleString("en")}</b> coins · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
+  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `${LEVELS[lvlOf(state.level)]} · Day <b>${state.day}</b> · <b>${state.coins.toLocaleString("en")}</b> coins · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
 }
 function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visible = vid === id; renderUI(); }
 function advance(days) {
@@ -1208,7 +1219,9 @@ function showResult(pf, r, gains) {
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
     ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of ${r.judges.length} approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
       <p style="color:var(--gold)"><b>Tickets: ${r.tickets.toLocaleString("en")} listeners × ${TICKET_PRICE} = +${r.ticketCoins.toLocaleString("en")} coins.</b></p>
-      <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${r.coins === ECO.yes ? "The judges approved." : `3 of 5 judges must approve for ${ECO.yes} coins.`} You have ${state.coins.toLocaleString("en")}.</p>` : ""}
+      <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${approved(r.judges) ? "The judges approved." : `3 of 5 judges must give ${passMark(r.levelBefore).toFixed(1)} or more for ${approvedCoins(r.levelBefore)} coins.`} You have ${state.coins.toLocaleString("en")}.</p>
+      ${r.levelAfter > r.levelBefore ? `<div class="card on"><span class="t" style="color:var(--good);font-size:16px">PROMOTED! Your orchestra is now the ${LEVELS[r.levelAfter]}.</span><span class="s">The judges will be stricter (${passMark(r.levelAfter).toFixed(1)} / 10) and pay more (${approvedCoins(r.levelAfter)} coins). Better musicians will apply.</span></div>`
+        : `<p class="muted small">${r.levelBefore >= LEVELS.length - 1 ? `You are the ${LEVELS[r.levelBefore]}: the top of the world.` : `Level: ${LEVELS[r.levelBefore]}. Win the judges' approval to be promoted to the ${LEVELS[r.levelBefore + 1]}.`}</p>`}` : ""}
     <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
     ${gains && gains.ok ? `<div class="eyebrow">Progress</div><p class="small" style="white-space:pre-line;color:var(--gold)">${esc(summary(gains))}</p>` : pf.ctx === "audition" ? `<p class="muted small">Decide in the Auditions tab: hire, invite, or wait for the next applicants.</p>` : pf.ctx === "preview" ? `<p class="muted small">Listening only: no training effect. Rehearse to improve preparation.</p>` : ""}
     <button class="btn primary" data-close>Continue</button>`);
@@ -1222,7 +1235,7 @@ const TUTORIAL = [
   ["2 · Hear them as they are", ["Open <b>Music &amp; Concerts</b>, pick <b>Twinkle, Twinkle</b>, choose <b>Separate Parts</b>, then <b>Listen</b>.", "Each player has their own part: violin melody, viola harmony, cello inner line, bass line.", "Wrong notes, out-of-tune notes and drifting apart show their current skill. The report card names the weakest area."]],
   ["3 · Train", ["<b>Quick Practice:</b> tap a skill in the Musician tab, then Quick Practice (20 energy).", "<b>Rhythm game:</b> Practice → Four Steady Beats → Start. After 4 clicks, tap Space or the pad on each click. A better score gives a bigger gain, up to 2×.", "<b>Daily plan:</b> pick a focus per musician; they train it twice every new day."]],
   ["4 · Rehearse and rest", ["<b>Rehearse</b> or <b>Quick rehearsal</b> raises the piece's prepared % and ensemble skill.", "Prepared pieces have fewer mistakes in concert.", "Each musician has up to 2,000 energy. <b>Next Day</b> restores 1,200. <b>+7 Days</b> skips a week."]],
-  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Every listener also pays <b>5 coins</b> for a ticket, so a fuller hall earns more. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (35,000–50,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
+  ["5 · Perform", ["<b>Perform Concert</b> runs once per day and needs 25 energy per musician.", "<b>Conductor:</b> Automatic, or <b>You conduct</b>: tap the beat (Space or the pad). Steady beating adds up to +6 points; no beating costs 6.", "Five <b>judges</b> score every concert: if three approve you earn <b>60 coins</b>, otherwise 10. Every listener also pays <b>5 coins</b> for a ticket, so a fuller hall earns more. <b>Career:</b> every concert the judges approve promotes you to the next orchestra: Community → Youth Symphony → City Chamber → Regional → National → Grand Philharmonic → World Symphony. Higher levels have stricter judges, pay more and attract better musicians. Spend coins in the <b>Shop</b> on masterclasses (+3 to a skill: tuning, timing, right notes, tone…) and better instruments, up to ten Stradivarius violins (35,000–50,000 coins).", "You get 1–5 stars and applause to match. Good concerts raise <b>reputation</b>: more of the hall fills up, and better musicians apply."]],
   ["6 · Grow the orchestra", ["<b>Auditions:</b> weekly applicants. Hear them, compare them with your player, hire.", "<b>Invitations:</b> stronger players; their chance to accept grows with reputation."]],
   ["7 · Cameras and a winning routine", ["Stage, Audience, Orchestra, Close-up, Free (keys 1–5). In Free: drag to look, scroll or pinch to zoom. <b>Hide UI</b> to watch.", "Routine: daily plans on weakest skills → one rhythm game a day → rehearse 3–4 times → concert → +7 days → check auditions.", "Expect Advanced after ~35 days, Professional after ~80, World-Class after ~155."]],
 ];

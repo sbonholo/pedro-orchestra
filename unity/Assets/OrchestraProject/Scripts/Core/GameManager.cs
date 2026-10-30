@@ -220,10 +220,16 @@ namespace OrchestraProject
                     progress.bestConcertRating = Mathf.Max(progress.bestConcertRating, result.Overall);
                     gains.Message += " Reputation +" + repGain.ToString("0.0") + " (now " + State.reputation.ToString("0") + ").";
                     if (AudienceCrowd.Instance != null) AudienceCrowd.Instance.Applaud(result.Stars, State.reputation);
-                    result.Judges = Economy.Judge(result, Rng);
-                    result.CoinsEarned = Economy.ConcertCoins(result.Judges);
+                    result.LevelBefore = result.LevelAfter = State.level;
+                    result.Judges = Economy.Judge(result, Rng, State.level);
+                    result.CoinsEarned = Economy.ConcertCoins(result.Judges, State.level);
                     State.coins += result.CoinsEarned;
-                    if (result.CoinsEarned == Economy.CoinsApproved) { State.judgeApprovals++; if (result.Mode == ArrangementMode.Solo) State.soloApproved = true; }
+                    if (Economy.Approved(result.Judges) && State.level < Economy.MaxLevel)
+                    {
+                        State.level++; result.LevelAfter = State.level;   // the judges' approval is the audition for the next orchestra
+                        State.Log("Promoted to " + Economy.LevelName(State.level) + ".");
+                    }
+                    if (Economy.Approved(result.Judges)) { State.judgeApprovals++; if (result.Mode == ArrangementMode.Solo) State.soloApproved = true; }
                     State.bestStars = Math.Max(State.bestStars, result.Stars);
                     if (result.ConductingScore >= 0f) State.bestConducting = Math.Max(State.bestConducting, result.ConductingScore);
                     if (!State.concertPieces.Contains(result.Piece.Id)) State.concertPieces.Add(result.Piece.Id);

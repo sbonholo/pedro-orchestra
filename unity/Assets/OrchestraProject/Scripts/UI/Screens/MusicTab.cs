@@ -62,6 +62,9 @@ namespace OrchestraProject
 
             // Main action first, so it is visible without scrolling.
             UIFactory.Header(root, "Concert");
+            var lvl = UIFactory.Label(root, "Your orchestra: <b>" + Economy.LevelName(s.level) + "</b> (level " + (s.level + 1) + " of " + Economy.Levels.Length + ")" +
+                (s.level < Economy.MaxLevel ? ". Win the judges' approval (3 of 5 give " + Economy.PassMark(s.level).ToString("0.0") + "+) to be promoted to the <b>" + Economy.LevelName(s.level + 1) + "</b>." : ": the top of the world."), 17, TextAnchor.UpperLeft, UITheme.Accent);
+            UIFactory.Size(lvl, 50);
             bool busy = gm.Performance.IsBusy;
             string reason;
             bool can = gm.CanPerformConcert(out reason);

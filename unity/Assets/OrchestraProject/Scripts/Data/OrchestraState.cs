@@ -43,7 +43,8 @@ namespace OrchestraProject
         public List<string> concertPieces = new List<string>();
         public int judgeApprovals, bestStars, musiciansHired;
         public float bestConducting;
-        public bool soloApproved;            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
+        public bool soloApproved;
+        public int level;                      // career level (Economy.Levels): promoted when the judges approve a concert            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();

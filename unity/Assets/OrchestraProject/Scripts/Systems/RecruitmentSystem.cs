@@ -24,7 +24,7 @@ namespace OrchestraProject
             s.auditionPool.Clear();
             s.invitePool.Clear();
 
-            float baseLevel = 26f + s.reputation * 0.45f;
+            float baseLevel = 26f + s.reputation * 0.45f + 4f * s.level;   // better orchestras attract better players
             for (int i = 0; i < AuditionPoolSize; i++)
             {
                 float mean = Clamp(baseLevel + (float)(rng.NextDouble() * 16.0 - 6.0), 18f, 85f);

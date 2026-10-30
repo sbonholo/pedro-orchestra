@@ -16,8 +16,8 @@ namespace OrchestraProject
     public class JudgeVerdict
     {
         public string Name, Focus, Comment;
-        public float Score;
-        public bool Approves { get { return Score >= Economy.JudgePassMark; } }
+        public float Score, PassMark = Economy.JudgePassMark;
+        public bool Approves { get { return Score >= PassMark; } }
     }
 
     /// <summary>
@@ -33,6 +33,19 @@ namespace OrchestraProject
         public const int CoinsApproved = 60, CoinsRejected = 10;
         public const float JudgePassMark = 5.5f;
         public const int JudgeCount = 5, JudgesNeeded = 3;   // a majority of the five judges
+
+        // ---- Career levels: each concert the judges approve promotes the orchestra to the next level ----
+        public static readonly string[] Levels =
+        {
+            "Community Orchestra", "Youth Symphony", "City Chamber Orchestra", "Regional Symphony",
+            "National Orchestra", "Grand Philharmonic", "World Symphony Orchestra"
+        };
+        public static int MaxLevel { get { return Levels.Length - 1; } }
+        public static string LevelName(int level) { return Levels[Math.Max(0, Math.Min(MaxLevel, level))]; }
+        /// <summary>Judges get stricter at every level: 5.5 / 10 at the start, 8.5 at the top.</summary>
+        public static float PassMark(int level) { return JudgePassMark + 0.5f * Math.Max(0, Math.Min(MaxLevel, level)); }
+        /// <summary>Approved concerts pay more at higher levels: 60, 80, 100 … 180 coins.</summary>
+        public static int ApprovedCoins(int level) { return CoinsApproved + 20 * Math.Max(0, Math.Min(MaxLevel, level)); }
         public const float MasterclassGain = 3f;
 
         // ---- Tickets: every audience member pays 5 coins to watch a concert ----
@@ -127,8 +140,9 @@ namespace OrchestraProject
         static readonly string[] JudgeFocus = { "intonation", "note accuracy", "rhythm and ensemble", "the overall impression", "artistry" };
         static readonly float[] JudgeBias = { -0.4f, -0.2f, 0f, 0.2f, 0.4f };   // from strict to generous
 
-        public static List<JudgeVerdict> Judge(PerformanceResult r, Random rng)
+        public static List<JudgeVerdict> Judge(PerformanceResult r, Random rng, int level = 0)
         {
+            float pass = PassMark(level);
             float[] focus = { r.Intonation, r.Accuracy, (r.Rhythm + r.Ensemble) * 0.5f, r.Overall, r.Artistry };
             var list = new List<JudgeVerdict>();
             for (int i = 0; i < JudgeCount; i++)
@@ -137,17 +151,22 @@ namespace OrchestraProject
                 score = (float)Math.Round(Math.Max(1f, Math.Min(10f, score)), 1);
                 list.Add(new JudgeVerdict
                 {
-                    Name = JudgeNames[i], Focus = JudgeFocus[i], Score = score,
-                    Comment = score >= 8.5f ? "Outstanding." : score >= JudgePassMark ? "Convincing." : score >= 4f ? "Not yet ready." : "Far from the standard."
+                    Name = JudgeNames[i], Focus = JudgeFocus[i], Score = score, PassMark = pass,
+                    Comment = score >= Math.Max(8.5f, pass + 0.5f) ? "Outstanding." : score >= pass ? "Convincing." : score >= 4f ? "Not yet ready." : "Far from the standard."
                 });
             }
             return list;
         }
 
-        public static int ConcertCoins(List<JudgeVerdict> judges)
+        public static bool Approved(List<JudgeVerdict> judges)
         {
             int yes = 0; foreach (var j in judges) if (j.Approves) yes++;
-            return yes >= JudgesNeeded ? CoinsApproved : CoinsRejected;
+            return yes >= JudgesNeeded;
+        }
+
+        public static int ConcertCoins(List<JudgeVerdict> judges, int level = 0)
+        {
+            return Approved(judges) ? ApprovedCoins(level) : CoinsRejected;
         }
     }
 }
