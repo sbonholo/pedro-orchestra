@@ -116,6 +116,17 @@ static class Program
         RecruitmentSystem.Refresh(st, rng);
         Check(st.auditionPool.Count == 3 && st.invitePool.Count == 2, "pools filled");
 
+        // Library: 41 pieces, every one arranges in every mode for all four sections
+        {
+            var all4 = new[] { InstrumentType.Violin, InstrumentType.Viola, InstrumentType.Cello, InstrumentType.DoubleBass };
+            bool ok = true;
+            foreach (var pc in MusicLibrary.All) foreach (ArrangementMode md in Enum.GetValues(typeof(ArrangementMode)))
+            {
+                var ar = Arranger.Arrange(pc, md, all4, pc.Featured);
+                foreach (var part in ar.Parts.Values) if (part.Notes.Count == 0) ok = false;
+            }
+            Check(MusicLibrary.All.Count == 41 && ok && MusicLibrary.Get("bluedanube") != null, "41 pieces arrange in every mode (new: Rondo alla Turca, Blue Danube, ...)");
+        }
         // Solo mode: only one musician plays
         {
             var ss = OrchestraState.NewGame(5);
