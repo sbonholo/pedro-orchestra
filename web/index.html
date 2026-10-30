@@ -28,6 +28,7 @@ html, body { height: 100%; }
 body { background: var(--ink); color: var(--text); font-family: var(--body); font-size: 14px; overflow: hidden; }
 #stage { position: fixed; inset: 0; }
 #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 70% at 50% 48%, transparent 55%, rgba(4,3,2,.5) 100%); }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .btn { background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 6px; padding: 9px 14px; min-height: 40px; transition: background .12s, border-color .12s; }
@@ -678,7 +679,7 @@ const stageEl = document.getElementById("stage");
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 stageEl.appendChild(renderer.domElement);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x060506); scene.fog = new THREE.FogExp2(0x17120d, 0.012);
@@ -690,24 +691,32 @@ function canvasTex(w, h, draw, rep = [1, 1]) { const c = document.createElement(
 function noiseFill(g, w, h, base, vary, streak) { const img = g.createImageData(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const n = Math.sin(y * streak + Math.sin(x * 0.05 + y * 0.002) * 3) * 0.5 + 0.5; const v = base + vary * n + (Math.random() - .5) * vary * .4; const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = clamp(v, 0, 255); img.data[i + 3] = 255; } g.putImageData(img, 0, 0); }
 const TEX = {
   planks: canvasTex(512, 512, (g, w, h) => { noiseFill(g, w, h, 205, 20, 0.9); g.fillStyle = "rgba(0,0,0,.35)"; for (let i = 0; i < 8; i++) { g.fillRect(0, i * 64, w, 2); g.fillRect((i * 131) % w, i * 64, 2, 64); } }, [8, 5]),
-  grain: canvasTex(256, 256, (g, w, h) => noiseFill(g, w, h, 205, 45, 0.15)),
+  grain: canvasTex(256, 256, (g, w, h) => noiseFill(g, w, h, 210, 24, 0.45)),
+  veneer: canvasTex(256, 512, (g, w, h) => { const img = g.createImageData(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const n = Math.sin(x * .32 + Math.sin(y * .012 + x * .03) * 1.6) * .5 + .5, v = 196 + 26 * n + (Math.random() - .5) * 10, i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } g.putImageData(img, 0, 0); }),
+  glow: canvasTex(256, 256, (g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); r.addColorStop(0, "rgba(255,255,255,0)"); r.addColorStop(.62, "rgba(255,255,255,0)"); r.addColorStop(.8, "rgba(255,255,255,1)"); r.addColorStop(.86, "rgba(255,255,255,.5)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); }),
+  blob: canvasTex(128, 128, (g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); r.addColorStop(0, "rgba(0,0,0,.55)"); r.addColorStop(.5, "rgba(0,0,0,.28)"); r.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); }),
   fabric: canvasTex(128, 128, (g, w, h) => noiseFill(g, w, h, 215, 30, 1.7), [2, 2]),
   sheet: canvasTex(256, 320, (g, w, h) => { g.fillStyle = "#f6f2e8"; g.fillRect(0, 0, w, h); g.strokeStyle = "#555"; g.fillStyle = "#222"; for (let s = 0; s < 8; s++) { const top = 26 + s * 36; for (let l = 0; l < 5; l++) { g.beginPath(); g.moveTo(14, top + l * 4); g.lineTo(w - 14, top + l * 4); g.stroke(); } for (let x = 30; x < w - 20; x += 14 + (x * 7 % 9)) { const y = top + ((x * 13) % 17); g.beginPath(); g.ellipse(x, y, 3.4, 2.4, -0.4, 0, Math.PI * 2); g.fill(); g.fillRect(x + 2.6, y - 12, 1, 12); } } }),
 };
 const mats = {};
-function mat(key, color, rough = 0.6, metal = 0, map = null) { return mats[key] ??= new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, map }); }
+function mat(key, color, rough = 0.6, metal = 0, map = null) { return mats[key] ??= new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, map, envMapIntensity: .45 }); }
 const M = {
-  floor: () => mat("floor", 0xc79262, .45, 0, TEX.planks), warm: () => mat("warm", 0x9e6639, .5, 0, TEX.grain), dark: () => mat("dark", 0x4b2c1a, .5, 0, TEX.grain),
+  floor: () => mat("floor", 0xa9744a, .5, 0, TEX.planks), warm: () => mat("warm", 0x9e6639, .5, 0, TEX.veneer), dark: () => mat("dark", 0x4b2c1a, .55, 0, TEX.veneer),
   velvet: () => mat("velvet", 0x7a1016, .85, 0, TEX.fabric), carpet: () => mat("carpet", 0x4a0b10, .95, 0, TEX.fabric), plaster: () => mat("plaster", 0xd6c8b0, .85), plaster2: () => mat("plaster2", 0xb1a18a, .85),
   gold: () => mat("gold", 0xd9a95a, .3, .9), pipe: () => mat("pipe", 0xd0ccc4, .25, 1), ceil: () => mat("ceil", 0x5a3b26, .7, 0, TEX.grain), lamp: () => mat("lamp", 0xffe2a8, .4, 0),
-  black: () => mat("black", 0x0c0c0e, .78, 0, TEX.fabric), shirt: () => mat("shirt", 0xe2ded6, .7), leather: () => mat("leather", 0x151313, .55), steel: () => mat("steel", 0x121214, .4, .8),
+  black: () => mat("black", 0x17171b, .74, 0, TEX.fabric), shirt: () => mat("shirt", 0xe2ded6, .7), leather: () => mat("leather", 0x151313, .55), steel: () => mat("steel", 0x34343a, .32, .85),
   varnish: () => mat("varnish", 0xa4481a, .18, 0, TEX.grain), varnish2: () => mat("varnish2", 0x6e2e12, .18, 0, TEX.grain), ebony: () => mat("ebony", 0x080605, .3), maple: () => mat("maple", 0xdcbb8c, .55),
-  jacket: () => mat("jacket", 0x0b0b0d, .72, 0, TEX.fabric), satin: () => mat("satin", 0x060607, .22), shoe: () => mat("shoe", 0x070707, .18, .2),
+  jacket: () => mat("jacket", 0x141419, .66, 0, TEX.fabric), satin: () => mat("satin", 0x060607, .22), shoe: () => mat("shoe", 0x070707, .18, .2),
   eyeW: () => mat("eyeW", 0xefe9e1, .3), iris: () => mat("iris", 0x24170f, .15), pearl: () => mat("pearl", 0xf3eee4, .25, .1),
   string: () => mat("string", 0xcfcac2, .2, 1), hair: () => mat("bowhair", 0xeee8d8, .6), stick: () => mat("stick", 0x4a200e, .3), sheet: () => mat("sheet", 0xffffff, .9, 0, TEX.sheet), ring: () => mat("ring", 0xffcf6a, .25, .6),
 };
+M.floor().envMapIntensity = .2;
 M.lamp().emissive = new THREE.Color(0xffc979); M.lamp().emissiveIntensity = 1.6;
-M.ring().emissive = new THREE.Color(0xb07d2a); M.ring().emissiveIntensity = 0.8;
+// Selection halo (soft additive ring) and contact shadows (soft dark blobs) that ground figures on the floor.
+const HALO = new THREE.MeshBasicMaterial({ map: TEX.glow, color: 0xffc766, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+const BLOB = new THREE.MeshBasicMaterial({ map: TEX.blob, transparent: true, depthWrite: false, fog: false });
+const GEO_PLANE = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+function decal(parent, material, pos, w, d, order) { const m = new THREE.Mesh(GEO_PLANE, material); m.position.set(...pos); m.scale.set(w, 1, d); m.renderOrder = order; parent.add(m); return m; }
 const GEO = { box: new THREE.BoxGeometry(1, 1, 1), sph: new THREE.SphereGeometry(0.5, 24, 16), cyl: new THREE.CylinderGeometry(0.5, 0.5, 2, 20), cap: new THREE.CapsuleGeometry(0.5, 1, 6, 14), skirt: new THREE.CylinderGeometry(0.34, 0.5, 1, 24) };
 const deg = Math.PI / 180;
 const euler = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x * deg, y * deg, z * deg, "YXZ"));
@@ -769,6 +778,7 @@ function updateHouseLights(dt) {
   for (const l of houseLights.house) l.intensity = l.userData.base * lerp(1, .25, d);
   for (const l of houseLights.spots) l.intensity = l.userData.base * lerp(1, 1.2, d);
   houseLights.key.intensity = houseLights.key.userData.base * lerp(1, .6, d); houseLights.hemi.intensity = houseLights.hemi.userData.base * lerp(1, .55, d);
+  houseLights.rim.intensity = houseLights.rim.userData.base * lerp(1, 1.35, d); houseLights.beam.uniforms.op.value = .05 * d; for (const c of houseLights.beams) c.visible = d > 0;
 }
 function buildLights() {
   const hemi = new THREE.HemisphereLight(0xffe7c4, 0x1a1410, 0.55); scene.add(hemi); houseLights.hemi = hemi;
@@ -778,7 +788,21 @@ function buildLights() {
   for (const x of [-6, -3, 0, 3, 6]) { const s = new THREE.SpotLight(0xffe2b8, 230, 0, 0.45, 0.55, 2); s.position.copy(U(x, 11.5, -5)); houseLights.spots.push(s); s.target.position.copy(U(x * .55, STAGE_H, 3.2)); scene.add(s, s.target);
     if (x === 0) { s.castShadow = true; s.shadow.mapSize.set(1024, 1024); s.shadow.bias = -0.0005; } }
   for (let i = 0; i < 2; i++) { const p = new THREE.PointLight(0xffcf99, 26, 26, 2); p.position.copy(U(0, 12, -10 - i * 12)); scene.add(p); houseLights.house.push(p); }
-  for (const l of [houseLights.hemi, houseLights.key, ...houseLights.spots, ...houseLights.house]) l.userData.base = l.intensity;
+  // Cool rim light from behind the orchestra: separates dark tailcoats from the dark shell (warm key / cool rim).
+  const rim = new THREE.DirectionalLight(0xc4d0ff, 1.5); rim.position.copy(U(0, 4, 14)); rim.target.position.copy(U(0, 1.2, 2)); scene.add(rim, rim.target); houseLights.rim = rim;
+  // Soft warm image-based light so wood, varnish and steel pick up reflections instead of reading flat.
+  const env = new THREE.Scene(), box = new THREE.Mesh(new THREE.BoxGeometry(30, 16, 30), new THREE.MeshBasicMaterial({ color: 0x231710, side: THREE.BackSide })); env.add(box);
+  for (const [c, k, pos, sc] of [[0xffd6a0, 6, [0, 7.9, 0], [14, .1, 8]], [0xffb877, 2.5, [0, 3, -14.9], [20, 4, .1]], [0x9fb4e8, 2, [0, 4, 14.9], [12, 3, .1]]]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k) })); m.position.set(...pos); m.scale.set(...sc); env.add(m); }
+  const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, 0.04).texture; pm.dispose();
+  // Haze beams under the stage spots, visible while the house lights are down.
+  const beamMat = new THREE.ShaderMaterial({ uniforms: { op: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec2 vUv; varying float vE; void main(){ vUv=uv; vec4 mv=modelViewMatrix*vec4(position,1.); vec3 n=normalize(normalMatrix*normal); vE=abs(dot(n,normalize(-mv.xyz))); gl_Position=projectionMatrix*mv; }",
+    fragmentShader: "uniform float op; varying vec2 vUv; varying float vE; void main(){ float a=op*pow(vE,2.)*(.25+.75*vUv.y); gl_FragColor=vec4(vec3(1.,.86,.66)*a,1.); }" });
+  houseLights.beam = beamMat; houseLights.beams = [];
+  for (const s of houseLights.spots) { const a = s.position, b = s.target.position, len = a.distanceTo(b), cone = new THREE.Mesh(new THREE.ConeGeometry(len * .2, len, 28, 1, true), beamMat);
+    cone.position.addVectors(a, b).multiplyScalar(.5); cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), a.clone().sub(b).normalize()); cone.renderOrder = 3; cone.visible = false; houseLights.beams.push(cone); scene.add(cone); }
+  for (const l of [houseLights.hemi, houseLights.key, houseLights.rim, ...houseLights.spots, ...houseLights.house]) l.userData.base = l.intensity;
 }
 
 /* ---------- musician figure (port of MusicianView) ---------- */
@@ -883,7 +907,7 @@ function buildMusician(m, solo = false) {
   else { parent = root; ip = new THREE.Vector3(-.1, 0, .42); fwd = new THREE.Vector3(-.18, 1, -.22); up = new THREE.Vector3(.12, .2, 1); head.quaternion.copy(euler(8, 12, -4)); poleL = new THREE.Vector3(-1, 0, .3); poleR = new THREE.Vector3(1, -.5, -.5); }
   const ins = buildInstrument(d, parent); ins.g.position.copy(ip); ins.g.quaternion.copy(lookRot(fwd, up));
   const bow = buildBow(d, world);
-  const ring = part(root, "cyl", M.ring(), [0, .005, .2], [1.3, .004, 1.3], null, false); ring.visible = false;
+  decal(root, BLOB, [0, .006, .25], 1.25, 1.35, 1); const ring = decal(root, HALO, [0, .012, .2], 1.7, 1.7, 2); ring.visible = false;
   const hit = new THREE.Mesh(new THREE.CapsuleGeometry(.5, .8, 4, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, .9, .2); hit.userData.musicianId = m.id; root.add(hit);
   const v = { m, d, solo, root, spine, head, ins, bow, arms, hL, hR, shL, shR, poleL, poleR, ring, hit, notes: null, startT: 0, idx: 0, bowPos: (d.bmin + d.bmax) / 2, from: 0, to: 0, strokeIdx: -1, lift: 1, phase: (m.seed % 1000) * .01, pan: 0, extra: [bow, ...Object.values(arms), hL, hR] };
   return v;
@@ -894,7 +918,7 @@ function buildConductor() {
   const root = new THREE.Group(); world.add(root); root.position.set(CONDUCTOR[0], STAGE_H + .21, CONDUCTOR[2]);
   const f = buildFigure(root, { female: false, seed: 1873 }, "standing", rngFrom(1873));
   part(f.hR, "cyl", M.shirt(), [0, 0, .26], [.007, .17, .007], euler(90, 0, 0), false);   // baton
-  conductor = { root, ...f, beatPhase: 0 };
+  decal(root, BLOB, [0, .002, 0], .8, .8, 1); conductor = { root, ...f, beatPhase: 0 };
 }
 const BEAT_PATTERNS = { 2: [[0, -.22, 0], [.02, .1, 0]], 3: [[0, -.22, 0], [.22, -.12, .02], [.04, .1, 0]], 4: [[0, -.22, 0], [-.18, -.12, .02], [.22, -.12, .02], [.04, .1, 0]] };
 function animateConductor(now, time) {
@@ -930,13 +954,15 @@ const audienceFill = rep => clamp(.1 + rep * .012, .1, 1);
 const TICKET_PRICE = 5, HALL_SEATS = 1166, audienceCount = rep => Math.round(HALL_SEATS * audienceFill(rep));
 function buildAudience() {
   const r = rngFrom(99), order = audienceSeats.map((p, i) => [r(), p]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
-  const body = new THREE.InstancedMesh(GEO.cap, new THREE.MeshStandardMaterial({ roughness: .85 }), order.length), head = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: .6 }), order.length);
+  const body = new THREE.InstancedMesh(GEO.cap, new THREE.MeshStandardMaterial({ roughness: .85, envMapIntensity: .3 }), order.length), head = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: .6, envMapIntensity: .3 }), order.length);
   const tmp = new THREE.Object3D(), clothes = [0x1d2230, 0x3a1f24, 0x2d2d2d, 0x47402f, 0x23332a, 0x5a4a3a], skins = [0xedc2a3, 0xc99a78, 0x9a6a48, 0x5c3824];
-  order.forEach((p, i) => { tmp.position.set(p[0], p[1] + .78, p[2] - .02); tmp.scale.set(.36, .24, .26); tmp.quaternion.identity(); tmp.updateMatrix(); body.setMatrixAt(i, tmp.matrix); body.setColorAt(i, new THREE.Color(clothes[Math.floor(r() * clothes.length)]));
+  order.forEach((p, i) => { tmp.position.set(p[0], p[1] + .84, p[2] - .02); tmp.scale.set(.4, .25, .28); tmp.quaternion.identity(); tmp.updateMatrix(); body.setMatrixAt(i, tmp.matrix); body.setColorAt(i, new THREE.Color(clothes[Math.floor(r() * clothes.length)]));
     tmp.position.set(p[0], p[1] + 1.16, p[2] + .01); tmp.scale.set(.19, .23, .21); tmp.updateMatrix(); head.setMatrixAt(i, tmp.matrix); head.setColorAt(i, new THREE.Color(skins[Math.floor(r() * skins.length)])); });
-  body.castShadow = false; world.add(body, head); audience = { body, head, n: order.length };
+  const hair = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: .7, envMapIntensity: .3 }), order.length), hairs = [0x0d0a09, 0x2a1a10, 0x5a3c22, 0x8a7a66, 0x9a9a9a];
+  order.forEach((p, i) => { tmp.position.set(p[0], p[1] + 1.2, p[2] - .015); tmp.scale.set(.2, .2, .21); tmp.updateMatrix(); hair.setMatrixAt(i, tmp.matrix); hair.setColorAt(i, new THREE.Color(hairs[Math.floor(r() * hairs.length)])); });
+  body.castShadow = false; world.add(body, head, hair); audience = { body, head, hair, n: order.length };
 }
-function updateAudience() { if (!audience || !state) return; const n = Math.round(audience.n * audienceFill(state.rep)); audience.body.count = audience.head.count = n; }
+function updateAudience() { if (!audience || !state) return; const n = Math.round(audience.n * audienceFill(state.rep)); audience.body.count = audience.head.count = audience.hair.count = n; }
 // Applause: many short filtered noise bursts (generated, no recording needed). Louder and longer for better concerts and fuller halls.
 function applause(stars) {
   if (!actx) return; const fill = audienceFill(state.rep), dur = 2.2 + stars * .9, claps = Math.round((60 + 340 * fill) * (.4 + stars * .15) * dur), t0 = actx.currentTime + .1;
@@ -1517,6 +1543,7 @@ function frame(now) {
   if (auditionView) animateMusician(auditionView, audioNow, t);
   if (perf && actx.currentTime > perf.end) finishPerformance();
   rhythmTick(); updateCamera(dt); updateStatus(); updateHouseLights(dt); if (perf?.cond || !$("#conduct-pad").hidden) updateConductPad();
+  const sv = views.get(selectedId); if (sv) sv.ring.scale.setScalar(1.7 * (1 + .035 * Math.sin(performance.now() / 260)));
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }
 buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (settings.quality !== "high") applySettings();

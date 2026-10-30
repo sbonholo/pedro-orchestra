@@ -95,7 +95,9 @@ namespace OrchestraProject
             bow = PlaceholderFactory.BuildBow(Def, transform);
 
             // Selection ring + click collider + spatial audio source
-            ring = PlaceholderFactory.Part("Selection Ring", transform, PrimitiveType.Cylinder, MaterialLibrary.SelectionRing, new Vector3(0, 0.005f, 0.2f), new Vector3(1.3f, 0.004f, 1.3f));
+            PlaceholderFactory.Part("Contact Shadow", transform, PrimitiveType.Quad, MaterialLibrary.ContactShadow, new Vector3(0, 0.006f, 0.25f), new Vector3(1.25f, 1.35f, 1f), Quaternion.Euler(90f, 0, 0)).GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            ring = PlaceholderFactory.Part("Selection Halo", transform, PrimitiveType.Quad, MaterialLibrary.SelectionRing, new Vector3(0, 0.012f, 0.2f), new Vector3(1.7f, 1.7f, 1f), Quaternion.Euler(90f, 0, 0));
+            ring.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             ring.gameObject.SetActive(false);
             var col = gameObject.AddComponent<CapsuleCollider>();
             col.center = new Vector3(0, 0.8f, 0.2f); col.radius = 0.5f; col.height = 1.8f;
@@ -131,6 +133,7 @@ namespace OrchestraProject
         void LateUpdate()
         {
             if (spine == null) return;
+            if (ring.gameObject.activeSelf) { float k = 1.7f * (1f + 0.035f * Mathf.Sin(Time.time * 3.85f)); ring.localScale = new Vector3(k, k, 1f); }   // gentle pulse
             float time = Time.time + idlePhase;
             float t = notes != null ? (float)(AudioSettings.dspTime - startDsp) : -1f;
             RenderedNote current = null;

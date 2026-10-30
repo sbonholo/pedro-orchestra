@@ -192,6 +192,16 @@ namespace OrchestraProject
             key.shadows = LightShadows.Soft;
             key.shadowStrength = 0.75f;
 
+            // Cool rim light from behind the orchestra: separates the dark tailcoats from the dark shell.
+            var rim = new GameObject("Rim Light").AddComponent<Light>();
+            rim.transform.SetParent(transform, false);
+            rim.type = LightType.Directional;
+            rim.transform.position = new Vector3(0, 4f, 14f);   // low angle: lights backs and shoulders, barely the floor
+            rim.transform.LookAt(new Vector3(0, 1.2f, 2f));
+            rim.color = new Color(0.77f, 0.82f, 1f);
+            rim.intensity = 0.45f;
+            rim.shadows = LightShadows.None;
+
             // Stage wash spotlights hung in front of the stage.
             var spots = new System.Collections.Generic.List<Light>(); var houses = new System.Collections.Generic.List<Light>();
             float[] xs = MobileQuality ? new[] { -4f, 0f, 4f } : new[] { -6f, -3f, 0f, 3f, 6f };

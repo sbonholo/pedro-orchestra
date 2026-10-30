@@ -24,6 +24,7 @@ namespace OrchestraProject
             body.transform.SetParent(transform, false);
             fig = HumanFigure.Build(body.transform, false, new System.Random(1873), true, false);
             PlaceholderFactory.Part("Baton", fig.handR, PrimitiveType.Cylinder, MaterialLibrary.WhiteShirt, new Vector3(0, 0, 0.26f), new Vector3(0.007f, 0.17f, 0.007f), Quaternion.Euler(90f, 0, 0));
+            PlaceholderFactory.Part("Contact Shadow", transform, PrimitiveType.Quad, MaterialLibrary.ContactShadow, new Vector3(0, 0.002f, 0), new Vector3(0.8f, 0.8f, 1f), Quaternion.Euler(90f, 0, 0)).GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             transform.localPosition = ConcertHallBuilder.ConductorPoint + new Vector3(0, 0.21f, 0);
             transform.localRotation = Quaternion.identity;   // faces +Z, toward the musicians
         }

@@ -61,7 +61,7 @@ namespace OrchestraProject
         public static Material Get(string key) { Material m; cache.TryGetValue(key, out m); return m; }
 
         // ---- Named materials used across the game ----
-        public static Material StageFloor { get { return Create("StageFloor", new Color(0.78f, 0.58f, 0.38f), 0.55f, 0f, ProceduralTextures.WoodPlanks, new Vector2(8f, 5f)); } }
+        public static Material StageFloor { get { return Create("StageFloor", new Color(0.66f, 0.46f, 0.29f), 0.5f, 0f, ProceduralTextures.WoodPlanks, new Vector2(8f, 5f)); } }
         public static Material WarmWood { get { return Create("WarmWood", new Color(0.62f, 0.40f, 0.24f), 0.45f, 0f, ProceduralTextures.WoodGrain, new Vector2(1f, 2f)); } }
         public static Material DarkWood { get { return Create("DarkWood", new Color(0.30f, 0.18f, 0.11f), 0.45f, 0f, ProceduralTextures.WoodGrain, new Vector2(1f, 1f)); } }
         public static Material Velvet { get { return Create("Velvet", new Color(0.50f, 0.07f, 0.09f), 0.15f, 0f, ProceduralTextures.Fabric, new Vector2(2f, 2f)); } }
@@ -72,10 +72,10 @@ namespace OrchestraProject
         public static Material OrganPipe { get { return Create("OrganPipe", new Color(0.82f, 0.80f, 0.76f), 0.8f, 1f); } }
         public static Material Ceiling { get { return Create("Ceiling", new Color(0.35f, 0.24f, 0.17f), 0.3f, 0f, ProceduralTextures.WoodGrain, new Vector2(6f, 6f)); } }
         public static Material WarmLamp { get { return Create("WarmLamp", new Color(1.0f, 0.88f, 0.62f), 0.9f); } }
-        public static Material BlackFabric { get { return Create("BlackFabric", new Color(0.035f, 0.035f, 0.04f), 0.22f, 0f, ProceduralTextures.Fabric, new Vector2(1f, 1f)); } }
+        public static Material BlackFabric { get { return Create("BlackFabric", new Color(0.07f, 0.07f, 0.08f), 0.22f, 0f, ProceduralTextures.Fabric, new Vector2(1f, 1f)); } }
         public static Material WhiteShirt { get { return Create("WhiteShirt", new Color(0.88f, 0.87f, 0.84f), 0.25f); } }
         public static Material ChairLeather { get { return Create("ChairLeather", new Color(0.08f, 0.07f, 0.07f), 0.4f); } }
-        public static Material SteelBlack { get { return Create("SteelBlack", new Color(0.06f, 0.06f, 0.065f), 0.6f, 0.8f); } }
+        public static Material SteelBlack { get { return Create("SteelBlack", new Color(0.16f, 0.16f, 0.18f), 0.68f, 0.85f); } }
         public static Material Varnish { get { return Create("Varnish", new Color(0.62f, 0.27f, 0.10f), 0.85f, 0f, ProceduralTextures.WoodGrain, new Vector2(1f, 1f)); } }
         public static Material VarnishDark { get { return Create("VarnishDark", new Color(0.42f, 0.17f, 0.07f), 0.85f, 0f, ProceduralTextures.WoodGrain, new Vector2(1f, 1f)); } }
         public static Material Ebony { get { return Create("Ebony", new Color(0.03f, 0.025f, 0.02f), 0.7f); } }
@@ -84,7 +84,21 @@ namespace OrchestraProject
         public static Material BowHair { get { return Create("BowHair", new Color(0.93f, 0.91f, 0.85f), 0.3f); } }
         public static Material BowStick { get { return Create("BowStick", new Color(0.30f, 0.13f, 0.06f), 0.7f); } }
         public static Material SheetMusic { get { return Create("SheetMusic", new Color(0.97f, 0.95f, 0.90f), 0.1f, 0f, ProceduralTextures.SheetMusic, new Vector2(1f, 1f)); } }
-        public static Material SelectionRing { get { return Create("SelectionRing", new Color(1.0f, 0.80f, 0.35f), 0.9f, 0.5f); } }
+        public static Material SelectionRing { get { return Decal("SelectionHalo", ProceduralTextures.Halo, new Color(1f, 0.78f, 0.4f, 1f)); } }
+        /// <summary>Soft dark blob under figures and chairs so they sit on the floor (same as the web preview's contact shadows).</summary>
+        public static Material ContactShadow { get { return Decal("ContactShadow", ProceduralTextures.Blob, Color.white); } }
+
+        /// <summary>Unlit, alpha-blended material for floor decals (Sprites/Default renders in URP's unlit pass).</summary>
+        public static Material Decal(string key, Texture2D tex, Color tint)
+        {
+            Material m;
+            if (cache.TryGetValue(key, out m) && m != null) return m;
+            var sh = Shader.Find("Sprites/Default");
+            if (sh == null) return Create(key, tint, 0.9f);
+            m = new Material(sh) { name = key, mainTexture = tex, color = tint, renderQueue = 3000 };
+            cache[key] = m;
+            return m;
+        }
 
         public static Material Skin(float tone)
         {
@@ -93,7 +107,7 @@ namespace OrchestraProject
             return Create(key, Color.Lerp(light, dark, Mathf.Round(tone * 10) / 10f), 0.35f);
         }
 
-        public static Material Jacket { get { return Create("Jacket", new Color(0.043f, 0.043f, 0.05f), 0.28f, 0f, ProceduralTextures.Fabric, new Vector2(1f, 1f)); } }
+        public static Material Jacket { get { return Create("Jacket", new Color(0.065f, 0.065f, 0.078f), 0.28f, 0f, ProceduralTextures.Fabric, new Vector2(1f, 1f)); } }
         public static Material Satin { get { return Create("Satin", new Color(0.024f, 0.024f, 0.028f), 0.78f); } }
         public static Material Shoe { get { return Create("Shoe", new Color(0.027f, 0.027f, 0.027f), 0.82f, 0.2f); } }
         public static Material EyeWhite { get { return Create("EyeWhite", new Color(0.94f, 0.91f, 0.88f), 0.7f); } }
@@ -118,7 +132,26 @@ namespace OrchestraProject
     /// <summary>Small procedural textures so surfaces are not flat colour. PLACEHOLDER for real texture sets.</summary>
     public static class ProceduralTextures
     {
-        static Texture2D woodPlanks, woodGrain, fabric, sheet;
+        static Texture2D woodPlanks, woodGrain, fabric, sheet, halo, blob;
+
+        /// <summary>Radial alpha gradient: a soft ring (halo) or a soft dark spot (blob).</summary>
+        static Texture2D Radial(bool ring)
+        {
+            const int size = 128;
+            var t = new Texture2D(size, size, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear };
+            var px = new Color[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float r = new Vector2(x - size / 2f + 0.5f, y - size / 2f + 0.5f).magnitude / (size / 2f);
+                    float a = ring ? Mathf.Clamp01(1f - Mathf.Abs(r - 0.8f) / 0.14f) : 0.55f * Mathf.Clamp01(1f - r) * Mathf.Clamp01(1f - r);
+                    px[y * size + x] = ring ? new Color(1f, 1f, 1f, a * a) : new Color(0f, 0f, 0f, a);
+                }
+            t.SetPixels(px); t.Apply(true);
+            return t;
+        }
+        public static Texture2D Halo { get { return halo != null ? halo : (halo = Radial(true)); } }
+        public static Texture2D Blob { get { return blob != null ? blob : (blob = Radial(false)); } }
 
         static Texture2D NewTex(int size)
         {
