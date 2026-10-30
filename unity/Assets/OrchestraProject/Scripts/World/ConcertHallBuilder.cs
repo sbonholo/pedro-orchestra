@@ -259,6 +259,7 @@ namespace OrchestraProject
             reverb.transform.SetParent(transform, false);
             reverb.transform.position = new Vector3(0, 4f, -8f);
             reverb.reverbPreset = AudioReverbPreset.Concerthall;
+            reverb.roomLF = -1200;   // keep the low end out of the hall reverb: cleaner cellos and basses (switches the zone to a User preset based on Concerthall)
             reverb.minDistance = 40f;
             reverb.maxDistance = 70f;
 

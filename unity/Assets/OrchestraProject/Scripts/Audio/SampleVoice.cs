@@ -80,8 +80,24 @@ namespace OrchestraProject
     /// </summary>
     public static class SampleVoice
     {
-        const double ReleaseSec = 0.16;
         const int CrossfadeSamples = 2400; // 50 ms
+
+        /// <summary>
+        /// Per-instrument clean-up for the lower strings (same numbers as CLEAN in the web preview):
+        /// high-pass below the instrument's range, a cut in the muddy low-mids, a little presence,
+        /// less added bow noise and vibrato (the recordings already have their own), and a longer, smoother release.
+        /// </summary>
+        struct Clean { public double HighPass, MudHz, MudDb, NoiseScale, VibScale, ReleaseSec; }
+        static Clean CleanFor(InstrumentType t)
+        {
+            switch (t)
+            {
+                case InstrumentType.Viola: return new Clean { HighPass = 100, MudHz = 300, MudDb = -3, NoiseScale = 0.5, VibScale = 0.15, ReleaseSec = 0.22 };
+                case InstrumentType.Cello: return new Clean { HighPass = 50, MudHz = 250, MudDb = -3.5, NoiseScale = 0.4, VibScale = 0.15, ReleaseSec = 0.28 };
+                case InstrumentType.DoubleBass: return new Clean { HighPass = 32, MudHz = 180, MudDb = -3, NoiseScale = 0.35, VibScale = 0.1, ReleaseSec = 0.32 };
+                default: return new Clean { HighPass = 160, MudHz = 0, MudDb = 0, NoiseScale = 1, VibScale = 0.25, ReleaseSec = 0.16 };
+            }
+        }
 
         public static float[] RenderPart(RenderedPart part, SampleSet set, int sampleRate, double totalSec, int seed)
         {
@@ -92,7 +108,14 @@ namespace OrchestraProject
             foreach (var n in part.Notes) brightness += n.Brightness;
             brightness = part.Notes.Count > 0 ? brightness / part.Notes.Count : 0.5f;
 
-            foreach (var n in part.Notes) RenderNote(buf, n, set, sampleRate, ref noiseState);
+            var clean = CleanFor(part.Instrument.Type);
+            foreach (var n in part.Notes) RenderNote(buf, n, set, sampleRate, ref noiseState, clean);
+            Biquad.HighPass(sampleRate, clean.HighPass, 0.707).Process(buf);
+            if (clean.MudHz > 0)
+            {
+                Biquad.Peaking(sampleRate, clean.MudHz, 1.0, clean.MudDb).Process(buf);
+                Biquad.Peaking(sampleRate, 2500, 0.9, 1.5).Process(buf);   // a little presence so the line stays clear
+            }
 
             // Weaker tone = darker, less focused sound. A world-class tone keeps the full recording.
             double cutoff = 2200 + 9000 * Math.Pow(brightness, 1.5);
@@ -107,7 +130,7 @@ namespace OrchestraProject
             return buf;
         }
 
-        static void RenderNote(float[] buf, RenderedNote n, SampleSet set, int sr, ref uint noiseState)
+        static void RenderNote(float[] buf, RenderedNote n, SampleSet set, int sr, ref uint noiseState, Clean clean)
         {
             var s = set.Nearest(n.PlayedMidi);
             double targetHz = 440.0 * Math.Pow(2.0, (n.PlayedMidi - 69.0) / 12.0);
@@ -116,18 +139,18 @@ namespace OrchestraProject
             int start = (int)((StringSynth.LeadInSec + n.StartSec) * sr);
             if (start < 0) start = 0;
             int sustainEnd = start + (int)(n.DurationSec * sr);
-            int end = Math.Min(buf.Length, sustainEnd + (int)(ReleaseSec * sr));
+            int end = Math.Min(buf.Length, sustainEnd + (int)(clean.ReleaseSec * sr));
 
             double pos = 0;
             double vibPhase = 0;
             float scoop = n.Noise * 120f;
-            double release = 1.0, releaseMul = Math.Exp(-1.0 / (sr * ReleaseSec / 4.0));
+            double release = 1.0, releaseMul = Math.Exp(-1.0 / (sr * clean.ReleaseSec / 4.0));
             double rate = baseRate;
             float noiseLp = 0f;
             int loopLen = s.LoopEnd - s.LoopStart;
             int xf = Math.Min(CrossfadeSamples, loopLen / 3);
             double attack = Math.Max(0.005, n.AttackSec * 0.25);   // the recording already has its own attack
-            double vibratoCents = set.RecordedVibrato ? n.VibratoCents * 0.25 : n.VibratoCents; // don't double the recorded vibrato
+            double vibratoCents = set.RecordedVibrato ? n.VibratoCents * clean.VibScale : n.VibratoCents; // don't double the recorded vibrato
 
             for (int i = start; i < end; i++)
             {
@@ -157,7 +180,7 @@ namespace OrchestraProject
                 noiseState ^= noiseState << 13; noiseState ^= noiseState >> 17; noiseState ^= noiseState << 5;
                 float white = (noiseState / (float)uint.MaxValue) * 2f - 1f;
                 noiseLp += (white - noiseLp) * 0.3f;
-                double scratch = (white - noiseLp) * n.Noise * (t < 0.12 ? 1.6 : 0.5);
+                double scratch = (white - noiseLp) * n.Noise * (t < 0.12 ? 1.6 : 0.5) * clean.NoiseScale;
 
                 buf[i] += (float)((v + scratch * 0.6) * env);
                 pos += rate;
