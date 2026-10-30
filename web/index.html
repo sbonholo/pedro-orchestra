@@ -713,7 +713,7 @@ const M = {
 M.floor().envMapIntensity = .2;
 M.lamp().emissive = new THREE.Color(0xffc979); M.lamp().emissiveIntensity = 1.6;
 // Selection halo (soft additive ring) and contact shadows (soft dark blobs) that ground figures on the floor.
-const HALO = new THREE.MeshBasicMaterial({ map: TEX.glow, color: 0xffc766, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+const HALO = new THREE.MeshBasicMaterial({ map: TEX.glow, color: 0x9c6a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
 const BLOB = new THREE.MeshBasicMaterial({ map: TEX.blob, transparent: true, depthWrite: false, fog: false });
 const GEO_PLANE = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 function decal(parent, material, pos, w, d, order) { const m = new THREE.Mesh(GEO_PLANE, material); m.position.set(...pos); m.scale.set(w, 1, d); m.renderOrder = order; parent.add(m); return m; }

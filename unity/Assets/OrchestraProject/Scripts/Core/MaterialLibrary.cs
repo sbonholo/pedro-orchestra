@@ -84,7 +84,7 @@ namespace OrchestraProject
         public static Material BowHair { get { return Create("BowHair", new Color(0.93f, 0.91f, 0.85f), 0.3f); } }
         public static Material BowStick { get { return Create("BowStick", new Color(0.30f, 0.13f, 0.06f), 0.7f); } }
         public static Material SheetMusic { get { return Create("SheetMusic", new Color(0.97f, 0.95f, 0.90f), 0.1f, 0f, ProceduralTextures.SheetMusic, new Vector2(1f, 1f)); } }
-        public static Material SelectionRing { get { return Decal("SelectionHalo", ProceduralTextures.Halo, new Color(1f, 0.78f, 0.4f, 1f)); } }
+        public static Material SelectionRing { get { return Decal("SelectionHalo", ProceduralTextures.Halo, new Color(1f, 0.78f, 0.4f, 0.7f)); } }
         /// <summary>Soft dark blob under figures and chairs so they sit on the floor (same as the web preview's contact shadows).</summary>
         public static Material ContactShadow { get { return Decal("ContactShadow", ProceduralTextures.Blob, Color.white); } }
 
