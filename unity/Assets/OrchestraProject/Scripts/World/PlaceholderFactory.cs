@@ -88,10 +88,16 @@ namespace OrchestraProject
             if (e > 0f)
                 Part("Endpin", root, PrimitiveType.Cylinder, MaterialLibrary.StringMetal, new Vector3(0, -D * 0.1f, e * 0.5f), new Vector3(0.012f, e * 0.5f, 0.012f), Quaternion.Euler(90, 0, 0));
 
-            // Body: lower bout, upper bout, waist (C-bouts), ribs.
-            Part("Lower Bout", root, PrimitiveType.Sphere, varnish, new Vector3(0, 0, e + L * 0.28f), new Vector3(W, D, L * 0.58f));
-            Part("Upper Bout", root, PrimitiveType.Sphere, varnish, new Vector3(0, 0, e + L * 0.74f), new Vector3(W * 0.82f, D, L * 0.50f));
-            Part("Waist", root, PrimitiveType.Cube, varnish, new Vector3(0, 0, e + L * 0.5f), new Vector3(W * 0.62f, D * 0.9f, L * 0.3f));
+            // Body: flat top and back with ribs (discs), wide lower bout, narrower upper bout, slim C-bout waist,
+            // dark edge purfling and rounded corners. Same shapes as buildInstrument() in the web preview.
+            Part("Lower Bout", root, PrimitiveType.Cylinder, varnish, new Vector3(0, 0, e + L * 0.27f), new Vector3(W, D * 0.5f, L * 0.54f));
+            Part("Upper Bout", root, PrimitiveType.Cylinder, varnish, new Vector3(0, 0, e + L * 0.75f), new Vector3(W * 0.8f, D * 0.5f, L * 0.44f));
+            Part("Waist", root, PrimitiveType.Cube, varnish, new Vector3(0, 0, e + L * 0.5f), new Vector3(W * 0.56f, D * 0.98f, L * 0.32f));
+            Part("Purfling Lower", root, PrimitiveType.Cylinder, MaterialLibrary.Ebony, new Vector3(0, D * 0.02f, e + L * 0.27f), new Vector3(W * 1.012f, D * 0.45f, L * 0.54f * 1.012f));
+            Part("Purfling Upper", root, PrimitiveType.Cylinder, MaterialLibrary.Ebony, new Vector3(0, D * 0.02f, e + L * 0.75f), new Vector3(W * 0.8f * 1.012f, D * 0.45f, L * 0.44f * 1.012f));
+            for (int s = -1; s <= 1; s += 2)
+                foreach (float z in new[] { 0.36f, 0.64f })
+                    Part("Corner", root, PrimitiveType.Sphere, varnish, new Vector3(s * W * 0.3f, 0, e + L * z), new Vector3(W * 0.1f, D * 0.98f, L * 0.07f));
 
             float top = D * 0.5f;
             float bridgeZ = e + L * 0.55f;
@@ -111,6 +117,7 @@ namespace OrchestraProject
             Part("Neck", root, PrimitiveType.Cube, MaterialLibrary.Maple, new Vector3(0, top * 0.5f, (neckBodyZ + nutZ) * 0.5f), new Vector3(W * 0.14f, D * 0.45f, nutZ - neckBodyZ));
             Part("Pegbox", root, PrimitiveType.Cube, varnish, new Vector3(0, top * 0.4f, (nutZ + scrollZ) * 0.5f), new Vector3(W * 0.13f, D * 0.5f, scrollZ - nutZ));
             Part("Scroll", root, PrimitiveType.Sphere, varnish, new Vector3(0, top * 0.5f, scrollZ + L * 0.03f), new Vector3(W * 0.16f, D * 0.75f, L * 0.1f));
+            Part("Volute", root, PrimitiveType.Cylinder, varnish, new Vector3(0, top * 0.5f, scrollZ + L * 0.035f), new Vector3(W * 0.12f, W * 0.09f, W * 0.12f), Quaternion.Euler(0, 0, 90));
             for (int p = 0; p < 4; p++)
             {
                 float pz = nutZ + (scrollZ - nutZ) * (0.2f + p * 0.2f);

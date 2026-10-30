@@ -31,7 +31,9 @@ namespace OrchestraProject
         float lift = 1f;
         float idlePhase;
 
-        public void Build(MusicianData data)
+        public bool Solo { get; private set; }
+
+        public void Build(MusicianData data, bool solo = false)
         {
             Data = data;
             Def = data.Instrument;
@@ -41,12 +43,14 @@ namespace OrchestraProject
             bool cello = Def.Posture == PlayingPosture.SeatedBetweenKnees;
 
             // Furniture
+            Solo = solo;
+            bool shoulder = Def.Posture == PlayingPosture.SeatedShoulder;
             if (standing) PlaceholderFactory.BuildStool(transform, new Vector3(0.05f, 0, -0.35f));
-            else PlaceholderFactory.BuildChair(transform, new Vector3(0, 0, -0.02f), 0f);
+            else if (!(solo && shoulder)) PlaceholderFactory.BuildChair(transform, new Vector3(0, 0, -0.02f), 0f);   // a violin/viola soloist stands
             float standX = cello ? 0.45f : standing ? 0.55f : 0.35f;
-            PlaceholderFactory.BuildMusicStand(transform, new Vector3(standX, 0, 0.95f), 0f, standing ? 1.15f : 0.85f);
+            if (!solo) PlaceholderFactory.BuildMusicStand(transform, new Vector3(standX, 0, 0.95f), 0f, standing ? 1.15f : 0.85f);
 
-            var fig = HumanFigure.Build(transform, Data.female, rng, standing, cello);
+            var fig = HumanFigure.Build(transform, Data.female, rng, standing || (solo && shoulder), cello);
             spine = fig.spine; head = fig.head; shoulderL = fig.shoulderL; shoulderR = fig.shoulderR;
             upperArmL = fig.upperArmL; foreArmL = fig.foreArmL; handL = fig.handL;
             upperArmR = fig.upperArmR; foreArmR = fig.foreArmR; handR = fig.handR;
@@ -148,7 +152,25 @@ namespace OrchestraProject
             // Body: breathing when idle, musical sway when playing (more for musical players).
             float musical = Data.Get01(SkillType.Musicality);
             float amp = notes != null ? 1.2f + 3.0f * musical : 0.5f;
-            spine.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.9f) * amp + StageBow.Weight * 24f, Mathf.Sin(time * 0.43f) * amp * 0.6f, Mathf.Sin(time * 0.61f) * amp * 0.7f);   // + bow after a concert
+            // Violinists and violists "dance" with the music: lean into phrases on the beat, sway and turn; soloists most of all.
+            // Same motion as animateMusician() in the web preview.
+            float dp = 0f, dr = 0f, dy = 0f;
+            var perf = GameManager.Instance != null ? GameManager.Instance.Performance : null;
+            if (notes != null && Def.Posture == PlayingPosture.SeatedShoulder && perf != null && perf.HasTiming)
+            {
+                float ph = Mathf.Max(0f, t) / perf.SecondsPerBeat * Mathf.PI;
+                float k = (Solo ? 2.2f : 1f) * (0.6f + 1.4f * musical);
+                bool longNote = current != null && current.DurationSec > 0.6 && sounding;
+                dp = k * (2.5f * Mathf.Sin(ph) + (longNote ? 4f * Mathf.Sin(Mathf.PI * p) : 0f));
+                dr = k * 3.5f * Mathf.Sin(ph / 2f);
+                dy = k * 3f * Mathf.Sin(ph / 4f);
+                if (Solo)
+                {
+                    transform.rotation = Quaternion.Euler(0, 180f + k * 5f * Mathf.Sin(ph / 4f), 0);
+                    var pos = transform.position; pos.y = ConcertHallBuilder.StageHeight - 0.015f * k * (1f - Mathf.Cos(ph)) * 0.5f; transform.position = pos;
+                }
+            }
+            spine.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.9f) * amp + StageBow.Weight * 24f + dp, Mathf.Sin(time * 0.43f) * amp * 0.6f + dy, Mathf.Sin(time * 0.61f) * amp * 0.7f + dr);   // + bow after a concert
 
             // Bow stroke for the current note.
             if (current != null && noteIndex != strokeNote && t >= current.StartSec)

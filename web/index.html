@@ -776,12 +776,17 @@ function placeLimb(m, a, b) { m.position.addVectors(a, b).multiplyScalar(.5); co
 function buildInstrument(d, parent) {
   const g = new THREE.Group(); parent.add(g); const { endpin: e, L, W, D } = d; const v = d.posture === "shoulder" && d === INST.violin ? M.varnish() : M.varnish2();
   if (e > 0) part(g, "cyl", M.string(), [0, -D * .1, e / 2], [.012, e / 2, .012], euler(90, 0, 0));
-  part(g, "sph", v, [0, 0, e + L * .28], [W, D, L * .58]); part(g, "sph", v, [0, 0, e + L * .74], [W * .82, D, L * .5]); part(g, "box", v, [0, 0, e + L * .5], [W * .62, D * .9, L * .3]);
+  // Body: flat top and back with ribs (discs), wide lower bout, narrower upper bout, slim C-bout waist, dark edge purfling
+  part(g, "cyl", v, [0, 0, e + L * .27], [W, D / 2, L * .54]); part(g, "cyl", v, [0, 0, e + L * .75], [W * .8, D / 2, L * .44]); part(g, "box", v, [0, 0, e + L * .5], [W * .56, D * .98, L * .32]);
+  for (const [z, w, l] of [[.27, 1, .54], [.75, .8, .44]]) part(g, "cyl", M.ebony(), [0, D * .02, e + L * z], [W * w * 1.012, D / 2 * .9, L * l * 1.012], null, false);
+  for (const s of [-1, 1]) for (const z of [.36, .64]) part(g, "sph", v, [s * W * .3, 0, e + L * z], [W * .1, D * .98, L * .07]);   // C-bout corners
   const top = D / 2, bridgeZ = e + L * .55, bh = L * (d.posture === "shoulder" ? .09 : .12), fb = e + L * .66, nb = e + L, nut = e + L + d.neck * .58, scroll = e + L + d.neck * .85;
   for (const s of [-1, 1]) part(g, "box", M.ebony(), [s * W * .2, top * .97, bridgeZ], [W * .025, .002, L * .2], euler(0, s * 8, 0), false);
   part(g, "box", M.ebony(), [0, top + bh * .45, (fb + nut) / 2], [W * .2, L * .02, nut - fb], euler(-4, 0, 0));
   part(g, "box", M.maple(), [0, top * .5, (nb + nut) / 2], [W * .14, D * .45, nut - nb]);
   part(g, "box", v, [0, top * .4, (nut + scroll) / 2], [W * .13, D * .5, scroll - nut]); part(g, "sph", v, [0, top * .5, scroll + L * .03], [W * .16, D * .75, L * .1]);
+  part(g, "cyl", v, [0, top * .5, scroll + L * .035], [W * .12, W * .09, W * .12], euler(0, 0, 90));   // scroll volute
+  for (let i = 0; i < 4; i++) { const z = nut + (scroll - nut) * (.2 + .2 * i); part(g, "cyl", M.ebony(), [(i % 2 ? 1 : -1) * W * .1, top * .4, z], [W * .03, W * .07, W * .03], euler(0, 0, 90), false); }   // tuning pegs
   part(g, "box", M.maple(), [0, top + bh / 2, bridgeZ], [W * .32, bh, .006]);
   const t0 = e + L * .08, t1 = e + L * .38; part(g, "box", M.ebony(), [0, top + bh * .2, (t0 + t1) / 2], [W * .22, .012, t1 - t0]);
   for (let s = 0; s < 4; s++) { const x = (s - 1.5) * W * .045; const a = new THREE.Vector3(x, top + bh * .3, t1), b = new THREE.Vector3(x * .7, top + bh * .62, nut);
@@ -791,10 +796,12 @@ function buildInstrument(d, parent) {
 function buildBow(d, parent) { const g = new THREE.Group(); parent.add(g); const l = d.bow;
   part(g, "cyl", M.stick(), [0, .014, l / 2], [.008, l / 2, .008], euler(90, 0, 0)); part(g, "box", M.hair(), [0, 0, l / 2], [.009, .002, l * .96]);
   part(g, "box", M.ebony(), [0, .008, .02], [.014, .022, .045]); part(g, "box", M.hair(), [0, .01, l], [.009, .02, .012]); return g; }
-function buildFurniture(root, d) {
+function buildFurniture(root, d, solo = false) {
+  if (solo && d.posture === "shoulder") return;   // a standing soloist plays from memory: no chair, no stand
   if (d.posture === "standing") { const s = new THREE.Group(); s.position.set(.05, 0, -.35); root.add(s); part(s, "cyl", M.leather(), [0, .74, 0], [.36, .03, .36]);
     for (let i = 0; i < 3; i++) { const a = i * 120 * deg, f = new THREE.Vector3(Math.sin(a) * .22, 0, Math.cos(a) * .22), t = new THREE.Vector3(Math.sin(a) * .1, .73, Math.cos(a) * .1); const l = part(s, "cyl", M.steel(), [0, 0, 0], [.022, f.distanceTo(t) / 2, .022]); l.position.addVectors(f, t).multiplyScalar(.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), t.clone().sub(f).normalize()); } }
   else { const c = new THREE.Group(); c.position.set(0, 0, -.02); root.add(c); part(c, "box", M.leather(), [0, .45, 0], [.46, .06, .44]); part(c, "box", M.leather(), [0, .78, -.21], [.44, .4, .04], euler(-8, 0, 0)); for (let i = 0; i < 4; i++) part(c, "cyl", M.steel(), [(i % 2 ? 1 : -1) * .2, .21, (i < 2 ? -1 : 1) * .19], [.025, .21, .025]); }
+  if (solo) return;
   const st = new THREE.Group(); st.position.set(d.posture === "knees" ? .45 : d.posture === "standing" ? .55 : .35, 0, .95); root.add(st); const h = d.posture === "standing" ? 1.15 : .85;
   part(st, "cyl", M.steel(), [0, .01, 0], [.4, .01, .4]); part(st, "cyl", M.steel(), [0, h / 2, 0], [.025, h / 2, .025]);
   const desk = new THREE.Group(); desk.position.set(0, h + .12, 0); desk.quaternion.copy(euler(-28, 180, 0)); st.add(desk);
@@ -854,10 +861,10 @@ function buildFigure(root, m, posture, r) {
   const hL = buildHand(skin, m.female ? skin : M.shirt(), 55), hR = buildHand(skin, m.female ? skin : M.shirt(), 35);
   return { spine, head, shL, shR, arms, hL, hR, shY, hipY };
 }
-function buildMusician(m) {
+function buildMusician(m, solo = false) {
   const d = INST[m.inst]; const r = rngFrom(m.seed); const root = new THREE.Group(); world.add(root);
-  buildFurniture(root, d);
-  const { spine, head, shL, shR, arms, hL, hR, shY, hipY } = buildFigure(root, m, d.posture, r); const knees = d.posture === "knees";
+  buildFurniture(root, d, solo);
+  const { spine, head, shL, shR, arms, hL, hR, shY, hipY } = buildFigure(root, m, solo && d.posture === "shoulder" ? "standing" : d.posture, r); const knees = d.posture === "knees";
   let ip, fwd, up, parent, poleL, poleR;
   if (d.posture === "shoulder") { parent = spine; ip = new THREE.Vector3(-.03, shY + .02 - hipY, .07); fwd = new THREE.Vector3(-.48, .06, .88); up = new THREE.Vector3(.55, .83, .05); head.quaternion.copy(euler(12, -10, 14)); poleL = new THREE.Vector3(.15, -1, .2); poleR = new THREE.Vector3(1, -.7, -.3); }
   else if (knees) { parent = root; ip = new THREE.Vector3(0, 0, .5); fwd = new THREE.Vector3(-.1, 1, -.38); up = new THREE.Vector3(.05, .3, 1); head.quaternion.copy(euler(6, 8, -6)); poleL = new THREE.Vector3(-1, -.2, .2); poleR = new THREE.Vector3(1, -.6, -.4); }
@@ -866,7 +873,7 @@ function buildMusician(m) {
   const bow = buildBow(d, world);
   const ring = part(root, "cyl", M.ring(), [0, .005, .2], [1.3, .004, 1.3], null, false); ring.visible = false;
   const hit = new THREE.Mesh(new THREE.CapsuleGeometry(.5, .8, 4, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, .9, .2); hit.userData.musicianId = m.id; root.add(hit);
-  const v = { m, d, root, spine, head, ins, bow, arms, hL, hR, shL, shR, poleL, poleR, ring, hit, notes: null, startT: 0, idx: 0, bowPos: (d.bmin + d.bmax) / 2, from: 0, to: 0, strokeIdx: -1, lift: 1, phase: (m.seed % 1000) * .01, pan: 0, extra: [bow, ...Object.values(arms), hL, hR] };
+  const v = { m, d, solo, root, spine, head, ins, bow, arms, hL, hR, shL, shR, poleL, poleR, ring, hit, notes: null, startT: 0, idx: 0, bowPos: (d.bmin + d.bmax) / 2, from: 0, to: 0, strokeIdx: -1, lift: 1, phase: (m.seed % 1000) * .01, pan: 0, extra: [bow, ...Object.values(arms), hL, hR] };
   return v;
 }
 /* ---------- conductor: beats time (4/4, 3/4 and 2/4 patterns) with the music actually playing ---------- */
@@ -880,7 +887,7 @@ function buildConductor() {
 const BEAT_PATTERNS = { 2: [[0, -.22, 0], [.02, .1, 0]], 3: [[0, -.22, 0], [.22, -.12, .02], [.04, .1, 0]], 4: [[0, -.22, 0], [-.18, -.12, .02], [.22, -.12, .02], [.04, .1, 0]] };
 function animateConductor(now, time) {
   const c = conductor; if (!c) return; const playing = perf && perf.ctx !== "audition" && perf.players.length > 1;   // a lone soloist plays without a conductor
-  c.root.visible = !auditionView;
+  c.root.visible = !auditionView; for (const x of [...Object.values(c.arms), c.hL, c.hR]) x.visible = c.root.visible;   // arms and hands live outside the root
   let right, left, nod = 0;
   if (playing) {
     const spb = 60 / (perf.p.bpm * perf.ts), pat = BEAT_PATTERNS[perf.p.bpb] || BEAT_PATTERNS[4], bpb = pat.length;
@@ -939,6 +946,8 @@ function updateConductPad() {
   const pad = $("#conduct-pad"), on = !!(perf && perf.cond) && !hidden; pad.hidden = !on; if (!on) return;
   pad.innerHTML = `${actx.currentTime < perf.t0 ? "GET READY…" : "TAP THE BEAT"}<small>or press Space${perf.cond.fb ? " · " + perf.cond.fb : ""}</small>`;
 }
+// Arms, hands and bow live outside the musician's root group, so hide them together.
+function showView(v, on) { v.root.visible = on; for (const x of v.extra) x.visible = on; }
 function disposeView(v) { world.remove(v.root); for (const o of v.extra) world.remove(o); }
 const uMat = o => { o.updateWorldMatrix(true, false); return new THREE.Matrix4().makeScale(-1, 1, 1).multiply(o.matrixWorld); };
 function solveArm(v, sh, target, pole, upper, fore, hand) {
@@ -957,7 +966,12 @@ function animateMusician(v, now, time) {
   const d = v.d; const t = v.notes ? now - v.startT : -1; let cur = null, p = 0, sounding = false;
   if (v.notes && v.notes.length) { while (v.idx < v.notes.length - 1 && t >= v.notes[v.idx + 1].start) v.idx++; if (t >= v.notes[v.idx].start) { cur = v.notes[v.idx]; p = clamp((t - cur.start) / cur.dur, 0, 1); sounding = t <= cur.start + cur.dur; } else cur = v.notes[0]; }
   const amp = v.notes ? 1.2 + 3 * sk(v.m, S.musicality) : .5, tt = time + v.phase;
-  v.spine.quaternion.copy(euler(Math.sin(tt * .9) * amp + bowWeight() * 24, Math.sin(tt * .43) * amp * .6, Math.sin(tt * .61) * amp * .7));   // + bow after a concert
+  // Violinists and violists "dance" with the music: they lean into phrases on the beat, sway and turn; soloists most of all.
+  let dp = 0, dr = 0, dy = 0;
+  if (v.notes && d.posture === "shoulder" && perf) { const spb = 60 / (perf.p.bpm * perf.ts), ph = Math.max(0, t) / spb * Math.PI, k = (v.solo ? 2.2 : 1) * (.6 + 1.4 * sk(v.m, S.musicality));
+    dp = k * (2.5 * Math.sin(ph) + (cur && cur.dur > .6 && sounding ? 4 * Math.sin(Math.PI * p) : 0)); dr = k * 3.5 * Math.sin(ph / 2); dy = k * 3 * Math.sin(ph / 4);
+    if (v.solo) { v.root.quaternion.copy(euler(0, 180 + k * 5 * Math.sin(ph / 4), 0)); v.root.position.y = STAGE_H - .015 * k * (1 - Math.cos(ph)) / 2; } }
+  v.spine.quaternion.copy(euler(Math.sin(tt * .9) * amp + bowWeight() * 24 + dp, Math.sin(tt * .43) * amp * .6 + dy, Math.sin(tt * .61) * amp * .7 + dr));   // + bow after a concert
   if (cur && v.idx !== v.strokeIdx && t >= cur.start) { v.strokeIdx = v.idx; const len = clamp(cur.dur * (.22 + .25 * cur.vel), .08, d.bmax - d.bmin); v.from = v.bowPos;
     v.to = cur.down ? Math.min(d.bmax, v.bowPos + len) : Math.max(d.bmin, v.bowPos - len); if (Math.abs(v.to - v.from) < .05) v.to = cur.down ? d.bmin + len : d.bmax - len; }
   const dt = 1 / 60;
@@ -1012,7 +1026,7 @@ function camPreset(mode) {
   if (mode === "stage") return [st(.35, 2.35, -.45), st(0, .8, 3.2), 55];   // over the conductor's shoulder
   if (mode === "audience") return [U(-2.5, 4, -14), st(0, 1, 3), 38];
   if (mode === "orchestra") return [U(0, 7.5, -5.5), st(0, .4, 3.3), 50];
-  if (mode === "closeup") { const v = views.get(selectedId) || [...views.values()][0]; if (!v) return camPreset("stage");
+  if (mode === "closeup") { const v = auditionView || views.get(selectedId) || [...views.values()][0]; if (!v) return camPreset("stage");
     const fu = new THREE.Vector3(0, v.d.posture === "standing" ? 1.25 : .95, .25).applyMatrix4(uMat(v.root));
     const rq = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(uMat(v.root)));
     const off = new THREE.Vector3(.9, .35, 1.9).applyQuaternion(rq); const pos = fu.clone().add(off);
@@ -1058,13 +1072,16 @@ async function perform(pieceId, mode, ctx, players, opts = {}) {
   if (actx.state !== "running") await actx.resume();
   stopPerformance(true);
   const p = pieceById(pieceId), parts = {};
-  if (mode === "solo") { players = soloPlayers(players, soloSel, p.unacc); if (!players.length) return toast(`Nobody in the orchestra plays the ${INST[soloSel].name.toLowerCase()}. Hire one in Auditions.`); if (ctx !== "audition") select(players[0].id); }
+  if (mode === "solo") { players = soloPlayers(players, soloSel, p.unacc); if (!players.length) return toast(`Nobody in the orchestra plays the ${INST[soloSel].name.toLowerCase()}. Hire one in Auditions.`); if (ctx !== "audition") select(players[0].id);
+    // The soloist walks to the front of the stage alone: violins and violas stand, the cellist sits, the bassist stands as always.
+    for (const v of views.values()) showView(v, false);
+    auditionView = buildMusician(players[0], true); auditionView.root.position.set(0, STAGE_H, -.6); auditionView.root.quaternion.copy(euler(0, 180, 0)); auditionView.pan = 0; }
   for (const m of players) parts[m.inst] ??= arrange(p, mode, m.inst, soloSel);
   const ts = tempoScale(players, parts, p), bpm = p.bpm * ts, prep = opts.prep ?? prog(pieceId).prep;
   const sect = {}; players.forEach(m => sect[m.inst] = (sect[m.inst] || 0) + 1);
   const rendered = players.map(m => { const rp = renderPart(m, parts[m.inst], p, prep, ctx, bpm); rp.sectionGain = 1 / Math.sqrt(sect[m.inst]) * (players.length > 1 ? .85 : 1.1) * parts[m.inst].gain; return rp; });
   const t0 = actx.currentTime + 0.35;
-  rendered.forEach(rp => { const v = ctx === "audition" ? auditionView : views.get(rp.m.id); const chain = musicianChain(rp.m, rp, v ? v.pan : 0);
+  rendered.forEach(rp => { const v = ctx === "audition" || mode === "solo" ? auditionView : views.get(rp.m.id); const chain = musicianChain(rp.m, rp, v ? v.pan : 0);
     for (const n of rp.notes) scheduleNote(chain, INST[rp.m.inst].set, n, t0 + n.start);
     if (v) { v.notes = rp.notes; v.startT = t0; v.idx = 0; v.strokeIdx = -1; } });
   const length = Math.max(...rendered.map(r => r.length));
@@ -1077,12 +1094,12 @@ async function perform(pieceId, mode, ctx, players, opts = {}) {
   renderUI();
 }
 function stopPerformance(silent) {
-  if (!perf) return; stopAllAudio(); for (const v of views.values()) v.notes = null; if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) v.root.visible = true; }
+  if (!perf) return; stopAllAudio(); for (const v of views.values()) v.notes = null; if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) showView(v, true); }
   perf = null; if (!silent) renderUI();
 }
 function finishPerformance() {
   const pf = perf; perf = null; for (const v of views.values()) v.notes = null;
-  if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) v.root.visible = true; }
+  if (auditionView) { disposeView(auditionView); auditionView = null; for (const v of views.values()) showView(v, true); }
   const res = evaluate(pf.rendered, pf.p, pf.mode, pf.ctx, pf.ts, pf.cond ? conductScore(pf.cond) : -1); let gains = null;
   const pr = prog(pf.p.id);
   if (pf.ctx === "rehearsal") gains = rehearse(pf.players, pr);
@@ -1405,7 +1422,7 @@ document.addEventListener("click", e => {
     else toast(`${fullName(c)} politely declined. Build reputation with concerts to attract stronger players.`); save(); renderUI(); }
 });
 function hearAudition(c) {
-  const p = pick(PIECES); for (const v of views.values()) v.root.visible = false;
+  const p = pick(PIECES); for (const v of views.values()) showView(v, false);
   auditionView = buildMusician(c); auditionView.root.position.set(0, STAGE_H, -.6); auditionView.root.quaternion.copy(euler(0, 180, 0)); auditionView.pan = 0;
   setCam("audience"); toast(`${fullName(c)} plays ${p.title} for you.`);
   perform(p.id, "same", "audition", [c], { prep: .6 });

@@ -19,6 +19,7 @@ namespace OrchestraProject
         public float Progress { get; private set; }
         public PerformanceContext Context { get; private set; }
         public int PlayerCount { get; private set; }
+        public ArrangementMode Mode { get; private set; }
 
         // "You conduct" mode: the player's taps are scored against the beats and drive the conductor's baton.
         public bool PlayerConducting { get; private set; }
@@ -85,6 +86,7 @@ namespace OrchestraProject
             IsBusy = true;
             Context = ctx;
             PlayerCount = players.Count;
+            Mode = mode;
             Progress = 0f;
             Status = "Preparing " + piece.Title + "…";
 
@@ -137,7 +139,9 @@ namespace OrchestraProject
             activeViews.Clear();
             for (int i = 0; i < parts.Count; i++)
             {
-                MusicianView view = ctx == PerformanceContext.Audition ? stage.ShowAuditionCandidate(parts[i].Musician) : stage.Get(parts[i].Musician.id);
+                MusicianView view = ctx == PerformanceContext.Audition ? stage.ShowAuditionCandidate(parts[i].Musician)
+                    : mode == ArrangementMode.Solo ? stage.ShowAuditionCandidate(parts[i].Musician, true)   // the soloist alone at the front of the stage
+                    : stage.Get(parts[i].Musician.id);
                 if (view == null) continue;
                 var clip = AudioClip.Create(parts[i].Musician.FullName + " - " + piece.Title, buffers[i].Length, 1, sampleRate, false);
                 clip.SetData(buffers[i], 0);
@@ -174,7 +178,7 @@ namespace OrchestraProject
             foreach (var v in activeViews) { v.EndPerformance(); ReleaseClip(v); }
             activeViews.Clear();
             HasTiming = false;
-            if (ctx == PerformanceContext.Audition) stage.HideAuditionCandidate();
+            if (ctx == PerformanceContext.Audition || mode == ArrangementMode.Solo) stage.HideAuditionCandidate();
 
             var result = PerformanceEvaluator.Evaluate(parts, piece, mode, ctx, tempoScale);
             if (conductScorer != null) PerformanceEvaluator.ApplyConducting(result, conductScorer.Score);

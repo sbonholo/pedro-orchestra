@@ -31,7 +31,7 @@ namespace OrchestraProject
         void LateUpdate()
         {
             if (fig == null) return;
-            bool audition = perf.IsBusy && perf.Context == PerformanceContext.Audition;
+            bool audition = perf.IsBusy && (perf.Context == PerformanceContext.Audition || perf.Mode == ArrangementMode.Solo);   // leaves the stage to the soloist
             body.SetActive(!audition);
             if (audition) return;
 

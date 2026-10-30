@@ -43,12 +43,12 @@ namespace OrchestraProject
             SetSelected(selectedId);
         }
 
-        MusicianView Spawn(MusicianData m, string name)
+        MusicianView Spawn(MusicianData m, string name, bool solo = false)
         {
             var go = new GameObject(name);
             go.transform.SetParent(transform, false);
             var v = go.AddComponent<MusicianView>();
-            v.Build(m);
+            v.Build(m, solo);
             return v;
         }
 
@@ -59,10 +59,11 @@ namespace OrchestraProject
         }
 
         /// <summary>Audition candidate playing alone at the front of the stage, facing the hall.</summary>
-        public MusicianView ShowAuditionCandidate(MusicianData candidate)
+        /// <summary>A musician alone at the front of the stage: an audition, or a soloist (solo = stands, no music stand).</summary>
+        public MusicianView ShowAuditionCandidate(MusicianData candidate, bool solo = false)
         {
             HideAuditionCandidate();
-            auditionView = Spawn(candidate, "Audition - " + candidate.FullName);
+            auditionView = Spawn(candidate, (solo ? "Soloist - " : "Audition - ") + candidate.FullName, solo);
             auditionView.transform.position = new Vector3(0f, ConcertHallBuilder.StageHeight, -0.6f);
             auditionView.transform.rotation = Quaternion.Euler(0, 180f, 0);
             foreach (var v in views.Values) v.gameObject.SetActive(false);
