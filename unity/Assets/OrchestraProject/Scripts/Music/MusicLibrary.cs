@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace OrchestraProject
@@ -369,6 +370,25 @@ namespace OrchestraProject
                     "G:4 | C:4 | D7:4 | G:4 | G:4 | C:4 | D7:4 | G:4"),
                 Rights = "Public domain (Bach, d. 1750). Opening bars, transcribed for the game."
             });
+            HardPieces.AddTo(pieces);
+            foreach (var p in pieces) Lengthen(p);
+        }
+
+        /// <summary>Pieces shorter than a minute play their music again (up to 4 times in all). Same rule as lengthen() in the web preview.</summary>
+        public const float TargetSeconds = 60f;
+        public static int PlaysFor(PieceDefinition p)
+        {
+            float sec = p.TotalBeats * 60f / p.Bpm;
+            return Math.Max(1, Math.Min(4, (int)Math.Ceiling(TargetSeconds / sec)));
+        }
+
+        static void Lengthen(PieceDefinition p)
+        {
+            int plays = PlaysFor(p);
+            if (plays <= 1) return;
+            var mel = new List<Note>(); var ch = new List<ChordSegment>();
+            for (int i = 0; i < plays; i++) { mel.AddRange(p.Melody); ch.AddRange(p.Chords); }
+            p.Melody = mel; p.Chords = ch;
         }
     }
 }
