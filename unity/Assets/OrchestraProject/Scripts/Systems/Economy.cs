@@ -110,11 +110,14 @@ namespace OrchestraProject
             return Math.Min(100f, m.Get(s) + bonus);
         }
 
-        /// <summary>You can own several copies of a model, one per player. Same as copiesOf / sparesOf in the web preview.</summary>
+        /// <summary>A Stradivarius (and the Dragonetti) is one of a kind: one copy, one player. Same as uniqueInst in the web preview.</summary>
+        public static bool Unique(string id) { return id.StartsWith("strad_") || id == "dragonetti"; }
+        /// <summary>Workshop and master-made models: own several copies, one per player. Same as copiesOf / sparesOf in the web preview.</summary>
         public static int Copies(OrchestraState s, string id) { int n = 0; foreach (var x in s.ownedInstruments) if (x == id) n++; return n; }
         /// <summary>Copies nobody plays except <paramref name="m"/> (so m can take one without buying).</summary>
         public static int Spares(OrchestraState s, string id, MusicianData m)
         {
+            if (Unique(id)) return Copies(s, id);   // the one copy can always change hands
             int used = 0; foreach (var o in s.roster) if (o != m && o.instrumentModel == id) used++;
             return Copies(s, id) - used;
         }
@@ -128,8 +131,10 @@ namespace OrchestraProject
                 s.coins -= im.Price;
                 s.ownedInstruments.Add(im.Id);
             }
+            MusicianData from = null;
+            if (Unique(im.Id)) foreach (var o in s.roster) if (o != m && o.instrumentModel == im.Id) { from = o; o.instrumentModel = ""; }
             m.instrumentModel = im.Id;
-            return m.firstName + " now plays the " + im.Name + ".";
+            return m.firstName + " now plays the " + im.Name + "." + (from != null ? " " + from.firstName + " gave it up." : "");
         }
 
         public static string Masterclass(OrchestraState s, MusicianData m, SkillType skill)

@@ -533,12 +533,15 @@ const SHOP = (() => {
 const shopItem = id => SHOP.find(x => x.id === id);
 // Skill as heard: the player's skill plus what their instrument adds (+20 tone, +8 expression, +4 intonation at quality 1)
 function played(m, i) { const q = shopItem(m.instrumentModel)?.q || 0; return Math.min(100, m.skills[i] + (i === S.tone ? 20 * q : i === S.expression ? 8 * q : i === S.intonation ? 4 * q : 0)); }
-// You can own several copies of a model (one per player); spares = copies not played by anyone except m. Same as Economy.Spares.
+// Workshop and master-made models: own several copies, one per player. A Stradivarius (and the Dragonetti) is one of a kind:
+// one copy, one player; giving it to someone takes it from whoever had it. Same as Economy.Unique / Spares.
+const uniqueInst = id => id.startsWith("strad_") || id === "dragonetti";
 const copiesOf = id => state.owned.filter(x => x === id).length;
-const sparesOf = (id, m) => copiesOf(id) - state.roster.filter(o => o !== m && o.instrumentModel === id).length;
+const sparesOf = (id, m) => uniqueInst(id) ? copiesOf(id) : copiesOf(id) - state.roster.filter(o => o !== m && o.instrumentModel === id).length;
 function buyInstrument(m, it) {
   if (sparesOf(it.id, m) <= 0) { if (state.coins < it.price) return `Not enough coins: ${it.name} costs ${it.price.toLocaleString("en")}.`; state.coins -= it.price; state.owned.push(it.id); }   // no spare copy: buy another
-  m.instrumentModel = it.id; return `${m.first} now plays the ${it.name}.`;
+  const from = uniqueInst(it.id) ? state.roster.find(o => o !== m && o.instrumentModel === it.id) : null; if (from) from.instrumentModel = "";
+  m.instrumentModel = it.id; return `${m.first} now plays the ${it.name}.` + (from ? ` ${from.first} gave it up.` : "");
 }
 function masterclass(m, i) {
   const v = m.skills[i]; if (v >= 100) return `${m.first}'s ${SKILLS[i][0]} is already at the maximum.`; const cost = masterclassCost(v);

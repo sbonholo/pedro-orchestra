@@ -154,13 +154,16 @@ static class Program
             es.coins = 50000; float tone0 = Economy.Played(v, SkillType.ToneQuality);
             Economy.Buy(es, v, Economy.Get("strad_messiah"));
             Check(es.coins == 0 && v.instrumentModel == "strad_messiah" && Economy.Played(v, SkillType.ToneQuality) > tone0 + 19f, "Messiah Stradivarius bought: +20 tone");
-            // Copies: a second violinist needs a second copy; a spare copy is free to hand over
+            // A Stradivarius is one of a kind: giving it to a second violinist takes it from the first, for free
             var v2 = es.roster.Find(x => x != v && x.instrument == InstrumentType.Violin) ?? es.roster.Find(x => x != v);
-            v2.instrument = InstrumentType.Violin; es.coins = 50000;
+            v2.instrument = InstrumentType.Violin; es.coins = 0;
             Economy.Buy(es, v2, Economy.Get("strad_messiah"));
-            bool bothPlay = v.instrumentModel == "strad_messiah" && v2.instrumentModel == "strad_messiah" && Economy.Copies(es, "strad_messiah") == 2 && es.coins == 0;
-            v.instrumentModel = ""; es.coins = 0; Economy.Buy(es, v, Economy.Get("strad_messiah"));
-            Check(bothPlay && v.instrumentModel == "strad_messiah" && es.coins == 0, "instrument copies: two violinists play two Messiahs; an unused copy is handed over free");
+            Check(v2.instrumentModel == "strad_messiah" && v.instrumentModel == "" && Economy.Copies(es, "strad_messiah") == 1, "Stradivarius: one copy, one player; handing it over takes it from the other");
+            // Master-made: a second violinist needs a second copy; an unused copy is handed over free
+            es.coins = 24000; Economy.Buy(es, v, Economy.Get("Violin_master")); Economy.Buy(es, v2, Economy.Get("Violin_master"));
+            bool both = v.instrumentModel == "Violin_master" && v2.instrumentModel == "Violin_master" && Economy.Copies(es, "Violin_master") == 2 && es.coins == 0;
+            v.instrumentModel = ""; Economy.Buy(es, v, Economy.Get("Violin_master"));
+            Check(both && v.instrumentModel == "Violin_master" && es.coins == 0, "master instruments: one copy per player; an unused copy is handed over free");
         }
         // Achievements pay once
         {
