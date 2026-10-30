@@ -604,7 +604,10 @@ let actx = null, master = null, reverbIn = null, samples = {}, noiseBuf = null, 
 async function initAudio() {
   if (audioReady) return audioReady;
   actx = new (window.AudioContext || window.webkitAudioContext)();
-  master = actx.createGain(); master.gain.value = settings.volume; master.connect(actx.destination);
+  master = actx.createGain(); master.gain.value = settings.volume;
+  // Louder and even: a gentle compressor with make-up gain, so the whole orchestra is clearly audible without distortion
+  const comp = actx.createDynamicsCompressor(); comp.threshold.value = -20; comp.knee.value = 12; comp.ratio.value = 3.5; comp.attack.value = .01; comp.release.value = .25;
+  const makeup = actx.createGain(); makeup.gain.value = 1.9; master.connect(comp); comp.connect(makeup); makeup.connect(actx.destination);
   // Concert-hall reverb: generated stereo impulse response (2.4 s)
   const len = Math.floor(actx.sampleRate * 2.4), ir = actx.createBuffer(2, len, actx.sampleRate);
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < len; i++) { const t = i / actx.sampleRate; lp += ((Math.random() * 2 - 1) - lp) * (0.55 - 0.4 * Math.min(1, t / 2.4)); d[i] = lp * Math.exp(-t / 0.62) * (t < 0.012 ? 0 : 1); } }
@@ -648,14 +651,23 @@ function scheduleNote(chain, set, n, t0) {
   const scoop = n.noise * 120; src.detune.setValueAtTime(-scoop, t0); src.detune.setTargetAtTime(0, t0, 0.03);
   const depth = n.vib * chain.clean.vib;
   if (depth > 0.5) { const lfo = actx.createOscillator(); lfo.frequency.value = n.vibRate; const lg = actx.createGain(); lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(0, t0 + n.vibDelay); lg.gain.linearRampToValueAtTime(depth, t0 + n.vibDelay + .25);
-    lfo.connect(lg); lg.connect(src.detune); lfo.start(t0); lfo.stop(t1 + rel + .1); scheduled.push(lfo); }
-  src.connect(env); env.connect(chain.input); src.start(t0); src.stop(t1 + rel + 0.05); scheduled.push(src);
+    lfo.connect(lg); lg.connect(src.detune); lfo.start(t0); lfo.stop(t1 + rel + .1); lfo._end = t1 + rel + .15; scheduled.push(lfo); }
+  src.connect(env); env.connect(chain.input); src.start(t0); src.stop(t1 + rel + 0.05); src._end = t1 + rel + .1; scheduled.push(src);
   if (n.noise > 0.02) { // bow scratch for weaker tone
     const ns = actx.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
     const ng = actx.createGain(); const lvl = n.noise * n.vel * 0.6 * chain.clean.noise; ng.gain.setValueAtTime(lvl * 1.6, t0); ng.gain.setTargetAtTime(lvl * 0.5, t0 + 0.12, 0.05); ng.gain.setTargetAtTime(0, t1, 0.03);
-    ns.connect(hp); hp.connect(ng); ng.connect(chain.input); ns.start(t0, Math.random() * 0.5); ns.stop(t1 + 0.2); scheduled.push(ns); }
+    ns.connect(hp); hp.connect(ng); ng.connect(chain.input); ns.start(t0, Math.random() * 0.5); ns.stop(t1 + 0.2); ns._end = t1 + .25; scheduled.push(ns); }
 }
-function stopAllAudio() { for (const s of scheduled) { try { s.stop(); } catch (e) { } } scheduled.length = 0; }
+function stopAllAudio() { stopScheduler(); for (const s of scheduled) { try { s.stop(); } catch (e) { } } scheduled.length = 0; }
+// Notes are created a little ahead of time (2.5 s), not all at once: whole-orchestra pieces no longer freeze the game.
+let schedTimer = null, schedQueue = null, schedT0 = 0;
+function pumpScheduler() {
+  if (!schedQueue || !actx) return; const until = actx.currentTime + 2.5;
+  for (const q of schedQueue) while (q.i < q.notes.length && schedT0 + q.notes[q.i].start < until) { scheduleNote(q.chain, q.set, q.notes[q.i], schedT0 + q.notes[q.i].start); q.i++; }
+  const now = actx.currentTime; for (let k = scheduled.length - 1; k >= 0; k--) if (scheduled[k]._end < now) scheduled.splice(k, 1);   // forget finished sounds
+}
+function startScheduler(queue, t0) { stopScheduler(); schedQueue = queue; schedT0 = t0; pumpScheduler(); schedTimer = setInterval(pumpScheduler, 250); }
+function stopScheduler() { clearInterval(schedTimer); schedTimer = null; schedQueue = null; }
 
 /* =====================================================================
    3D — concert hall and musicians (PLACEHOLDER shapes, real proportions)
@@ -1080,10 +1092,11 @@ async function perform(pieceId, mode, ctx, players, opts = {}) {
   const ts = tempoScale(players, parts, p), bpm = p.bpm * ts, prep = opts.prep ?? prog(pieceId).prep;
   const sect = {}; players.forEach(m => sect[m.inst] = (sect[m.inst] || 0) + 1);
   const rendered = players.map(m => { const rp = renderPart(m, parts[m.inst], p, prep, ctx, bpm); rp.sectionGain = 1 / Math.sqrt(sect[m.inst]) * (players.length > 1 ? .85 : 1.1) * parts[m.inst].gain; return rp; });
-  const t0 = actx.currentTime + 0.35;
+  const t0 = actx.currentTime + 0.35; const queue = [];
   rendered.forEach(rp => { const v = ctx === "audition" || mode === "solo" ? auditionView : views.get(rp.m.id); const chain = musicianChain(rp.m, rp, v ? v.pan : 0);
-    for (const n of rp.notes) scheduleNote(chain, INST[rp.m.inst].set, n, t0 + n.start);
+    queue.push({ chain, set: INST[rp.m.inst].set, notes: rp.notes, i: 0 });
     if (v) { v.notes = rp.notes; v.startT = t0; v.idx = 0; v.strokeIdx = -1; } });
+  startScheduler(queue, t0);
   const length = Math.max(...rendered.map(r => r.length));
   perf = { p, mode, solo: soloSel, ctx, t0, end: t0 + length + 1.2, players, rendered, ts, onDone: opts.onDone };
   if (state.conduct && ctx !== "audition" && players.length > 1) {   // "You conduct": beats to hit, scored like the rhythm game
