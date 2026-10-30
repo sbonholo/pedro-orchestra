@@ -617,7 +617,11 @@ async function connectCloudSave() {
     if (!snap.exists) { if (hasSave()) save(); return; }   // first visit with cloud saves: upload the browser save
     if (cloud.pending) { pushCloud(); return; }   // already playing (saved before the account answered): this game is newer
     const d = snap.data(), local = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; } })();
-    if (typeof d.json !== "string" || (local && (local.savedAt || 0) >= (d.at || 0))) return;
+    let remote = null; try { remote = JSON.parse(d.json); } catch (e) { }
+    // Keep whichever game is further along (more days played); only on a tie, the newer save. Old saves have no savedAt.
+    const ahead = (x, y) => (x.day || 0) !== (y.day || 0) ? (x.day || 0) > (y.day || 0) : (x.savedAt || 0) >= (y.savedAt || 0);
+    if (!remote || !remote.roster) return;
+    if (local && local.roster && ahead(local, remote)) { cloud.pending = { json: JSON.stringify(local), at: local.savedAt || Date.now() }; pushCloud(); return; }   // this device's game wins: back it up
     cloud.json = d.json; try { localStorage.setItem(SAVE_KEY, d.json); } catch (e) { }
     if (!$("#menu").hidden) { state = null; load(); syncStage(); }   // not in a game yet: Continue resumes the account save
     $("#m-continue").hidden = $("#m-continue").disabled = false;   // still on the menu: Continue now resumes the cloud game
