@@ -307,6 +307,48 @@ namespace OrchestraProject
 
             pieces.Add(new PieceDefinition
             {
+                Id = "stormcaprice",
+                Title = "Storm Caprice",
+                Composer = "Orchestra Project original (2026)",
+                Difficulty = Difficulty.Virtuoso,
+                Character = "Two-octave arpeggios at full speed, then a leap to the top",
+                Bpm = 152, BeatsPerBar = 2, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Violin,
+                Melody = NoteParser.Parse("A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | D5:0.25 F5:0.25 A5:0.25 D6:0.25 F6:0.25 A6:0.25 D7:0.25 A6:0.25 | E4:0.25 Ab4:0.25 B4:0.25 D5:0.25 E5:0.25 Ab5:0.25 B5:0.25 D6:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | F4:0.25 A4:0.25 C5:0.25 F5:0.25 A5:0.25 C6:0.25 F6:0.25 C6:0.25 | D4:0.25 F4:0.25 A4:0.25 D5:0.25 F5:0.25 A5:0.25 D6:0.25 A5:0.25 | E4:0.25 Ab4:0.25 B4:0.25 D5:0.25 E5:0.25 Ab5:0.25 B5:0.25 D6:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | D5:0.25 F5:0.25 A5:0.25 D6:0.25 F6:0.25 A6:0.25 D7:0.25 A6:0.25 | E4:0.25 Ab4:0.25 B4:0.25 D5:0.25 E5:0.25 Ab5:0.25 B5:0.25 D6:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | F4:0.25 A4:0.25 C5:0.25 F5:0.25 A5:0.25 C6:0.25 F6:0.25 C6:0.25 | D4:0.25 F4:0.25 A4:0.25 D5:0.25 F5:0.25 A5:0.25 D6:0.25 A5:0.25 | E4:0.25 Ab4:0.25 B4:0.25 D5:0.25 E5:0.25 Ab5:0.25 B5:0.25 D6:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 A6:0.25 E6:0.25 | A4:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.5 A6:0.5 | A4:2"),
+                Chords = NoteParser.ParseChords("Am:2 | Dm:2 | E7:2 | Am:2 | F:2 | Dm:2 | E7:2 | Am:2 | Am:2 | Dm:2 | E7:2 | Am:2 | F:2 | Dm:2 | E7:2 | Am:2 | Am:2 | Am:2"),
+                Rights = "Original virtuoso showpiece composed for Orchestra Project; owned by the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
+                Id = "devilstaircase",
+                Title = "The Devil's Staircase",
+                Composer = "Orchestra Project original (2026)",
+                Difficulty = Difficulty.Virtuoso,
+                Character = "Breakneck chromatic runs up and down the whole instrument",
+                Bpm = 138, BeatsPerBar = 4, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Cello,
+                Melody = NoteParser.Parse("D4:0.25 Eb4:0.25 E4:0.25 F4:0.25 F#4:0.25 G4:0.25 Ab4:0.25 A4:0.25 Bb4:0.25 B4:0.25 C5:0.25 C#5:0.25 D5:0.25 Eb5:0.25 E5:0.25 F5:0.25 | A5:0.25 Ab5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 Eb5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 Bb4:0.25 A4:0.25 Ab4:0.25 G4:0.25 F#4:0.25 | D4:0.25 E4:0.25 F#4:0.25 Ab4:0.25 Bb4:0.25 C5:0.25 D5:0.25 E5:0.25 D5:0.25 C5:0.25 Bb4:0.25 Ab4:0.25 F#4:0.25 E4:0.25 D4:0.25 C4:0.25 | A4:0.25 C#5:0.25 E5:0.25 G5:0.25 A5:0.25 G5:0.25 E5:0.25 C#5:0.25 A4:0.25 C#5:0.25 E5:0.25 G5:0.25 A5:0.25 G5:0.25 E5:0.25 C#5:0.25 | G4:0.25 Ab4:0.25 A4:0.25 Bb4:0.25 B4:0.25 C5:0.25 C#5:0.25 D5:0.25 Eb5:0.25 E5:0.25 F5:0.25 F#5:0.25 G5:0.25 Ab5:0.25 A5:0.25 Bb5:0.25 | D6:0.25 C#6:0.25 C6:0.25 B5:0.25 Bb5:0.25 A5:0.25 Ab5:0.25 G5:0.25 F#5:0.25 F5:0.25 E5:0.25 Eb5:0.25 D5:0.25 C#5:0.25 C5:0.25 B4:0.25 | E4:0.25 A4:0.25 C#5:0.25 E5:0.25 A5:0.25 C#6:0.25 E6:0.25 C#6:0.25 A5:0.25 E5:0.25 C#5:0.25 A4:0.25 E4:0.25 C#5:0.25 A4:0.25 E4:0.25 | D5:0.25 A5:0.25 D6:0.5 D4:3"),
+                Chords = NoteParser.ParseChords("Dm:4 | A7:4 | Dm:4 | A7:4 | Gm:4 | Dm:4 | A7:4 | Dm:4"),
+                Rights = "Original virtuoso showpiece composed for Orchestra Project; owned by the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
+                Id = "perpetualmotion",
+                Title = "Perpetual Motion Finale",
+                Composer = "Orchestra Project original (2026)",
+                Difficulty = Difficulty.Virtuoso,
+                Character = "Non-stop sixteenth notes for the whole orchestra, no time to breathe",
+                Bpm = 160, BeatsPerBar = 4, PickupBeats = 0, PhraseBars = 2,
+                Featured = InstrumentType.Violin,
+                Melody = NoteParser.Parse("G4:0.25 A4:0.25 B4:0.25 C5:0.25 D5:0.25 E5:0.25 F#5:0.25 G5:0.25 A5:0.25 B5:0.25 C6:0.25 D6:0.25 E6:0.25 F#6:0.25 G6:0.25 A6:0.25 | D6:0.25 C6:0.25 B5:0.25 A5:0.25 G5:0.25 F#5:0.25 E5:0.25 D5:0.25 C5:0.25 A4:0.25 F#4:0.25 D4:0.25 F#4:0.25 A4:0.25 C5:0.25 D5:0.25 | B4:0.25 D5:0.25 G5:0.25 B5:0.25 G5:0.25 D5:0.25 B4:0.25 G4:0.25 B4:0.25 D5:0.25 G5:0.25 B5:0.25 D6:0.25 B5:0.25 G5:0.25 D5:0.25 | C5:0.25 E5:0.25 G5:0.25 C6:0.25 E6:0.25 C6:0.25 G5:0.25 E5:0.25 C5:0.25 E5:0.25 G5:0.25 C6:0.25 G5:0.25 E5:0.25 C5:0.25 G4:0.25 | A4:0.25 C5:0.25 E5:0.25 A5:0.25 C6:0.25 A5:0.25 E5:0.25 C5:0.25 A4:0.25 E5:0.25 A5:0.25 C6:0.25 E6:0.25 C6:0.25 A5:0.25 E5:0.25 | F#5:0.25 A5:0.25 C6:0.25 D6:0.25 F#6:0.25 D6:0.25 C6:0.25 A5:0.25 F#5:0.25 D5:0.25 C5:0.25 A4:0.25 F#4:0.25 A4:0.25 C5:0.25 D5:0.25 | G5:0.25 F#5:0.25 E5:0.25 D5:0.25 C5:0.25 B4:0.25 A4:0.25 G4:0.25 F#4:0.25 E4:0.25 D4:0.25 C4:0.25 B3:0.25 A3:0.25 G3:0.25 F#7:0.25 | G5:0.5 D5:0.5 B4:0.5 G4:2.5"),
+                Chords = NoteParser.ParseChords("G:4 | D7:4 | G:4 | C:4 | Am:4 | D7:4 | G:4 | G:4"),
+                Rights = "Original virtuoso showpiece composed for Orchestra Project; owned by the game."
+            });
+
+            pieces.Add(new PieceDefinition
+            {
                 Id = "bachprelude",
                 Title = "Cello Suite No. 1: Prelude (opening)",
                 Composer = "Johann Sebastian Bach (c. 1720)",
