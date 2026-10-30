@@ -533,9 +533,11 @@ const SHOP = (() => {
 const shopItem = id => SHOP.find(x => x.id === id);
 // Skill as heard: the player's skill plus what their instrument adds (+20 tone, +8 expression, +4 intonation at quality 1)
 function played(m, i) { const q = shopItem(m.instrumentModel)?.q || 0; return Math.min(100, m.skills[i] + (i === S.tone ? 20 * q : i === S.expression ? 8 * q : i === S.intonation ? 4 * q : 0)); }
+// You can own several copies of a model (one per player); spares = copies not played by anyone except m. Same as Economy.Spares.
+const copiesOf = id => state.owned.filter(x => x === id).length;
+const sparesOf = (id, m) => copiesOf(id) - state.roster.filter(o => o !== m && o.instrumentModel === id).length;
 function buyInstrument(m, it) {
-  if (!state.owned.includes(it.id)) { if (state.coins < it.price) return `Not enough coins: ${it.name} costs ${it.price.toLocaleString("en")}.`; state.coins -= it.price; state.owned.push(it.id); }
-  for (const o of state.roster) if (o.instrumentModel === it.id) o.instrumentModel = "";
+  if (sparesOf(it.id, m) <= 0) { if (state.coins < it.price) return `Not enough coins: ${it.name} costs ${it.price.toLocaleString("en")}.`; state.coins -= it.price; state.owned.push(it.id); }   // no spare copy: buy another
   m.instrumentModel = it.id; return `${m.first} now plays the ${it.name}.`;
 }
 function masterclass(m, i) {
@@ -1307,8 +1309,8 @@ function renderSide() {
       + (!m ? `<p>Select a musician to upgrade them.</p>` : `<h3>Masterclasses for ${esc(fullName(m))} <span class="muted small">(+${ECO.gain} per lesson)</span></h3>
       ${order.map(i => { const v = m.skills[i], c = masterclassCost(v); return `<button class="btn" data-mc="${i}" ${v >= 100 || state.coins < c ? "disabled" : ""} style="text-align:left">${SKILLS[i][0]} ${v.toFixed(0)} <span class="muted small">(${plain[i]})</span> — ${v >= 100 ? "maximum" : c + " coins"}</button>`; }).join("")}
       <h3>Instruments for ${esc(fullName(m))}</h3><p class="muted small">Playing: <b>${shopItem(m.instrumentModel)?.name || "own student " + INST[m.inst].name.toLowerCase()}</b>. Better instruments add up to +20 Tone, +8 Expression and +4 Intonation.</p>
-      ${SHOP.filter(it => it.inst === m.inst).map(it => { const own = state.owned.includes(it.id), on = m.instrumentModel === it.id;
-        return `<button class="card ${on ? "on" : ""}" data-buy="${it.id}" ${on || (!own && state.coins < it.price) ? "disabled" : ""}><span class="t">${it.name}</span><span class="s">${it.maker} · quality ${Math.round(it.q * 100)} · ${on ? "playing" : own ? `owned: give to ${esc(m.first)}` : it.price.toLocaleString("en") + " coins"}</span></button>`; }).join("")}`);
+      ${SHOP.filter(it => it.inst === m.inst).map(it => { const n = copiesOf(it.id), own = sparesOf(it.id, m) > 0, on = m.instrumentModel === it.id;
+        return `<button class="card ${on ? "on" : ""}" data-buy="${it.id}" ${on || (!own && state.coins < it.price) ? "disabled" : ""}><span class="t">${it.name}</span><span class="s">${it.maker} · quality ${Math.round(it.q * 100)} · ${n > 1 ? `you own ${n} · ` : ""}${on ? "playing" : own ? `owned: give to ${esc(m.first)}` : (n ? "buy another: " : "") + it.price.toLocaleString("en") + " coins"}</span></button>`; }).join("")}`);
   } else if (tab === "auditions") {
     const card = (c, inv) => { const lead = state.roster.filter(x => x.inst === c.inst).sort((a, b) => overall(b) - overall(a))[0]; const diff = lead ? overall(c) - overall(lead) : null;
       const str = c.skills.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]); const nm = l => l.map(([, i]) => SKILLS[i][1]).join(", ");

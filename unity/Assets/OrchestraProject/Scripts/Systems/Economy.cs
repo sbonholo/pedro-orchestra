@@ -110,16 +110,24 @@ namespace OrchestraProject
             return Math.Min(100f, m.Get(s) + bonus);
         }
 
+        /// <summary>You can own several copies of a model, one per player. Same as copiesOf / sparesOf in the web preview.</summary>
+        public static int Copies(OrchestraState s, string id) { int n = 0; foreach (var x in s.ownedInstruments) if (x == id) n++; return n; }
+        /// <summary>Copies nobody plays except <paramref name="m"/> (so m can take one without buying).</summary>
+        public static int Spares(OrchestraState s, string id, MusicianData m)
+        {
+            int used = 0; foreach (var o in s.roster) if (o != m && o.instrumentModel == id) used++;
+            return Copies(s, id) - used;
+        }
+
         public static string Buy(OrchestraState s, MusicianData m, InstrumentModel im)
         {
             if (im.Type != m.instrument) return "That instrument is for a different section.";
-            if (!s.ownedInstruments.Contains(im.Id))
+            if (Spares(s, im.Id, m) <= 0)   // no spare copy: buy another
             {
                 if (s.coins < im.Price) return "Not enough coins: " + im.Name + " costs " + im.Price.ToString("N0") + ".";
                 s.coins -= im.Price;
                 s.ownedInstruments.Add(im.Id);
             }
-            foreach (var other in s.roster) if (other.instrumentModel == im.Id) other.instrumentModel = "";   // one player at a time
             m.instrumentModel = im.Id;
             return m.firstName + " now plays the " + im.Name + ".";
         }

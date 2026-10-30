@@ -56,9 +56,10 @@ namespace OrchestraProject
             {
                 if (im.Type != m.instrument) continue;
                 var model = im;
-                bool owned = s.ownedInstruments.Contains(im.Id), playing = m.instrumentModel == im.Id;
-                string label = "<b>" + im.Name + "</b>  <size=15>" + im.Maker + " · quality " + (im.Quality * 100f).ToString("0") + "</size>   —   "
-                               + (playing ? "playing" : owned ? "owned: give to " + m.firstName : im.Price.ToString("N0") + " coins");
+                int copies = Economy.Copies(s, im.Id);
+                bool owned = Economy.Spares(s, im.Id, m) > 0, playing = m.instrumentModel == im.Id;
+                string label = "<b>" + im.Name + "</b>  <size=15>" + im.Maker + " · quality " + (im.Quality * 100f).ToString("0") + (copies > 1 ? " · you own " + copies : "") + "</size>   —   "
+                               + (playing ? "playing" : owned ? "owned: give to " + m.firstName : (copies > 0 ? "buy another: " : "") + im.Price.ToString("N0") + " coins");
                 var b = UIFactory.Button(root, label, () => { gm.Notify(Economy.Buy(s, m, model)); gm.Save(); ui.Hud.Refresh(); }, 18, 56, playing ? UITheme.AccentDim : (Color?)null);
                 b.interactable = !playing && (owned || s.coins >= im.Price);
             }
