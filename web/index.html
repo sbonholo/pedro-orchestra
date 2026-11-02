@@ -92,6 +92,10 @@ p { margin: 0; line-height: 1.5; }
 .stars .star.on { animation: starPop .45s ease-out both; }
 .stars .star.on:nth-child(2) { animation-delay: .25s; } .stars .star.on:nth-child(3) { animation-delay: .5s; } .stars .star.on:nth-child(4) { animation-delay: .75s; } .stars .star.on:nth-child(5) { animation-delay: 1s; }
 input[type=range] { width: 100%; accent-color: var(--gold); }
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 13px; border-radius: 2px; opacity: .95; animation: fall linear forwards; }
+@keyframes fall { to { top: 105%; margin-left: var(--dx); rotate: 720deg; opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
 #save-mark { position: fixed; right: 16px; bottom: 64px; z-index: 30; font-size: 12px; color: #e8c886; background: rgba(20,16,12,.85); border: 1px solid rgba(232,200,134,.3); border-radius: 999px; padding: 5px 11px; opacity: 0; transition: opacity .4s; pointer-events: none; }
 #save-mark.on { opacity: 1; }
 #toast { left: 50%; top: 84px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 12px 16px; white-space: pre-line; font-size: 13px;
@@ -600,6 +604,11 @@ function winVenue(st, v) {
   if (v.id === "vienna") { st.wonGame = true; return `THE GOLDEN BATON! Your orchestra conquered Vienna: the best orchestra in the world. Prize ${v.prize.toLocaleString("en")} coins.`; }
   return `Triumph in ${v.city}! Prize ${v.prize.toLocaleString("en")} coins and reputation +5.`;
 }
+// Battle of the Orchestras every 7th day, and encores after 5-star concerts (same rules as Tour.cs).
+const RIVALS = ["The Iron Philharmonic", "Golden Strings Ensemble", "The Midnight Symphony", "Royal Velvet Orchestra"];
+const isBattleDay = d => d % 7 === 0, daysToBattle = d => (7 - d % 7) % 7, rivalName = d => RIVALS[Math.floor(d / 7) % RIVALS.length];
+const rivalScore = (l, d) => clamp(45 + 7 * (l || 0) + (Math.floor(d / 7) * 37) % 11 - 5, 30, 98), battlePrize = l => 300 + 150 * (l || 0);
+const encoreCoins = (stars, ticketCoins) => stars >= 5 ? Math.floor(ticketCoins / 2) : 0;
 // A surprise on about a third of the days (same six events as Tour.DailyEvent).
 function dailyEvent(st) {
   if (rnd() >= .35 || !st.roster.length) return null; const m = pick(st.roster);
@@ -631,6 +640,7 @@ const ACHIEVEMENTS = [
   ["national", "National Stage", "Be promoted to the National Orchestra.", 400, st => (st.level || 0) >= 4],
   ["top", "Top of the World", "Become the World Symphony Orchestra.", 1000, st => (st.level || 0) >= LEVELS.length - 1],
   ["tour", "World Tour", "Win the judges' approval in 3 famous halls abroad.", 600, st => toursWon(st) >= 3],
+  ["battle", "Battle Champion", "Win 3 Battles of the Orchestras.", 800, st => (st.battlesWon || 0) >= 3],
   ["golden_baton", "The Golden Baton", "Win the judges' approval in the Golden Hall, Vienna.", 5000, st => !!st.wonGame],
 ].map(([id, title, desc, reward, done]) => ({ id, title, desc, reward, done }));
 function checkAchievements() {
@@ -1240,6 +1250,9 @@ function finishPerformance() {
   const pr = prog(pf.p.id);
   if (pf.ctx === "rehearsal") gains = rehearse(pf.players, pr);
   if (pf.ctx === "concert") { state.lastConcert = state.day; const log = []; const venue = currentVenue(state); res.venue = `${venue.name}, ${venue.city}`; res.tickets = Math.round(venue.seats * audienceFill(state.rep)); res.ticketCoins = res.tickets * TICKET_PRICE; state.coins += res.ticketCoins;
+    res.encore = encoreCoins(res.stars, res.ticketCoins); state.coins += res.encore;
+    if (isBattleDay(state.day)) { res.rival = rivalName(state.day); res.rivalScore = rivalScore(state.level, state.day); res.battleWon = res.overall > res.rivalScore;
+      if (res.battleWon) { res.battlePrize = battlePrize(state.level); state.coins += res.battlePrize; state.battlesWon = (state.battlesWon || 0) + 1; state.rep = Math.min(100, state.rep + 3); } }
     for (const m of pf.players) { const f = T.base * m.talent * (.6 + res.overall / 100); gain(m, S.confidence, f * 1.2, log); gain(m, S.musicality, f * .3, log); gain(m, S.expression, f * .3, log); m.energy = Math.max(0, m.energy - T.eConcert); m.concerts++; }
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
@@ -1345,6 +1358,7 @@ function renderSide() {
       <div class="eyebrow">Concert</div>
       <p class="small" style="color:var(--gold)">Your orchestra: <b>${LEVELS[lvlOf(state.level)]}</b> (level ${lvlOf(state.level) + 1} of ${LEVELS.length})${lvlOf(state.level) < LEVELS.length - 1 ? `. Win the judges' approval (3 of 5 give ${passMark(state.level).toFixed(1)}+) to be promoted to the <b>${LEVELS[lvlOf(state.level) + 1]}</b>.` : ": the top of the world."}</p>
       <p class="muted small">${state.wonGame ? "<b>You hold the Golden Baton.</b> Keep touring for coins and glory." : `<b>World tour:</b> ${toursWon(state)} of ${VENUES.length - 1} halls won. Win the judges' approval in the Golden Hall, Vienna, to win the Golden Baton.`}</p>
+      ${(() => { const dtb = daysToBattle(state.day); return `<p class="small" style="color:${dtb ? "var(--muted)" : "var(--good)"}"><b>Battle of the Orchestras</b> ${dtb ? `in ${dtb} day${dtb === 1 ? "" : "s"}` : "is TODAY"}: beat ${rivalName(state.day + dtb)} (about ${rivalScore(state.level, state.day + dtb)} points) for ${battlePrize(state.level).toLocaleString("en")} coins. 5-star concerts earn an encore.</p>`; })()}
       ${VENUES.map(v => { const open = venueOpen(state, v), won = (state.venuesWon || []).includes(v.id), on = currentVenue(state) === v;
         return `<button class="card ${on ? "on" : ""}" data-venue="${v.id}" ${open ? "" : "disabled"}><span class="t">${won ? "★ " : ""}${v.name}, ${v.city}</span><span class="s">${open ? `${v.seats.toLocaleString("en")} seats${v.prize ? ` · prize ${v.prize.toLocaleString("en")}${won ? " (won)" : ""}` : ""} · judges +${v.strict.toFixed(1)}` : `opens at ${LEVELS[v.min]}`}</span></button>`; }).join("")}
       <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)} (${currentVenue(state).city})</button>
@@ -1417,7 +1431,15 @@ function showMenu() { stopPerformance(true); $("#menu").hidden = false; $("#topb
 
 /* ---------- modals ---------- */
 function modal(html) { const bg = el(`<div class="modal-bg"><div class="modal">${html}</div></div>`); $("#modal-root").appendChild(bg); return bg; }
+// Confetti burst for big moments (5 stars, battle wins, promotions, prizes). Pure CSS, removed after 4 s.
+function confetti(n = 90) {
+  const box = document.createElement("div"); box.className = "confetti"; const cols = ["#e8c886", "#f6e7b8", "#c94b4b", "#7fb7e8", "#9be29b", "#ffffff"];
+  for (let i = 0; i < n; i++) { const c = document.createElement("i"); c.style.left = Math.random() * 100 + "%"; c.style.background = cols[i % cols.length];
+    c.style.animationDelay = Math.random() * .8 + "s"; c.style.animationDuration = 2.2 + Math.random() * 1.6 + "s"; c.style.setProperty("--dx", (Math.random() * 200 - 100) + "px"); c.style.transform = `rotate(${Math.random() * 360}deg)`; box.appendChild(c); }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 4200);
+}
 function showResult(pf, r, gains) {
+  if (pf.ctx === "concert" && (r.stars >= 5 || r.battleWon || r.venueMsg || r.levelAfter > r.levelBefore)) setTimeout(() => confetti(r.venueMsg && state.wonGame ? 200 : 90), 600);
   const kind = { concert: "Concert review", audition: "Audition", rehearsal: "Rehearsal report", preview: "Performance" }[pf.ctx];
   const cat = (n, v) => `<div class="skill" style="padding:2px 0"><span>${n}</span>${bar(v, skillColor(v))}<span class="v">${v.toFixed(0)}</span></div>`;
   const bg = modal(`<div class="eyebrow">${kind}</div><h2>${esc(pf.p.title)} <span class="muted" style="font-size:16px">(${pf.mode === "parts" ? "separate parts" : pf.mode === "solo" ? INST[pf.solo].name.toLowerCase() + " solo" : "same melody"})</span></h2>
@@ -1425,6 +1447,8 @@ function showResult(pf, r, gains) {
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
     ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of ${r.judges.length} approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
+      ${r.encore ? `<p style="color:var(--good)"><b>ENCORE! The audience would not let you leave: +${r.encore.toLocaleString("en")} coins.</b></p>` : ""}
+      ${r.rival ? `<div class="card ${r.battleWon ? "on" : ""}"><span class="t" style="color:${r.battleWon ? "var(--good)" : "var(--bad)"};font-size:16px">BATTLE OF THE ORCHESTRAS vs ${r.rival}: ${r.overall.toFixed(0)} to ${r.rivalScore}. ${r.battleWon ? `YOU WIN! +${r.battlePrize.toLocaleString("en")} coins, reputation +3.` : "They win this time."}</span></div>` : ""}
       ${r.venueMsg ? `<div class="card on"><span class="t" style="color:var(--good);font-size:16px">${esc(r.venueMsg)}</span></div>` : ""}
       <p style="color:var(--gold)">${esc(r.venue || "")}. <b>Tickets: ${r.tickets.toLocaleString("en")} listeners × ${TICKET_PRICE} = +${r.ticketCoins.toLocaleString("en")} coins.</b></p>
       <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${approved(r.judges) ? "The judges approved." : `3 of 5 judges must give ${(r.pass ?? passMark(r.levelBefore)).toFixed(1)} or more for ${approvedCoins(r.levelBefore)} coins.`} You have ${state.coins.toLocaleString("en")}.</p>

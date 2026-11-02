@@ -58,6 +58,17 @@ namespace OrchestraProject
             return "Triumph in " + v.City + "! Prize " + v.Prize.ToString("N0") + " coins and reputation +" + WinReputation.ToString("0") + ".";
         }
 
+        // ---- Battle of the Orchestras: every 7th day a concert is also a battle against a rival orchestra ----
+        static readonly string[] Rivals = { "The Iron Philharmonic", "Golden Strings Ensemble", "The Midnight Symphony", "Royal Velvet Orchestra" };
+        public static bool IsBattleDay(int day) { return day % 7 == 0; }
+        public static int DaysToBattle(int day) { return (7 - day % 7) % 7; }
+        public static string RivalName(int day) { return Rivals[(day / 7) % Rivals.Length]; }
+        /// <summary>The rival's concert score (0–100): stronger at every career level, a little different each week.</summary>
+        public static int RivalScore(int level, int day) { return Math.Max(30, Math.Min(98, 45 + 7 * level + (day / 7 * 37) % 11 - 5)); }
+        public static int BattlePrize(int level) { return 300 + 150 * level; }
+        /// <summary>A 5-star concert earns an encore: half the ticket income again.</summary>
+        public static int EncoreCoins(int stars, int ticketCoins) { return stars >= 5 ? ticketCoins / 2 : 0; }
+
         /// <summary>A surprise at the start of about a third of the days. Returns the message, or null.</summary>
         public static string DailyEvent(OrchestraState s, Random rng)
         {

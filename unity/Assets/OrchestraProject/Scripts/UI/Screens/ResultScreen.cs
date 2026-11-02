@@ -67,6 +67,13 @@ namespace OrchestraProject
                         18, TextAnchor.UpperLeft, j.Approves ? UITheme.Good : UITheme.Bad);
                     UIFactory.Size(jl, 28);
                 }
+                if (r.EncoreCoins > 0) { var en = UIFactory.Label(body, "<b>ENCORE! The audience would not let you leave: +" + r.EncoreCoins.ToString("N0") + " coins.</b>", 21, TextAnchor.UpperLeft, UITheme.Good); UIFactory.Size(en, 32); }
+                if (r.Rival != null)
+                {
+                    var bt = UIFactory.Label(body, "<b>BATTLE OF THE ORCHESTRAS vs " + r.Rival + ": " + r.Overall.ToString("0") + " to " + r.RivalScore + ". " + (r.BattleWon ? "YOU WIN! +" + r.BattlePrize.ToString("N0") + " coins, reputation +3." : "They win this time.") + "</b>",
+                        21, TextAnchor.UpperLeft, r.BattleWon ? UITheme.Good : UITheme.Bad);
+                    UIFactory.Size(bt, 56);
+                }
                 if (r.VenueMessage != null) { var vm = UIFactory.Label(body, "<b>" + r.VenueMessage + "</b>", 22, TextAnchor.UpperLeft, UITheme.Good); UIFactory.Size(vm, 60); }
                 var tk = UIFactory.Label(body, (r.VenueName != null ? r.VenueName + ".  " : "") + "<b>Tickets: " + r.TicketsSold.ToString("N0") + " listeners × " + Economy.TicketPrice + " = +" + r.TicketCoins.ToString("N0") + " coins</b>", 20, TextAnchor.UpperLeft, UITheme.Accent);
                 UIFactory.Size(tk, 32);

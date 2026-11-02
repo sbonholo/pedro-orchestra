@@ -34,6 +34,7 @@ namespace OrchestraProject
             A("national", "National Stage", "Be promoted to the National Orchestra.", 400, s => s.level >= 4),
             A("top", "Top of the World", "Become the World Symphony Orchestra.", 1000, s => s.level >= Economy.MaxLevel),
             A("tour", "World Tour", "Win the judges' approval in 3 famous halls abroad.", 600, s => s.venuesWon.FindAll(v => v != Tour.Home).Count >= 3),
+            A("battle", "Battle Champion", "Win 3 Battles of the Orchestras.", 800, s => s.battlesWon >= 3),
             A("golden_baton", "The Golden Baton", "Win the judges' approval in the Golden Hall, Vienna.", 5000, s => s.wonGame),
         };
 

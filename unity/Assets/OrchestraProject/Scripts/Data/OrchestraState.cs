@@ -48,6 +48,7 @@ namespace OrchestraProject
         public string venue = Tour.Home;                        // hall chosen for the next concert (Tour.Venues)
         public List<string> venuesWon = new List<string>();     // halls where the judges approved a concert
         public bool wonGame;                                    // the Golden Baton (approved concert in Vienna)
+        public int battlesWon;                                  // Battle of the Orchestras victories
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();

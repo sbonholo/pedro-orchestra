@@ -22,6 +22,8 @@ namespace OrchestraProject
         public int LevelBefore, LevelAfter;   // promotion through the career levels
         public string VenueName, VenueMessage; // the hall played and its prize message (Tour)
         public float PassMark;                 // the judges' pass mark for this concert (level + hall)
+        public string Rival; public int RivalScore, BattlePrize; public bool BattleWon;   // Battle of the Orchestras (every 7th day)
+        public int EncoreCoins;                // 5 stars: the audience demands an encore
     }
 
     /// <summary>

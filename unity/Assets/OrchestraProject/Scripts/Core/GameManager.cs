@@ -213,6 +213,15 @@ namespace OrchestraProject
                     result.TicketsSold = Tour.Audience(venue, State.reputation);       // the audience that came pays at the door
                     result.TicketCoins = result.TicketsSold * Economy.TicketPrice;
                     State.coins += result.TicketCoins;
+                    result.EncoreCoins = Tour.EncoreCoins(result.Stars, result.TicketCoins);
+                    State.coins += result.EncoreCoins;
+                    if (Tour.IsBattleDay(State.day))
+                    {
+                        result.Rival = Tour.RivalName(State.day); result.RivalScore = Tour.RivalScore(State.level, State.day);
+                        result.BattleWon = result.Overall > result.RivalScore;
+                        if (result.BattleWon) { result.BattlePrize = Tour.BattlePrize(State.level); State.coins += result.BattlePrize; State.battlesWon++; State.reputation = Mathf.Min(100f, State.reputation + 3f); }
+                        State.Log("Battle vs " + result.Rival + ": " + (result.BattleWon ? "won" : "lost") + ".");
+                    }
                     gains = new TrainingResult { Success = true, Message = "Concert experience:" };
                     TrainingSystem.ApplyConcertExperience(players, result.Overall / 100f, gains);
                     float cap = Mathf.Clamp01(1f - State.reputation / (20f + 20f * (int)result.Piece.Difficulty));

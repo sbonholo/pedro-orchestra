@@ -77,6 +77,10 @@ namespace OrchestraProject
             var tl = UIFactory.Label(root, s.wonGame ? "<b>You hold the Golden Baton.</b> Keep touring for coins and glory."
                 : "<b>World tour:</b> " + (s.venuesWon.FindAll(v => v != Tour.Home).Count) + " of " + (Tour.Venues.Length - 1) + " halls won. Win the judges' approval in the Golden Hall, Vienna, to win the Golden Baton.", 17, TextAnchor.UpperLeft, UITheme.TextDim);
             UIFactory.Size(tl, 46);
+            int dtb = Tour.DaysToBattle(s.day);
+            var bl = UIFactory.Label(root, "<b>Battle of the Orchestras</b> " + (dtb == 0 ? "is TODAY" : "in " + dtb + " day" + (dtb == 1 ? "" : "s")) + ": beat " + Tour.RivalName(s.day + dtb) + " (about " + Tour.RivalScore(s.level, s.day + dtb) + " points) for " + Tour.BattlePrize(s.level).ToString("N0") + " coins. 5-star concerts earn an encore.",
+                17, TextAnchor.UpperLeft, dtb == 0 ? UITheme.Good : UITheme.TextDim);
+            UIFactory.Size(bl, 46);
             foreach (var v in Tour.Venues)
             {
                 var venue = v; bool open = Tour.IsOpen(s, v), won = s.venuesWon.Contains(v.Id);

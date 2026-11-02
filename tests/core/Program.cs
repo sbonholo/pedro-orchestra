@@ -182,7 +182,7 @@ static class Program
             gs.concertsPerformed = 1; var got = Achievements.Check(gs);
             var again = Achievements.Check(gs);
             Check(got.Count == 1 && got[0].Id == "first_concert" && gs.coins == c0 + 20 && again.Count == 0, "achievement Opening Night pays 20 coins once");
-            Check(Achievements.All.Count == 17, "17 career goals");
+            Check(Achievements.All.Count == 18, "18 career goals");
         }
         // World tour: halls open by career level; the first approved concert pays the prize once; Vienna wins the game
         {
@@ -199,6 +199,9 @@ static class Program
             for (int i = 0; i < 1000; i++) if (Tour.DailyEvent(ts, er) != null) events++;
             Check(events > 280 && events < 420 && ts.coins >= 0, "daily events: about a third of the days (" + events + " of 1000)");
             Check(Achievements.Check(ts).Exists(x => x.Id == "golden_baton"), "achievement: The Golden Baton");
+            Check(Tour.IsBattleDay(7) && !Tour.IsBattleDay(8) && Tour.DaysToBattle(8) == 6 && Tour.DaysToBattle(14) == 0, "battle: every 7th day");
+            Check(Tour.RivalScore(0, 7) < Tour.RivalScore(6, 7) && Tour.RivalScore(6, 70) <= 98 && Tour.BattlePrize(2) == 600, "battle: rivals get stronger with your level; prize 300 + 150 per level");
+            Check(Tour.EncoreCoins(5, 1000) == 500 && Tour.EncoreCoins(4, 1000) == 0, "encore: 5 stars earn half the tickets again");
         }
         // Rare talents: about 1 % of applicants and invitations are world-class
         {
