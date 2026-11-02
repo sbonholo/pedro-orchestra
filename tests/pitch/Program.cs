@@ -27,6 +27,24 @@ class P {
         Console.WriteLine($"{(ok?"PASS":"FAIL")} {t,-10} {NoteParser.MidiToName(midi),-4} via {set.Nearest(midi).Name,-14} pitch {c1:+0;-0}c / {c2:+0;-0}c (vibrato in recording), level {R(s1):0.000}->{R(s2):0.000}");
       }
     }
+    // The Messiah Stradivarius must sound clearly finer than a student violin: louder "bridge hill" (2.4-3.2 kHz) and more presence overall
+    {
+      string dir = "../../unity/Assets/OrchestraProject/Resources/OrchestraSamples/Violin/";
+      var set = SampleSet.Parse(InstrumentType.Violin, File.ReadAllText(dir + "samples.txt"), f => File.ReadAllBytes(dir + f + ".bytes"));
+      double Band(string model) {
+        var m = new MusicianData { instrument = InstrumentType.Violin, instrumentModel = model };
+        var rp = new RenderedPart { Musician = m, Instrument = InstrumentCatalog.Get(InstrumentType.Violin), SectionGain = 1f };
+        rp.Notes.Add(new RenderedNote { StartSec=0, DurationSec=3.0, PlayedMidi=69, Velocity=0.6f, AttackSec=0.05f, Brightness=0.9f });
+        var b = SampleVoice.RenderPart(rp, set, 48000, 3.0, 1);
+        var x = new float[48000]; Array.Copy(b, (int)((StringSynth.LeadInSec + 1) * 48000), x, 0, 48000);
+        Biquad.HighPass(48000, 2400, 2).Process(x); Biquad.LowPass(48000, 3200, 2).Process(x);
+        return Math.Sqrt(x.Select(v => (double)v * v).Average());
+      }
+      double student = Band(""), master = Band("Violin_master"), strad = Band("strad_messiah");
+      bool ok = strad > master * 1.25 && master > student;
+      if (!ok) fails++;
+      Console.WriteLine($"{(ok?"PASS":"FAIL")} Stradivarius sound: 2.4-3.2 kHz band student {student:0.0000}, master {master:0.0000}, Messiah {strad:0.0000} ({20*Math.Log10(strad/student):+0.0} dB)");
+    }
     Console.WriteLine(fails==0?"ALL PASS":fails+" FAILED");
   }
 }

@@ -99,6 +99,12 @@ namespace OrchestraProject
             }
         }
 
+        /// <summary>Main body (wood) resonance of each instrument.</summary>
+        static double BodyHz(InstrumentType t)
+        {
+            switch (t) { case InstrumentType.Viola: return 350; case InstrumentType.Cello: return 200; case InstrumentType.DoubleBass: return 110; default: return 450; }
+        }
+
         public static float[] RenderPart(RenderedPart part, SampleSet set, int sampleRate, double totalSec, int seed)
         {
             int length = (int)((StringSynth.LeadInSec + totalSec + 1.5) * sampleRate);
@@ -109,6 +115,10 @@ namespace OrchestraProject
             brightness = part.Notes.Count > 0 ? brightness / part.Notes.Count : 0.5f;
 
             var clean = CleanFor(part.Instrument.Type);
+            // The instrument itself (Economy.Quality, squared so a Stradivarius stands far above a master-made one):
+            // a fine instrument scratches less, resonates in its body, sings in the 2–3 kHz "bridge hill", has more air and projects.
+            double w = part.Musician != null ? Math.Pow(Economy.Quality(part.Musician), 2) : 0;
+            clean.NoiseScale *= 1 - 0.8 * w;
             foreach (var n in part.Notes) RenderNote(buf, n, set, sampleRate, ref noiseState, clean);
             Biquad.HighPass(sampleRate, clean.HighPass, 0.707).Process(buf);
             if (clean.MudHz > 0)
@@ -117,11 +127,18 @@ namespace OrchestraProject
                 Biquad.Peaking(sampleRate, 2500, 0.9, 1.5).Process(buf);   // a little presence so the line stays clear
             }
 
+            if (w > 0)
+            {
+                Biquad.Peaking(sampleRate, BodyHz(part.Instrument.Type), 1.4, 3.0 * w).Process(buf);   // body resonance: warmth
+                Biquad.Peaking(sampleRate, 2800, 0.8, 3.5 * w).Process(buf);                          // bridge hill: the singing, carrying sound
+                Biquad.Peaking(sampleRate, 9000, 0.7, 2.5 * w).Process(buf);                          // air and sparkle
+            }
+
             // Weaker tone = darker, less focused sound. A world-class tone keeps the full recording.
-            double cutoff = 2200 + 9000 * Math.Pow(brightness, 1.5);
+            double cutoff = 2200 + 9000 * Math.Pow(brightness, 1.5) + 3000 * w;
             if (cutoff < sampleRate * 0.45) Biquad.LowPass(sampleRate, cutoff, 0.707).Process(buf);
 
-            float gain = 0.55f * part.Instrument.Loudness * part.SectionGain;
+            float gain = 0.55f * part.Instrument.Loudness * part.SectionGain * (1f + 0.25f * (float)w);   // fine instruments project
             for (int i = 0; i < buf.Length; i++)
             {
                 float v = buf[i] * gain;

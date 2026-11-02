@@ -722,13 +722,18 @@ function nearestSample(set, midi) { let best = null, cost = 1e9; for (const s of
 // Clean-up for the lower strings (same numbers as SampleVoice.cs): high-pass, low-mid mud cut, presence, less added noise and vibrato, smoother release.
 const CLEAN = { violin: { hp: 160, mud: 0, mudDb: 0, noise: 1, vib: .25, rel: .16 }, viola: { hp: 100, mud: 300, mudDb: -3, noise: .5, vib: .15, rel: .22 },
   cello: { hp: 50, mud: 250, mudDb: -3.5, noise: .4, vib: .15, rel: .28 }, bass: { hp: 32, mud: 180, mudDb: -3, noise: .35, vib: .1, rel: .32 } };
+// The instrument itself (same numbers as SampleVoice.cs; quality squared so a Stradivarius stands far above a master-made one):
+// less scratch, body resonance, the 2–3 kHz "bridge hill" that makes a Strad sing and carry, more air, more projection.
+const BODY_HZ = { violin: 450, viola: 350, cello: 200, bass: 110 };
 function musicianChain(m, rp, pan) {
-  const d = INST[m.inst]; const b = rp.notes.reduce((a, n) => a + n.bright, 0) / rp.notes.length;
-  const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(18000, 2200 + 9000 * Math.pow(b, 1.5)); lp.Q.value = 0.7;
-  const p = actx.createStereoPanner ? actx.createStereoPanner() : null; const out = actx.createGain(); out.gain.value = 0.55 * d.loud * rp.sectionGain;
-  const cl = CLEAN[m.inst], hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = cl.hp; hp.Q.value = .707; lp.connect(hp); let last = hp;
+  const d = INST[m.inst]; const b = rp.notes.reduce((a, n) => a + n.bright, 0) / rp.notes.length, w = Math.pow(shopItem(m.instrumentModel || "")?.q || 0, 2);
+  const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(18000, 2200 + 9000 * Math.pow(b, 1.5) + 3000 * w); lp.Q.value = 0.7;
+  const p = actx.createStereoPanner ? actx.createStereoPanner() : null; const out = actx.createGain(); out.gain.value = 0.55 * d.loud * rp.sectionGain * (1 + .25 * w);
+  const cl = { ...CLEAN[m.inst], noise: CLEAN[m.inst].noise * (1 - .8 * w) }, hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = cl.hp; hp.Q.value = .707; lp.connect(hp); let last = hp;
   if (cl.mud) { const mud = actx.createBiquadFilter(); mud.type = "peaking"; mud.frequency.value = cl.mud; mud.Q.value = 1; mud.gain.value = cl.mudDb;
     const pres = actx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 2500; pres.Q.value = .9; pres.gain.value = 1.5; hp.connect(mud); mud.connect(pres); last = pres; }
+  if (w > 0) for (const [f, q, db] of [[BODY_HZ[m.inst], 1.4, 3 * w], [2800, .8, 3.5 * w], [9000, .7, 2.5 * w]]) {
+    const eq = actx.createBiquadFilter(); eq.type = "peaking"; eq.frequency.value = f; eq.Q.value = q; eq.gain.value = db; last.connect(eq); last = eq; }
   last.connect(out); if (p) { p.pan.value = pan; out.connect(p); p.connect(master); p.connect(reverbIn); } else { out.connect(master); out.connect(reverbIn); }
   return { input: lp, clean: cl, nodes: [lp, out, p].filter(Boolean) };
 }
