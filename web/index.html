@@ -569,8 +569,8 @@ function masterclass(m, i) {
   state.coins -= cost; m.skills[i] = Math.min(100, v + ECO.gain); return `Masterclass: ${m.first}'s ${SKILLS[i][0]} ${v.toFixed(1)} → ${m.skills[i].toFixed(1)}.`;
 }
 const JUDGES = [["Prof. Ilse Varga", "intonation", -.4], ["Dr. Kenji Mori", "note accuracy", -.2], ["Marcus Bell", "rhythm and ensemble", 0], ["Amara Okoye", "the overall impression", .2], ["Sofia Ricci", "artistry", .4]];   // five judges, strict to generous; 3 must approve
-function judge(r, level = 0) {
-  const pass = passMark(level);
+function judge(r, level = 0, strict = 0) {
+  const pass = passMark(level) + strict;
   const focus = [r.I, r.A, (r.R + r.E) / 2, r.overall, r.Art];
   return JUDGES.map(([name, f, bias], i) => { const score = Math.round(clamp((r.overall + (focus[i] - r.overall) * .5) / 10 + bias + (Math.random() - .5) * .6, 1, 10) * 10) / 10;
     return { name, focus: f, score, ok: score >= pass, comment: score >= Math.max(8.5, pass + .5) ? "Outstanding." : score >= pass ? "Convincing." : score >= 4 ? "Not yet ready." : "Far from the standard." }; });
@@ -580,6 +580,38 @@ const LEVELS = ["Community Orchestra", "Youth Symphony", "City Chamber Orchestra
 const lvlOf = l => clamp(l || 0, 0, LEVELS.length - 1), passMark = l => ECO.pass + .5 * lvlOf(l), approvedCoins = l => ECO.yes + 20 * lvlOf(l);
 const approved = js => js.filter(j => j.ok).length >= 3;
 const concertCoins = (js, l = 0) => approved(js) ? approvedCoins(l) : ECO.no;
+// World tour (same halls, seats and prizes as Tour.cs): each career level opens a famous hall; the first approved concert
+// in a hall pays its prize and +5 reputation; the Golden Hall in Vienna wins the Golden Baton (the game).
+const VENUES = [
+  { id: "home", name: "Riverside Concert Hall", city: "your home town", min: 0, seats: 1166, strict: 0, prize: 0 },
+  { id: "prague", name: "Rudolfinum, Dvořák Hall", city: "Prague", min: 1, seats: 1100, strict: .1, prize: 500 },
+  { id: "amsterdam", name: "Concertgebouw", city: "Amsterdam", min: 2, seats: 1974, strict: .2, prize: 1000 },
+  { id: "tokyo", name: "Suntory Hall", city: "Tokyo", min: 3, seats: 2006, strict: .3, prize: 2000 },
+  { id: "london", name: "Royal Albert Hall", city: "London", min: 4, seats: 5272, strict: .4, prize: 3000 },
+  { id: "newyork", name: "Carnegie Hall", city: "New York", min: 5, seats: 2804, strict: .5, prize: 5000 },
+  { id: "vienna", name: "Musikverein, Golden Hall", city: "Vienna", min: 6, seats: 1744, strict: .6, prize: 10000 },
+];
+const venueOpen = (st, v) => (st.level || 0) >= v.min, venueById = id => VENUES.find(v => v.id === id) || VENUES[0];
+const currentVenue = st => { const v = venueById(st.venue); return venueOpen(st, v) ? v : VENUES[0]; };
+const toursWon = st => (st.venuesWon || []).filter(id => id !== "home").length;
+function winVenue(st, v) {
+  st.venuesWon ??= []; if (st.venuesWon.includes(v.id)) return null; st.venuesWon.push(v.id); if (v.id === "home") return null;
+  st.coins += v.prize; st.rep = Math.min(100, st.rep + 5);
+  if (v.id === "vienna") { st.wonGame = true; return `THE GOLDEN BATON! Your orchestra conquered Vienna: the best orchestra in the world. Prize ${v.prize.toLocaleString("en")} coins.`; }
+  return `Triumph in ${v.city}! Prize ${v.prize.toLocaleString("en")} coins and reputation +5.`;
+}
+// A surprise on about a third of the days (same six events as Tour.DailyEvent).
+function dailyEvent(st) {
+  if (rnd() >= .35 || !st.roster.length) return null; const m = pick(st.roster);
+  switch (Math.floor(rnd() * 6)) {
+    case 0: { const c = 100 + 50 * (st.level || 0); st.coins += c; return `A sponsor donates ${c} coins.`; }
+    case 1: st.rep = Math.min(100, st.rep + 3); return "A newspaper critic praises your orchestra: reputation +3.";
+    case 2: m.energy = Math.floor(m.energy / 2); return `${m.first} caught a cold: energy halved.`;
+    case 3: { const k = Math.floor(rnd() * 11); m.skills[k] = Math.min(100, m.skills[k] + 2); return `A guest teacher coached ${m.first}: ${SKILLS[k][0]} +2.`; }
+    case 4: { const c = Math.min(st.coins, 50); st.coins -= c; return `New strings and bow rehairs cost ${c} coins.`; }
+    default: { const c = Math.floor(5 * Math.round(HALL_SEATS * audienceFill(st.rep)) / 10); st.coins += c; return `Your last concert was on the radio: ${c} coins in royalties.`; }
+  }
+}
 // Career goals with coin rewards (same list, order and rewards as Achievements.cs). Each pays once.
 const avgLevel = st => st.roster.reduce((a, m) => a + overall(m), 0) / Math.max(1, st.roster.length);
 const ACHIEVEMENTS = [
@@ -598,6 +630,8 @@ const ACHIEVEMENTS = [
   ["strad", "A Stradivarius", "Own a Stradivarius.", 500, st => st.owned.some(id => id.startsWith("strad_"))],
   ["national", "National Stage", "Be promoted to the National Orchestra.", 400, st => (st.level || 0) >= 4],
   ["top", "Top of the World", "Become the World Symphony Orchestra.", 1000, st => (st.level || 0) >= LEVELS.length - 1],
+  ["tour", "World Tour", "Win the judges' approval in 3 famous halls abroad.", 600, st => toursWon(st) >= 3],
+  ["golden_baton", "The Golden Baton", "Win the judges' approval in the Golden Hall, Vienna.", 5000, st => !!st.wonGame],
 ].map(([id, title, desc, reward, done]) => ({ id, title, desc, reward, done }));
 function checkAchievements() {
   if (!state) return; for (const k of ["achievements", "concertPieces"]) state[k] ??= []; for (const k of ["judgeApprovals", "bestStars", "hired", "bestConducting"]) state[k] ??= 0;
@@ -617,7 +651,7 @@ let state = null, selectedId = null;
 function newGame() {
   state = { day: 1, rep: 5, style: "director", concerts: 0, best: 0, lastConcert: -1, poolDay: -100, pieces: {},
     roster: [createMusician("violin", 36, S.speed, S.expression), createMusician("viola", 33, S.ensemble, S.tone), createMusician("cello", 35, S.musicality, S.intonation), createMusician("bass", 31, S.rhythm, S.confidence)],
-    auditions: [], invites: [], energy1000: true, energy2000: true, coins: ECO.start, owned: [], achievements: [], concertPieces: [], judgeApprovals: 0, bestStars: 0, hired: 0, bestConducting: 0, soloApproved: false };
+    auditions: [], invites: [], energy1000: true, energy2000: true, coins: ECO.start, owned: [], achievements: [], concertPieces: [], judgeApprovals: 0, bestStars: 0, hired: 0, bestConducting: 0, soloApproved: false, venue: "home", venuesWon: [], wonGame: false };
   refreshPools(state); save();
 }
 const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
@@ -1200,13 +1234,14 @@ function finishPerformance() {
   const res = evaluate(pf.rendered, pf.p, pf.mode, pf.ctx, pf.ts, pf.cond ? conductScore(pf.cond) : -1); let gains = null;
   const pr = prog(pf.p.id);
   if (pf.ctx === "rehearsal") gains = rehearse(pf.players, pr);
-  if (pf.ctx === "concert") { state.lastConcert = state.day; const log = []; res.tickets = audienceCount(state.rep); res.ticketCoins = res.tickets * TICKET_PRICE; state.coins += res.ticketCoins;
+  if (pf.ctx === "concert") { state.lastConcert = state.day; const log = []; const venue = currentVenue(state); res.venue = `${venue.name}, ${venue.city}`; res.tickets = Math.round(venue.seats * audienceFill(state.rep)); res.ticketCoins = res.tickets * TICKET_PRICE; state.coins += res.ticketCoins;
     for (const m of pf.players) { const f = T.base * m.talent * (.6 + res.overall / 100); gain(m, S.confidence, f * 1.2, log); gain(m, S.musicality, f * .3, log); gain(m, S.expression, f * .3, log); m.energy = Math.max(0, m.energy - T.eConcert); m.concerts++; }
     const cap = clamp(1 - state.rep / (20 + 20 * pf.p.diff), 0, 1), rg = Math.max(.3, (res.overall - 30) / 10) * Math.max(.1, cap);
     state.rep = Math.min(100, state.rep + rg); state.concerts++; state.best = Math.max(state.best, res.overall); pr.best = Math.max(pr.best, res.overall);
     gains = { ok: true, msg: `Concert experience. Reputation +${rg.toFixed(1)} (now ${state.rep.toFixed(0)}).`, log }; }
   if (pf.ctx === "concert") { applause(res.stars); state.level ??= 0; res.levelBefore = res.levelAfter = state.level;
-    res.judges = judge(res, state.level); res.coins = concertCoins(res.judges, state.level); state.coins += res.coins;
+    const venue = currentVenue(state); res.pass = passMark(state.level) + venue.strict;
+    res.judges = judge(res, state.level, venue.strict); if (approved(res.judges)) res.venueMsg = winVenue(state, venue); res.coins = concertCoins(res.judges, state.level); state.coins += res.coins;
     if (approved(res.judges) && state.level < LEVELS.length - 1) res.levelAfter = ++state.level;   // the judges' approval is the audition for the next orchestra
     checkAchievements();
     if (approved(res.judges)) { state.judgeApprovals++; if (pf.mode === "solo") state.soloApproved = true; }
@@ -1304,7 +1339,10 @@ function renderSide() {
       <div class="eyebrow">Conductor</div><div class="row"><button class="btn ${!state.conduct ? "on" : ""}" data-cond="auto">Automatic</button><button class="btn ${state.conduct ? "on" : ""}" data-cond="you">You conduct (tap the beat)</button></div>
       <div class="eyebrow">Concert</div>
       <p class="small" style="color:var(--gold)">Your orchestra: <b>${LEVELS[lvlOf(state.level)]}</b> (level ${lvlOf(state.level) + 1} of ${LEVELS.length})${lvlOf(state.level) < LEVELS.length - 1 ? `. Win the judges' approval (3 of 5 give ${passMark(state.level).toFixed(1)}+) to be promoted to the <b>${LEVELS[lvlOf(state.level) + 1]}</b>.` : ": the top of the world."}</p>
-      <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)}</button>
+      <p class="muted small">${state.wonGame ? "<b>You hold the Golden Baton.</b> Keep touring for coins and glory." : `<b>World tour:</b> ${toursWon(state)} of ${VENUES.length - 1} halls won. Win the judges' approval in the Golden Hall, Vienna, to win the Golden Baton.`}</p>
+      ${VENUES.map(v => { const open = venueOpen(state, v), won = (state.venuesWon || []).includes(v.id), on = currentVenue(state) === v;
+        return `<button class="card ${on ? "on" : ""}" data-venue="${v.id}" ${open ? "" : "disabled"}><span class="t">${won ? "★ " : ""}${v.name}, ${v.city}</span><span class="s">${open ? `${v.seats.toLocaleString("en")} seats${v.prize ? ` · prize ${v.prize.toLocaleString("en")}${won ? " (won)" : ""}` : ""} · judges +${v.strict.toFixed(1)}` : `opens at ${LEVELS[v.min]}`}</span></button>`; }).join("")}
+      <button class="btn primary" id="a-concert" ${!canConcert || perf ? "disabled" : ""}>Perform Concert: ${esc(p.title)} (${currentVenue(state).city})</button>
       <p class="small ${canConcert ? "muted" : ""}" style="${canConcert ? "" : "color:var(--bad)"}">${canConcert ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians." : why}</p>
       <div class="eyebrow">Rehearse</div>
       <div class="row"><button class="btn" id="a-listen" ${perf ? "disabled" : ""}>Listen</button><button class="btn" id="a-rehearse" ${perf ? "disabled" : ""}>Rehearse</button><button class="btn" id="a-quick" ${perf ? "disabled" : ""}>Quick rehearsal</button></div>
@@ -1358,12 +1396,13 @@ function updateStatus() {
 function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visible = vid === id; renderUI(); }
 function advance(days) {
   if (perf) return toast("Wait until the performance ends.");
-  let sessions = 0;
+  let sessions = 0; const events = [];
   for (let d = 0; d < days; d++) { state.day++; for (const m of state.roster) m.energy = Math.min(T.maxE, m.energy + T.recover);
     if (state.style === "director") for (const m of state.roster) for (let i = 0; i < T.directorSessions; i++) if (practice(m, m.focus >= 0 ? m.focus : weakest(m)).ok) sessions++;
     for (const p of Object.values(state.pieces)) p.prep *= .985;
-    if (state.day - state.poolDay >= 7) refreshPools(state); }
-  save(); toast(`Day ${state.day} begins.${sessions ? ` Musicians completed ${sessions} practice sessions from their training plans.` : ""}`); renderUI();
+    if (state.day - state.poolDay >= 7) refreshPools(state);
+    const ev = dailyEvent(state); if (ev) events.push(ev); }
+  save(); toast(`Day ${state.day} begins.${sessions ? ` Musicians completed ${sessions} practice sessions from their training plans.` : ""}${events.length ? "\n" + events.slice(-3).join("\n") : ""}`); renderUI();
 }
 function enterGame(t) {
   $("#menu").hidden = true; $("#topbar").hidden = false; $("#bottombar").hidden = false; tab = t; rosterOpen = !isNarrow() || t === "roster"; if (isNarrow() && t !== "roster") rosterOpen = false;
@@ -1381,8 +1420,9 @@ function showResult(pf, r, gains) {
     <p><i>“${esc(r.review)}”</i></p>
     <div>${cat("Rhythm", r.R)}${cat("Intonation", r.I)}${cat("Note accuracy", r.A)}${cat("Ensemble", r.E)}${cat("Artistry", r.Art)}</div>
     ${r.judges ? `<div class="eyebrow">The judges (${r.judges.filter(j => j.ok).length} of ${r.judges.length} approve)</div><div>${r.judges.map(j => `<div class="kv" style="color:${j.ok ? "var(--good)" : "var(--bad)"}"><span><b>${j.name}</b> <span class="muted small">listens for ${j.focus}</span></span><span>${j.score.toFixed(1)} / 10 · ${j.ok ? "YES" : "NO"} · ${j.comment}</span></div>`).join("")}</div>
-      <p style="color:var(--gold)"><b>Tickets: ${r.tickets.toLocaleString("en")} listeners × ${TICKET_PRICE} = +${r.ticketCoins.toLocaleString("en")} coins.</b></p>
-      <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${approved(r.judges) ? "The judges approved." : `3 of 5 judges must give ${passMark(r.levelBefore).toFixed(1)} or more for ${approvedCoins(r.levelBefore)} coins.`} You have ${state.coins.toLocaleString("en")}.</p>
+      ${r.venueMsg ? `<div class="card on"><span class="t" style="color:var(--good);font-size:16px">${esc(r.venueMsg)}</span></div>` : ""}
+      <p style="color:var(--gold)">${esc(r.venue || "")}. <b>Tickets: ${r.tickets.toLocaleString("en")} listeners × ${TICKET_PRICE} = +${r.ticketCoins.toLocaleString("en")} coins.</b></p>
+      <p style="color:var(--gold)"><b>+${r.coins} coins from the judges.</b> ${approved(r.judges) ? "The judges approved." : `3 of 5 judges must give ${(r.pass ?? passMark(r.levelBefore)).toFixed(1)} or more for ${approvedCoins(r.levelBefore)} coins.`} You have ${state.coins.toLocaleString("en")}.</p>
       ${r.levelAfter > r.levelBefore ? `<div class="card on"><span class="t" style="color:var(--good);font-size:16px">PROMOTED! Your orchestra is now the ${LEVELS[r.levelAfter]}.</span><span class="s">The judges will be stricter (${passMark(r.levelAfter).toFixed(1)} / 10) and pay more (${approvedCoins(r.levelAfter)} coins). Better musicians will apply.</span></div>`
         : `<p class="muted small">${r.levelBefore >= LEVELS.length - 1 ? `You are the ${LEVELS[r.levelBefore]}: the top of the world.` : `Level: ${LEVELS[r.levelBefore]}. Win the judges' approval to be promoted to the ${LEVELS[r.levelBefore + 1]}.`}</p>`}` : ""}
     <div class="eyebrow">What the audience heard</div><p class="muted small">${r.lines.map(esc).join("<br>")}</p>
@@ -1510,6 +1550,7 @@ document.addEventListener("click", e => {
   else if (d.mc) { toast(masterclass(selected(), +d.mc)); save(); renderUI(); }
   else if (d.buy) { toast(buyInstrument(selected(), shopItem(d.buy))); save(); renderUI(); }
   else if (d.cond) { state.conduct = d.cond === "you"; save(); renderUI(); }
+  else if (d.venue) { state.venue = d.venue; save(); renderUI(); }
   else if (d.mode) { modeSel = d.mode; renderUI(); }
   else if (d.exp) { expanded = expanded === d.exp ? null : d.exp; renderUI(); }
   else if (d.hear) { const c = [...state.auditions, ...state.invites].find(x => x.id === d.hear); hearAudition(c); }

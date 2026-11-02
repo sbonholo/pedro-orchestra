@@ -71,10 +71,26 @@ namespace OrchestraProject
             var lvl = UIFactory.Label(root, "Your orchestra: <b>" + Economy.LevelName(s.level) + "</b> (level " + (s.level + 1) + " of " + Economy.Levels.Length + ")" +
                 (s.level < Economy.MaxLevel ? ". Win the judges' approval (3 of 5 give " + Economy.PassMark(s.level).ToString("0.0") + "+) to be promoted to the <b>" + Economy.LevelName(s.level + 1) + "</b>." : ": the top of the world."), 17, TextAnchor.UpperLeft, UITheme.Accent);
             UIFactory.Size(lvl, 50);
+
+            // World tour: each career level opens a famous hall; win the Golden Hall in Vienna to win the game.
+            var cur = Tour.Current(s);
+            var tl = UIFactory.Label(root, s.wonGame ? "<b>You hold the Golden Baton.</b> Keep touring for coins and glory."
+                : "<b>World tour:</b> " + (s.venuesWon.FindAll(v => v != Tour.Home).Count) + " of " + (Tour.Venues.Length - 1) + " halls won. Win the judges' approval in the Golden Hall, Vienna, to win the Golden Baton.", 17, TextAnchor.UpperLeft, UITheme.TextDim);
+            UIFactory.Size(tl, 46);
+            foreach (var v in Tour.Venues)
+            {
+                var venue = v; bool open = Tour.IsOpen(s, v), won = s.venuesWon.Contains(v.Id);
+                string label = (won ? "★ " : "") + "<b>" + v.Name + "</b>, " + v.City + "  <size=15>" + (open
+                    ? v.Seats.ToString("N0") + " seats" + (v.Prize > 0 ? " · prize " + v.Prize.ToString("N0") + (won ? " (won)" : "") : "") + " · judges +" + v.Strict.ToString("0.0")
+                    : "opens at " + Economy.LevelName(v.MinLevel)) + "</size>";
+                var vb = UIFactory.Button(root, label, () => { s.venue = venue.Id; gm.Save(); ui.Hud.Refresh(); }, 17, 46);
+                vb.interactable = open;
+                UIFactory.SetSelected(vb, cur == v);
+            }
             bool busy = gm.Performance.IsBusy;
             string reason;
             bool can = gm.CanPerformConcert(out reason);
-            var concert = UIFactory.Button(root, "Perform Concert: " + sel.Title, () => gm.PerformConcert(pieceId, mode), 21, 70, UITheme.AccentDim);
+            var concert = UIFactory.Button(root, "Perform Concert: " + sel.Title + "  <size=16>(" + cur.City + ")</size>", () => gm.PerformConcert(pieceId, mode), 21, 70, UITheme.AccentDim);
             concert.interactable = can && !busy;
             var cl = UIFactory.Label(root, can ? "Rated on rhythm, intonation, accuracy, ensemble and artistry. Good concerts raise reputation, which attracts better musicians."
                 : reason, 17, TextAnchor.UpperLeft, can ? UITheme.TextDim : UITheme.Bad);

@@ -11,6 +11,7 @@
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/TrainingSystem.cs" />
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/RecruitmentSystem.cs" />
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/Economy.cs" />
+    <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Systems/Tour.cs" />
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Music/*.cs" />
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Performance/PerformanceRenderer.cs" />
     <Compile Include="../../unity/Assets/OrchestraProject/Scripts/Performance/PerformanceEvaluator.cs" />

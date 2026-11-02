@@ -153,9 +153,10 @@ namespace OrchestraProject
         static readonly string[] JudgeFocus = { "intonation", "note accuracy", "rhythm and ensemble", "the overall impression", "artistry" };
         static readonly float[] JudgeBias = { -0.4f, -0.2f, 0f, 0.2f, 0.4f };   // from strict to generous
 
-        public static List<JudgeVerdict> Judge(PerformanceResult r, Random rng, int level = 0)
+        /// <summary>strict: extra pass mark of the concert hall (Tour.Venue.Strict).</summary>
+        public static List<JudgeVerdict> Judge(PerformanceResult r, Random rng, int level = 0, float strict = 0f)
         {
-            float pass = PassMark(level);
+            float pass = PassMark(level) + strict;
             float[] focus = { r.Intonation, r.Accuracy, (r.Rhythm + r.Ensemble) * 0.5f, r.Overall, r.Artistry };
             var list = new List<JudgeVerdict>();
             for (int i = 0; i < JudgeCount; i++)

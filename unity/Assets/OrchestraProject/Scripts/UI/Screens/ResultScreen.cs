@@ -67,10 +67,11 @@ namespace OrchestraProject
                         18, TextAnchor.UpperLeft, j.Approves ? UITheme.Good : UITheme.Bad);
                     UIFactory.Size(jl, 28);
                 }
-                var tk = UIFactory.Label(body, "<b>Tickets: " + r.TicketsSold.ToString("N0") + " listeners × " + Economy.TicketPrice + " = +" + r.TicketCoins.ToString("N0") + " coins</b>", 20, TextAnchor.UpperLeft, UITheme.Accent);
+                if (r.VenueMessage != null) { var vm = UIFactory.Label(body, "<b>" + r.VenueMessage + "</b>", 22, TextAnchor.UpperLeft, UITheme.Good); UIFactory.Size(vm, 60); }
+                var tk = UIFactory.Label(body, (r.VenueName != null ? r.VenueName + ".  " : "") + "<b>Tickets: " + r.TicketsSold.ToString("N0") + " listeners × " + Economy.TicketPrice + " = +" + r.TicketCoins.ToString("N0") + " coins</b>", 20, TextAnchor.UpperLeft, UITheme.Accent);
                 UIFactory.Size(tk, 32);
                 bool ok = Economy.Approved(r.Judges);
-                var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (ok ? "  The judges approved." : "  " + Economy.JudgesNeeded + " of " + Economy.JudgeCount + " judges must give " + Economy.PassMark(r.LevelBefore).ToString("0.0") + " or more for " + Economy.ApprovedCoins(r.LevelBefore) + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
+                var cl = UIFactory.Label(body, "<b>+" + r.CoinsEarned + " coins</b>" + (ok ? "  The judges approved." : "  " + Economy.JudgesNeeded + " of " + Economy.JudgeCount + " judges must give " + r.PassMark.ToString("0.0") + " or more for " + Economy.ApprovedCoins(r.LevelBefore) + " coins."), 20, TextAnchor.UpperLeft, UITheme.Accent);
                 UIFactory.Size(cl, 32);
                 var lv = UIFactory.Label(body, r.LevelAfter > r.LevelBefore ? "<b>PROMOTED! Your orchestra is now the " + Economy.LevelName(r.LevelAfter) + ".</b>  The judges will be stricter (" + Economy.PassMark(r.LevelAfter).ToString("0.0") + " / 10) and pay more (" + Economy.ApprovedCoins(r.LevelAfter) + " coins)."
                     : r.LevelBefore >= Economy.MaxLevel ? "You are the " + Economy.LevelName(r.LevelBefore) + ": the top of the world." : "Level: " + Economy.LevelName(r.LevelBefore) + ". Win the judges' approval to be promoted to the " + Economy.LevelName(r.LevelBefore + 1) + ".",

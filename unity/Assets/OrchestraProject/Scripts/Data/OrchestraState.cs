@@ -45,6 +45,9 @@ namespace OrchestraProject
         public float bestConducting;
         public bool soloApproved;
         public int level;                      // career level (Economy.Levels): promoted when the judges approve a concert            // "You conduct": the player taps the beat during performances            // first Listen done (drives the Next step card)
+        public string venue = Tour.Home;                        // hall chosen for the next concert (Tour.Venues)
+        public List<string> venuesWon = new List<string>();     // halls where the judges approved a concert
+        public bool wonGame;                                    // the Golden Baton (approved concert in Vienna)
         public int randomSeed;
         public List<MusicianData> roster = new List<MusicianData>();
         public List<MusicianData> auditionPool = new List<MusicianData>();
@@ -89,6 +92,8 @@ namespace OrchestraProject
             if (ownedInstruments == null) ownedInstruments = new List<string>();
             if (achievements == null) achievements = new List<string>();
             if (concertPieces == null) concertPieces = new List<string>();
+            if (venuesWon == null) venuesWon = new List<string>();
+            if (string.IsNullOrEmpty(venue)) venue = Tour.Home;
             if (coins < 0) coins = 0;
             foreach (var m in roster) m.Validate();
             foreach (var m in auditionPool) m.Validate();

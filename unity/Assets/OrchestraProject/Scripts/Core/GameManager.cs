@@ -133,6 +133,8 @@ namespace OrchestraProject
             for (int i = 0; i < days; i++)
             {
                 last = TrainingSystem.AdvanceDay(State, Rng);
+                var ev = Tour.DailyEvent(State, Rng);
+                if (ev != null) { last += " " + ev; State.Log(ev); }
                 if (State.day - State.lastPoolRefreshDay >= RecruitmentSystem.RefreshEveryDays)
                 {
                     RecruitmentSystem.Refresh(State, Rng);
@@ -207,7 +209,8 @@ namespace OrchestraProject
                     break;
                 case PerformanceContext.Concert:
                     State.lastConcertDay = State.day;
-                    result.TicketsSold = Economy.Audience(State.reputation);          // the audience that came pays at the door
+                    var venue = Tour.Current(State); result.VenueName = venue.Name + ", " + venue.City;
+                    result.TicketsSold = Tour.Audience(venue, State.reputation);       // the audience that came pays at the door
                     result.TicketCoins = result.TicketsSold * Economy.TicketPrice;
                     State.coins += result.TicketCoins;
                     gains = new TrainingResult { Success = true, Message = "Concert experience:" };
@@ -221,7 +224,8 @@ namespace OrchestraProject
                     gains.Message += " Reputation +" + repGain.ToString("0.0") + " (now " + State.reputation.ToString("0") + ").";
                     if (AudienceCrowd.Instance != null) AudienceCrowd.Instance.Applaud(result.Stars, State.reputation);
                     result.LevelBefore = result.LevelAfter = State.level;
-                    result.Judges = Economy.Judge(result, Rng, State.level);
+                    result.PassMark = Economy.PassMark(State.level) + venue.Strict;
+                    result.Judges = Economy.Judge(result, Rng, State.level, venue.Strict);
                     result.CoinsEarned = Economy.ConcertCoins(result.Judges, State.level);
                     State.coins += result.CoinsEarned;
                     if (Economy.Approved(result.Judges) && State.level < Economy.MaxLevel)
@@ -229,6 +233,7 @@ namespace OrchestraProject
                         State.level++; result.LevelAfter = State.level;   // the judges' approval is the audition for the next orchestra
                         State.Log("Promoted to " + Economy.LevelName(State.level) + ".");
                     }
+                    if (Economy.Approved(result.Judges)) { result.VenueMessage = Tour.Win(State, venue); if (result.VenueMessage != null) State.Log(result.VenueMessage); }
                     if (Economy.Approved(result.Judges)) { State.judgeApprovals++; if (result.Mode == ArrangementMode.Solo) State.soloApproved = true; }
                     State.bestStars = Math.Max(State.bestStars, result.Stars);
                     if (result.ConductingScore >= 0f) State.bestConducting = Math.Max(State.bestConducting, result.ConductingScore);

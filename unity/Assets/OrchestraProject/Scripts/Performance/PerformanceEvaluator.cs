@@ -20,6 +20,8 @@ namespace OrchestraProject
         public int CoinsEarned;
         public int TicketsSold, TicketCoins;
         public int LevelBefore, LevelAfter;   // promotion through the career levels
+        public string VenueName, VenueMessage; // the hall played and its prize message (Tour)
+        public float PassMark;                 // the judges' pass mark for this concert (level + hall)
     }
 
     /// <summary>

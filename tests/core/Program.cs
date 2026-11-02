@@ -182,7 +182,23 @@ static class Program
             gs.concertsPerformed = 1; var got = Achievements.Check(gs);
             var again = Achievements.Check(gs);
             Check(got.Count == 1 && got[0].Id == "first_concert" && gs.coins == c0 + 20 && again.Count == 0, "achievement Opening Night pays 20 coins once");
-            Check(Achievements.All.Count == 15, "15 career goals");
+            Check(Achievements.All.Count == 17, "17 career goals");
+        }
+        // World tour: halls open by career level; the first approved concert pays the prize once; Vienna wins the game
+        {
+            var ts = OrchestraState.NewGame(4);
+            Check(Tour.Venues.Length == 7 && Tour.Current(ts).Id == Tour.Home && !Tour.IsOpen(ts, Tour.Get("london")), "tour: 7 halls, only home open at the start");
+            ts.venue = "vienna"; Check(Tour.Current(ts).Id == Tour.Home, "tour: a closed hall falls back to home");
+            ts.level = Economy.MaxLevel; int c0 = ts.coins; float r0 = ts.reputation;
+            string msg = Tour.Win(ts, Tour.Current(ts)), again = Tour.Win(ts, Tour.Get("vienna"));
+            Check(msg != null && msg.Contains("GOLDEN BATON") && ts.wonGame && ts.coins == c0 + 10000 && ts.reputation == r0 + 5f && again == null, "tour: Vienna pays 10,000 once and wins the Golden Baton");
+            Check(Tour.Audience(Tour.Get("london"), 75f) == 5272 && Tour.Audience(Tour.Get(Tour.Home), 75f) == Economy.HallSeats, "tour: a full Royal Albert Hall sells 5,272 tickets");
+            var good = new PerformanceResult { Overall = 80, Rhythm = 80, Intonation = 80, Ensemble = 80, Artistry = 80, Accuracy = 80 };
+            Check(Economy.Judge(good, new Random(1), 6, 0.6f)[0].PassMark == Economy.PassMark(6) + 0.6f, "tour: the hall adds to the judges' pass mark");
+            var er = new Random(5); int events = 0;
+            for (int i = 0; i < 1000; i++) if (Tour.DailyEvent(ts, er) != null) events++;
+            Check(events > 280 && events < 420 && ts.coins >= 0, "daily events: about a third of the days (" + events + " of 1000)");
+            Check(Achievements.Check(ts).Exists(x => x.Id == "golden_baton"), "achievement: The Golden Baton");
         }
         // Rare talents: about 1 % of applicants and invitations are world-class
         {
