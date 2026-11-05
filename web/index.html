@@ -152,6 +152,11 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
   .btn { padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Phones and touch screens: every tap target at least 44 px, no text under 12 px */
+@media (max-width: 760px), (pointer: coarse) {
+  .btn, .card, button.skill, input[type=range] { min-height: 44px; }
+  #brand small, .eyebrow, .tier, #menu .note { font-size: 12px; }
+}
 #err-toast { position: fixed; z-index: 100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px);
   min-height: 44px; padding: 12px 18px; background: var(--card-solid); color: var(--text); border: 1px solid var(--bad); border-radius: 8px; font: 500 14px var(--body); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 </style>
@@ -189,7 +194,7 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
     <button class="btn" data-go="practice">Practice</button>
     <button class="btn" data-go="auditions">Auditions</button>
     <button class="btn" data-go="music">Concerts</button>
-    <p class="note">Browser preview of the Unity game. Real string recordings (VSCO 2 Community Edition, CC0); placeholder 3D figures. Use speakers or headphones.</p>
+    <p class="note">Real string recordings (VSCO 2 Community Edition, CC0); placeholder 3D figures. Use speakers or headphones.</p>
   </div>
 </div>
 
@@ -737,6 +742,12 @@ const selected = () => state?.roster.find(m => m.id === selectedId) || null;
    AUDIO — real recordings (VSCO 2 CE, CC0) through Web Audio
    ===================================================================== */
 let actx = null, master = null, reverbIn = null, samples = {}, noiseBuf = null, audioReady = null;
+const audioLoad = { active: false, done: 0, total: 0 };   // recordings load lazily on entering the game; progress shows in the bottom bar
+const audioPct = () => audioLoad.total ? Math.round(audioLoad.done / audioLoad.total * 100) : 0;
+async function fetchRetry(url, tries = 3) {   // a flaky phone connection gets two more chances per file
+  for (let i = 1; ; i++) { try { const r = await fetch(url); if (r.ok) return r; throw new Error(`${url}: HTTP ${r.status}`); }
+    catch (e) { if (i >= tries) throw e; await new Promise(ok => setTimeout(ok, 600 * i)); } }
+}
 async function initAudio() {
   if (audioReady) return audioReady;
   actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -750,15 +761,19 @@ async function initAudio() {
   const conv = actx.createConvolver(); conv.buffer = ir; const wet = actx.createGain(); wet.gain.value = 0.55; conv.connect(wet); wet.connect(master);
   const revHp = actx.createBiquadFilter(); revHp.type = "highpass"; revHp.frequency.value = 220; revHp.connect(conv); reverbIn = revHp;   // keep the low end out of the reverb: cleaner cellos and basses
   noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  audioLoad.active = true;
   audioReady = (async () => {
-    const manifest = await (await fetch("samples.json")).json();
+    const manifest = await (await fetchRetry("samples.json")).json();
     const jobs = [];
     for (const [set, list] of Object.entries(manifest)) {
-      samples[set] = [];
-      for (const s of list) jobs.push(fetch("audio/" + encodeURIComponent(s.f) + ".mp3").then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => actx.decodeAudioData(b, ok, no))).then(buf => samples[set].push({ ...s, buf })));
+      samples[set] = []; audioLoad.total += list.length;
+      for (const s of list) jobs.push(fetchRetry("audio/" + encodeURIComponent(s.f) + ".mp3").then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => actx.decodeAudioData(b, ok, no)))
+        .then(buf => samples[set].push({ ...s, buf }), e => console.warn("Recording not loaded:", s.f, e)).finally(() => audioLoad.done++));
     }
     await Promise.all(jobs);
-  })();
+    // A missing note is covered by its neighbours (pitch-shifted); a whole missing instrument is not
+    if (Object.values(samples).some(l => !l.length)) throw new Error("recordings missing");
+  })().finally(() => audioLoad.active = false);
   return audioReady;
 }
 function nearestSample(set, midi) { let best = null, cost = 1e9; for (const s of samples[set]) { const d = midi - s.m; const c = d >= 0 ? d : -d * 1.6; if (c < cost) { cost = c; best = s; } } return best; }
@@ -1246,7 +1261,8 @@ const camGoalLook = U(0, 1.8, 3);
    ===================================================================== */
 let perf = null; // {piece, mode, ctx, t0, end, players, parts, ts, prep, status}
 async function perform(pieceId, mode, ctx, players, opts = {}) {
-  await initAudio(); try { await audioReady; } catch (e) { toast("The recordings could not be loaded. Check your connection and reload the page."); return; }
+  initAudio().catch(() => { }); if (audioLoad.active) toast(`Tuning up: loading the string recordings (${audioPct()}%)…`);
+  try { await audioReady; } catch (e) { toast("The recordings could not be loaded. Check your connection and reload the page."); return; }
   if (actx.state !== "running") await actx.resume();
   stopPerformance(true);
   const p = pieceById(pieceId), parts = {};
@@ -1443,7 +1459,7 @@ function renderSide() {
 function updateStatus() {
   if (!state) return;
   if (perf) { $("#status").innerHTML = perf.status; $("#progress i").style.width = clamp((actx.currentTime - perf.t0) / (perf.end - perf.t0) * 100, 0, 100) + "%"; }
-  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = `${LEVELS[lvlOf(state.level)]} · Day <b>${state.day}</b> · <b>${state.coins.toLocaleString("en")}</b> coins · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = "0"; }
+  else { const avg = state.roster.reduce((a, m) => a + overall(m), 0) / state.roster.length; $("#status").innerHTML = (audioLoad.active ? `Loading recordings <b>${audioPct()}%</b> · ` : "") + `${LEVELS[lvlOf(state.level)]} · Day <b>${state.day}</b> · <b>${state.coins.toLocaleString("en")}</b> coins · Reputation <b>${state.rep.toFixed(0)}</b> · Orchestra level <b>${avg.toFixed(0)}</b> (${tierName(avg)})`; $("#progress i").style.width = audioLoad.active ? audioPct() + "%" : "0"; }
 }
 function select(id) { selectedId = id; for (const [vid, v] of views) v.ring.visible = vid === id; renderUI(); }
 function advance(days) {
