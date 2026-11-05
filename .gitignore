@@ -17,3 +17,7 @@ tests/**/bin_*/
 tests/unity-compile/pkgs/
 *.wav
 .DS_Store
+
+# Web vendor build
+tools/web-vendor/node_modules/
+tests/web/*.png
