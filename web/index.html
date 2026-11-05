@@ -668,6 +668,10 @@ function nextBanner() { const a = bannerQueue.shift(), el = $("#achv"); if (!a) 
 /* =====================================================================
    STATE & SAVE (browser storage; the Unity game saves to a JSON file)
    ===================================================================== */
+// Browser storage can be missing or throw (private browsing, blocked site data, full quota): every access goes through here.
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { } } };
 const SAVE_KEY = "orchestra-project-save-v1";
 let state = null, selectedId = null;
 function newGame() {
@@ -680,7 +684,7 @@ const prog = id => (state.pieces[id] ??= { prep: 0, times: 0, best: 0 });
 // Saves go to browser storage AND a private copy in the player's claude.ai account (db capability), so Continue
 // still works when browser storage is empty: another device, the app, a cleared or blocked browser.
 const cloud = { doc: null, json: null, pending: null, busy: false, fails: 0 };
-function save() { checkAchievements(); state.savedAt = Date.now(); const json = JSON.stringify(state); try { localStorage.setItem(SAVE_KEY, json); } catch (e) { /* storage unavailable: game still runs */ }
+function save() { checkAchievements(); state.savedAt = Date.now(); const json = JSON.stringify(state); store.set(SAVE_KEY, json);   /* storage unavailable: the game still runs */
   cloud.json = json; cloud.pending = { json, at: state.savedAt }; pushCloud(); if (cloud.checked && !cloud.doc) saveMark("Saved on this device only"); }
 // One write at a time; the newest state wins; a failed write is retried and reported once.
 async function pushCloud() {
@@ -690,20 +694,20 @@ async function pushCloud() {
   finally { cloud.busy = false; if (cloud.pending) setTimeout(pushCloud, cloud.fails ? Math.min(30000, 2000 * cloud.fails) : 300); } }
 function saveMark(t) { const el = $("#save-mark"); if (!el) return; el.textContent = "✓ " + t; el.classList.add("on"); clearTimeout(saveMark.t); saveMark.t = setTimeout(() => el.classList.remove("on"), 1800); }
 addEventListener("pagehide", pushCloud); document.addEventListener("visibilitychange", () => { if (document.hidden) pushCloud(); });
-const savedJson = () => { try { return localStorage.getItem(SAVE_KEY) || cloud.json; } catch (e) { return cloud.json; } };
+const savedJson = () => store.get(SAVE_KEY) || cloud.json;
 async function connectCloudSave() {
   setTimeout(() => cloud.checked = true, 12000);   // claude.use() answers within 10 s, or this view has no account saves
   try { if (!window.claude?.use) return; const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); const id = db && user && await user.id(); if (!id) return;
     const doc = db.collection("data/users/" + id).doc("save"), snap = await doc.get(); cloud.doc = doc;
     if (!snap.exists) { if (hasSave()) save(); return; }   // first visit with cloud saves: upload the browser save
     if (cloud.pending) { pushCloud(); return; }   // already playing (saved before the account answered): this game is newer
-    const d = snap.data(), local = (() => { try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; } })();
+    const d = snap.data(), local = (() => { try { return JSON.parse(store.get(SAVE_KEY)); } catch (e) { return null; } })();
     let remote = null; try { remote = JSON.parse(d.json); } catch (e) { }
     // Keep whichever game is further along (more days played); only on a tie, the newer save. Old saves have no savedAt.
     const ahead = (x, y) => (x.day || 0) !== (y.day || 0) ? (x.day || 0) > (y.day || 0) : (x.savedAt || 0) >= (y.savedAt || 0);
     if (!remote || !remote.roster) return;
     if (local && local.roster && ahead(local, remote)) { cloud.pending = { json: JSON.stringify(local), at: local.savedAt || Date.now() }; pushCloud(); return; }   // this device's game wins: back it up
-    cloud.json = d.json; try { localStorage.setItem(SAVE_KEY, d.json); } catch (e) { }
+    cloud.json = d.json; store.set(SAVE_KEY, d.json);
     if (!$("#menu").hidden) { state = null; load(); syncStage(); }   // not in a game yet: Continue resumes the account save
     $("#m-continue").hidden = $("#m-continue").disabled = false;   // still on the menu: Continue now resumes the cloud game
   } catch (e) { /* no cloud saves in this view: browser storage only */ }
@@ -1494,10 +1498,10 @@ function openTutorial(start = 0) {
   bg.querySelector("#tut-prev").onclick = () => { i = Math.max(0, i - 1); draw(); };
   bg.querySelector("#tut-next").onclick = () => { if (i === TUTORIAL.length - 1) return bg.remove(); i++; draw(); };
   bg.querySelector("#tut-close").onclick = () => bg.remove();
-  try { localStorage.setItem("orchestra-tutorial-seen", "1"); } catch (e) { }
+  store.set("orchestra-tutorial-seen", "1");
   draw();
 }
-const tutorialSeen = () => { try { return !!localStorage.getItem("orchestra-tutorial-seen"); } catch (e) { return false; } };
+const tutorialSeen = () => !!store.get("orchestra-tutorial-seen");
 let rhythm = null;
 function openRhythm(m, exIndex = 0) {
   const bg = modal(`<div class="eyebrow">Rhythm practice</div><h2 id="r-title"></h2><p class="muted small" id="r-who"></p>
@@ -1628,9 +1632,9 @@ $("#m-new").onclick = () => { if (hasSave() && !confirmNew) { confirmNew = true;
 $("#m-help").onclick = () => openTutorial();
 // Settings: volume, applause volume, graphics quality (saved in this browser only)
 const SET_KEY = "orchestra-settings"; let settings = { volume: .9, applause: 1, quality: "high" };
-try { Object.assign(settings, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch (e) { }
+try { Object.assign(settings, JSON.parse(store.get(SET_KEY)) || {}); } catch (e) { }
 function applySettings() { if (master) master.gain.value = settings.volume; renderer.shadowMap.enabled = settings.quality === "high"; renderer.setPixelRatio(settings.quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize();
-  scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) { } }
+  scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); store.set(SET_KEY, JSON.stringify(settings)); }
 $("#m-settings").onclick = () => {
   const bg = modal(`<div class="eyebrow">Settings</div><h2>Settings</h2>
     <label>Volume <span class="muted" id="sv-v"></span><input type="range" min="0" max="100" id="s-vol" value="${Math.round(settings.volume / .9 * 100)}"></label>
@@ -1642,7 +1646,7 @@ $("#m-settings").onclick = () => {
   bg.querySelector("#s-vol").oninput = e => { settings.volume = e.target.value / 100 * .9; applySettings(); show(); };
   bg.querySelector("#s-app").oninput = e => { settings.applause = e.target.value / 100; applySettings(); show(); };
   bg.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { settings.quality = b.dataset.q; applySettings(); bg.querySelectorAll("[data-q]").forEach(x => x.classList.toggle("on", x === b)); });
-  let sure = false; bg.querySelector("#s-reset").onclick = e => { if (!sure) { sure = true; e.target.textContent = "Tap again to delete the saved game"; return; } try { localStorage.removeItem(SAVE_KEY); } catch (er) { } Promise.resolve(cloud.doc?.delete()).catch(() => { }).finally(() => location.reload()); };
+  let sure = false; bg.querySelector("#s-reset").onclick = e => { if (!sure) { sure = true; e.target.textContent = "Tap again to delete the saved game"; return; } store.del(SAVE_KEY); Promise.resolve(cloud.doc?.delete()).catch(() => { }).finally(() => location.reload()); };
   bg.querySelector("[data-close]").onclick = () => bg.remove(); show();
 };
 $("#b-help").onclick = () => openTutorial();
@@ -1688,7 +1692,7 @@ function frame(now) {
 }
 buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (settings.quality !== "high") applySettings();
 // Show the starting orchestra on stage behind the menu (new players see the four musicians immediately)
-if (!load()) { newGame(); try { localStorage.removeItem(SAVE_KEY); } catch (e) { } cloud.pending = cloud.json = null; }   // a placeholder behind the menu, never saved
+if (!load()) { newGame(); store.del(SAVE_KEY); cloud.pending = cloud.json = null; }   // a placeholder behind the menu, never saved
 syncStage();
 camera.position.copy(U(0, 5, -8)); camera.lookAt(camGoalLook);
 $("#m-continue").disabled = !hasSave(); $("#m-continue").hidden = !hasSave();   // no saved game yet: New Game is the only choice
