@@ -152,7 +152,24 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
   .btn { padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+#err-toast { position: fixed; z-index: 100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px);
+  min-height: 44px; padding: 12px 18px; background: var(--card-solid); color: var(--text); border: 1px solid var(--bad); border-radius: 8px; font: 500 14px var(--body); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 </style>
+<script>
+// Safety net: any uncaught error or rejected promise shows one small "tap to reload" toast instead of a frozen page.
+(function () {
+  var shown = false;
+  function show() {
+    if (shown) return; shown = true;
+    var put = function () { var b = document.createElement("button"); b.id = "err-toast"; b.type = "button"; b.textContent = "Something went wrong - tap to reload";
+      b.onclick = function () { location.reload(); }; document.body.appendChild(b); };
+    if (document.body) put(); else document.addEventListener("DOMContentLoaded", put);
+  }
+  window.onerror = function (msg) { if (/ResizeObserver loop/.test(String(msg))) return; show(); };   // that one is a harmless browser notice
+  window.addEventListener("unhandledrejection", show);
+  window.__errorToast = show;
+})();
+</script>
 </head>
 <body>
 
@@ -215,7 +232,7 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
 <div class="ui" id="achv"></div>
 <div id="modal-root"></div>
 
-<script type="module">
+<script type="module" onerror="__errorToast()">
 // Three.js 0.160 + OrbitControls, served from this site (tools/web-vendor builds only the classes used here).
 import * as THREE from "./vendor/three.js";
 import { OrbitControls } from "./vendor/three.js";
@@ -1441,7 +1458,7 @@ function advance(days) {
 }
 function enterGame(t) {
   $("#menu").hidden = true; $("#topbar").hidden = false; $("#bottombar").hidden = false; tab = t; rosterOpen = !isNarrow() || t === "roster"; if (isNarrow() && t !== "roster") rosterOpen = false;
-  syncStage(); if (!selectedId || !selected()) select(state.roster[0].id); setCam("orchestra"); renderUI(); initAudio();
+  syncStage(); if (!selectedId || !selected()) select(state.roster[0].id); setCam("orchestra"); renderUI(); initAudio().catch(() => { });
 }
 function showMenu() { stopPerformance(true); $("#menu").hidden = false; $("#topbar").hidden = true; $("#bottombar").hidden = true; $("#roster").hidden = true; $("#side").hidden = true; setCam("menu"); camMode = "menu"; $("#m-continue").disabled = $("#m-continue").hidden = !hasSave() && !state; }
 
