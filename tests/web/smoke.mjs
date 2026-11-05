@@ -31,7 +31,8 @@ async function run(name, ctxOpts) {
   const t0 = Date.now(); await page.goto(base, { waitUntil: "load" });
   await page.waitForSelector("#loading", { state: "hidden", timeout: 30000 }); const bootMs = Date.now() - t0;
   const shellBytes = bytes, sizeCheck = () => page.evaluate(() => { if (innerWidth > 760) return [];
-    const out = []; for (const e of document.querySelectorAll("button, input")) { const r = e.getBoundingClientRect(); if (r.width && r.height && r.height < 44) out.push(`${e.id || e.className || e.tagName} ${Math.round(r.height)}px tall`); }
+    const out = []; for (const e of document.querySelectorAll("button, input")) { const r = e.getBoundingClientRect(); if (r.width && r.height && r.height < 44) out.push(`${e.id || e.className || e.tagName} ${Math.round(r.height)}px tall`);
+      if (r.height && e.scrollHeight > e.clientHeight + 2) out.push(`${e.id || e.className || e.tagName} text overflows`); }
     for (const e of document.querySelectorAll("body *")) { const r = e.getBoundingClientRect(); if (!r.width || ![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
       const fs = parseFloat(getComputedStyle(e).fontSize); if (fs < 12) out.push(`${e.id || e.className || e.tagName} text ${fs}px`); } return out; });
   const small = await sizeCheck();

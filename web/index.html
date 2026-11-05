@@ -155,6 +155,7 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
 /* Phones and touch screens: every tap target at least 44 px, no text under 12 px */
 @media (max-width: 760px), (pointer: coarse) {
   .btn, .card, button.skill, input[type=range] { min-height: 44px; }
+  .panel > * { flex-shrink: 0; }   /* an explicit min-height would otherwise let panel items squash below their text */
   #brand small, .eyebrow, .tier, #menu .note { font-size: 12px; }
 }
 #err-toast { position: fixed; z-index: 100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px);
