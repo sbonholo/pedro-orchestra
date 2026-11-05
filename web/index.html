@@ -1695,7 +1695,7 @@ const barObserver = new ResizeObserver(() => {
   st.setProperty("--bot", ($("#bottombar").offsetHeight + 8) + "px");
 });
 barObserver.observe($("#topbar")); barObserver.observe($("#bottombar"));
-let last = performance.now();
+let last = performance.now(), rafId = 0, loopPaused = false, audioWasRunning = false;
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
   const audioNow = actx ? actx.currentTime : 0;
@@ -1705,8 +1705,15 @@ function frame(now) {
   if (perf && actx.currentTime > perf.end) finishPerformance();
   rhythmTick(); updateCamera(dt); updateStatus(); updateHouseLights(dt); if (perf?.cond || !$("#conduct-pad").hidden) updateConductPad();
   const sv = views.get(selectedId); if (sv) sv.ring.scale.setScalar(1.7 * (1 + .035 * Math.sin(performance.now() / 260)));
-  renderer.render(scene, camera); requestAnimationFrame(frame);
+  renderer.render(scene, camera); rafId = requestAnimationFrame(frame);
 }
+// Tab hidden: stop drawing and pause the sound; back again: carry on. Performances, the rhythm game and conducting all run
+// on audio time, so a paused piece continues exactly where it stopped.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { if (loopPaused) return; loopPaused = true; cancelAnimationFrame(rafId);
+    audioWasRunning = actx?.state === "running"; if (audioWasRunning) actx.suspend().catch(() => { }); }
+  else if (loopPaused) { loopPaused = false; if (audioWasRunning) actx.resume().catch(() => { }); last = performance.now(); rafId = requestAnimationFrame(frame); }
+});
 buildHall(); buildLights(); buildConductor(); buildAudience(); resize(); if (settings.quality !== "high") applySettings();
 // Show the starting orchestra on stage behind the menu (new players see the four musicians immediately)
 if (!load()) { newGame(); store.del(SAVE_KEY); cloud.pending = cloud.json = null; }   // a placeholder behind the menu, never saved
@@ -1714,7 +1721,7 @@ syncStage();
 camera.position.copy(U(0, 5, -8)); camera.lookAt(camGoalLook);
 $("#m-continue").disabled = !hasSave(); $("#m-continue").hidden = !hasSave();   // no saved game yet: New Game is the only choice
 $("#loading").hidden = true; connectCloudSave();
-requestAnimationFrame(frame);
+rafId = requestAnimationFrame(frame);
 window.__orchestra = { get state() { return state; }, get perf() { return perf; }, get actx() { return actx; }, tap: ts => conductTap(ts) };   // test hooks
 </script>
 </body>
