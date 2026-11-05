@@ -20,3 +20,4 @@ tests/unity-compile/pkgs/
 
 # Web vendor build
 tools/web-vendor/node_modules/
+tests/web/*.png
